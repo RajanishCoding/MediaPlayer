@@ -1,4 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
     <string name="app_name">Media Player</string>
-    <string name="allow_access">ALLOW ACCESS</string>
+    <string name="storage_access_text">"Storage permission is required to scan and access media files from the storage. We strongly recommend you to allow this permission. \n\n" +
+                        "Allow Permission ?"</string>
 </resources>

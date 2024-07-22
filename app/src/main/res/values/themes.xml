@@ -16,7 +16,6 @@
 
         <!-- Status Bar Colors -->
         <item name="android:statusBarColor">@color/toolbar_background</item>
-        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
 
         <!-- Customize SeekBar colors -->
         <item name="colorControlActivated">@color/overlayColorRect</item> <!-- Progress color -->

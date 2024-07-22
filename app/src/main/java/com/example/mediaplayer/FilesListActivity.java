@@ -158,8 +158,7 @@ public class FilesListActivity extends AppCompatActivity {
     private void checkStorageAccessA11() {
         new AlertDialog.Builder(this)
                 .setTitle("Storage Permission")
-                .setMessage("Storage permission is required to scan and access media files from the storage. We strongly recommend you to allow this permission. \n\n" +
-                        "Allow Permission ?")
+                .setMessage(R.string.storage_access_text)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @RequiresApi(api = Build.VERSION_CODES.R)
                     @Override

@@ -73,7 +73,7 @@
         android:id="@+id/StorageAccessLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/overlayColorLight"
+        android:background="@drawable/selector_rect_radius"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -85,7 +85,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="ALLOW ACCESS"
-            android:textSize="25sp"
+            android:textSize="30sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
             style="@style/TextViewStyle"
@@ -97,13 +97,15 @@
             android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/allow_access"
-            android:textSize="15sp"
+            android:text="@string/storage_access_text"
+            android:textSize="25sp"
             style="@style/TextViewStyle"
+            android:paddingHorizontal="20dp"
+            android:layout_marginTop="30dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/header"
-            android:layout_marginTop="50dp"/>
+            />
 
 
 
