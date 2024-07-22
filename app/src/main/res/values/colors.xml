@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="my_light_primary">#2254B8</color>
+    <color name="my_light_primary_variant">#3700B3</color>
+    <color name="my_light_on_primary">#000000</color>
+
+    <color name="my_light_background">#FFFFFF</color>
+    <color name="my_light_on_background">#000000</color>
+    <color name="my_light_surface">#FF0000</color>
+    <color name="my_light_on_surface">#000000</color>
+
+    <color name="my_light_error">#B00020</color>
+    <color name="my_light_on_error">#FFFFFF</color>
+
+    <color name="my_dark_primary">#000000</color>
+    <color name="my_dark_primary_variant">#3700B3</color>
+    <color name="my_dark_on_primary">#FFFFFF</color>
+
+    <color name="my_dark_background">#000000</color>
+    <color name="my_dark_on_background">#FFFFFF</color>
+    <color name="my_dark_surface">#1E1E1E</color>
+    <color name="my_dark_on_surface">#FFFFFF</color>
+
+    <color name="my_dark_error">#CF6679</color>
+    <color name="my_dark_on_error">#000000</color>
+
+
+    <!-- Toolbar Colors -->
+    <color name="toolbar_background">#FFFFFF</color>
+    <color name="toolbar_text">#000000</color>
+    <color name="toolbar_icons">#000000</color>
+
+    <color name="toolbar_background_dark">#000000</color>
+    <color name="toolbar_text_dark">#FFFFFF</color>
+    <color name="toolbar_icons_dark">#FFFFFF</color>
+
+    <!-- Button Colors -->
+    <color name="button_background">#0004C6</color>
+    <color name="button_background_pressed">#3700B3</color>
+    <color name="button_text">#FFFFFF</color>
+
+    <color name="button_background_dark">#3717FF</color>
+    <color name="button_background_pressed_dark">#3700B3</color>
+    <color name="button_text_dark">#FFFFFF</color>
+
+    <!-- Button Variant Colors -->
+    <color name="button_background_variant">#482BFF</color>
+    <color name="button_background_pressed_variant">#018786</color>
+    <color name="button_text_variant">#000000</color>
+
+    <!-- Text View Colors -->
+    <color name="text_view_text">#000000</color>
+    <color name="text_view_text_dark">#FFFFFF</color>
+
+    <!-- Text View Variant Colors -->
+    <color name="text_view_text_variant">#646464</color>
+    <color name="text_view_text_variant_dark">#BDBDBD</color>
+
+    <!-- Overlay Colors -->
+    <color name="overlayColorLight">#33000000</color> <!-- Light theme: 20% black -->
+    <color name="overlayColorDark">#33FFFFFF</color> <!-- Dark theme: 20% white -->
+    <color name="overlayColorRect">#3F51B5</color> <!-- Dark theme -->
+
+    <attr name="overlayColor" format="reference|color" />
+
+</resources>

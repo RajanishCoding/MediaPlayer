@@ -1,0 +1,86 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MediaPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!--        <item name="colorPrimary">@color/my_dark_primary</item>-->
+        <!--        <item name="colorPrimaryVariant">@color/my_dark_primary_variant</item>-->
+        <!--        <item name="colorOnPrimary">@color/my_dark_on_primary</item>-->
+
+        <!--        <item name="android:colorBackground">@color/my_dark_background</item>-->
+        <!--        <item name="android:colorForeground">@color/my_dark_on_background</item>-->
+        <!--        <item name="colorSurface">@color/my_dark_surface</item>-->
+        <!--        <item name="colorOnSurface">@color/my_dark_on_surface</item>-->
+
+        <!--        <item name="colorError">@color/my_dark_error</item>-->
+        <!--        <item name="colorOnError">@color/my_dark_on_error</item>-->
+
+        <!-- Status Bar Colors -->
+        <item name="android:statusBarColor">@color/toolbar_background_dark</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+
+        <!-- Customize SeekBar colors -->
+        <item name="colorControlActivated">@color/button_background_dark</item> <!-- Progress color -->
+        <item name="colorControlNormal">@color/white</item> <!-- Thumb color -->
+
+        <!-- Overlay Colors -->
+        <item name="overlayColor">@color/overlayColorDark</item> <!-- Dark theme: 20% white -->
+    </style>
+
+
+    <!-- Button Style -->
+    <style name="ButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:backgroundTint">@color/button_background_dark</item>
+        <item name="android:textColor">@color/button_text_dark</item>
+    </style>
+
+    <style name="ButtonStyleVariant" parent="Widget.MaterialComponents.Button">
+        <item name="android:backgroundTint">@color/button_background_variant</item>
+        <item name="android:textColor">@color/button_text_variant</item>
+    </style>
+
+    <!-- Text View Style -->
+    <style name="TextViewStyle" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textColor">@color/text_view_text_dark</item>
+    </style>
+
+    <style name="TextViewStyleVariant" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textColor">@color/text_view_text_variant_dark</item>
+    </style>
+
+    <!-- SeekBar Style -->
+    <style name="SeekBarStyleVariant" parent="Widget.AppCompat.SeekBar">
+        <item name="colorControlNormal">@color/button_background_variant</item> <!-- Default color -->
+        <item name="colorControlActivated">@color/button_background_pressed_variant</item> <!-- Color when activated/progress -->
+    </style>
+
+    <style name="LinearLayout">
+        <item name="android:background">@color/toolbar_background_dark</item>
+    </style>
+
+
+    <!-- Toolbar Style -->
+    <style name="ToolbarStyle" parent="Widget.AppCompat.Toolbar">
+        <item name="android:background">@color/toolbar_background_dark</item>
+    </style>
+
+    <!-- Toolbar Foreground Styles -->
+    <style name="ToolbarIconsStyle">
+        <item name="android:tint">@android:color/transparent</item>
+    </style>
+
+    <style name="ToolbarTitleStyle">
+        <item name="android:textColor">@color/toolbar_text_dark</item>
+    </style>
+
+
+    <!-- Toolbar Media Style -->
+    <style name="ToolbarStyleMedia" parent="Widget.AppCompat.Toolbar">
+        <item name="android:background">@color/toolbar_background_dark</item>
+    </style>
+
+    <!-- Toolbar Foreground Styles -->
+    <style name="ToolbarTitleStyleMedia">
+        <item name="android:textColor">@color/toolbar_text_dark</item>
+    </style>
+
+</resources>
