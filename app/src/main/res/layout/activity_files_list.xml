@@ -67,6 +67,49 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+
+    <!-- Storage Access Layout -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/StorageAccessLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/overlayColorLight"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        >
+
+        <TextView
+            android:id="@+id/header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALLOW ACCESS"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            style="@style/TextViewStyle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/allow_access"
+            android:textSize="15sp"
+            style="@style/TextViewStyle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/header"
+            android:layout_marginTop="50dp"/>
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
     <!-- SwipeRefreshLayout with RecyclerView -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"

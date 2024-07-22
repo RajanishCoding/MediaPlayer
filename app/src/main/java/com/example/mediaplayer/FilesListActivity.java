@@ -13,6 +13,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -47,7 +49,8 @@ public class FilesListActivity extends AppCompatActivity {
     private MediaAdapter adapter;
     private List<Media> mediaList;
 
-    private ConstraintLayout RationaleLayout;
+    private ConstraintLayout StorageRationaleLayout;
+    private Button Rationale_AllowAccess_Button;
     private boolean NotificationEnabled;
 
 
@@ -81,7 +84,13 @@ public class FilesListActivity extends AppCompatActivity {
             }
             else {
                 checkNotificationAccess();
-                checkStorageAccessA11();
+//                StorageRationaleLayout.setVisibility(View.VISIBLE);
+//                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        checkStorageAccessA11();
+//                    }
+//                });
             }
         }
         else {
@@ -95,47 +104,63 @@ public class FilesListActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(
                     this, Manifest.permission.POST_NOTIFICATIONS) ==
                     PackageManager.PERMISSION_GRANTED) {
-                // Permission is already granted. Proceed with the action.
                 NotificationEnabled = true;
             }
+
             else if (ActivityCompat.shouldShowRequestPermissionRationale(
                     this, Manifest.permission.POST_NOTIFICATIONS)) {
-                // Permission hasn't been granted yet and the user hasn't declined it previously.
-                // You can explain to the user why the permission is needed.
                 NotificationEnabled = false;
                 showRationaleDialogNotification();
             }
+
             else {
-                // Permission hasn't been granted yet. Request the permission.
                 NotificationEnabled = false;
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
     }
 
-    // Register the permissions callback, which handles the user's response to the
     // system permissions dialog.
     ActivityResultLauncher<String> requestPermissionLauncher_Notification =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
                 @Override
                 public void onActivityResult(Boolean isGranted) {
-                    if (isGranted) {
-                        // Permission is granted. Continue the action or workflow in your
-                        // app.
-                        NotificationEnabled = true;
-                    }
-                    else {
-                        NotificationEnabled = false;
-                    }
+                    NotificationEnabled = isGranted;
                 }
             });
+
+    private void showRationaleDialogNotification(){
+        new AlertDialog.Builder(this)
+                .setTitle("Notification Permission")
+                .setMessage("Notification permission is required to control the media playback from notification while background play is enabled.\n\n" +
+                        "Please enable it in the permissions of the app settings.")
+                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Open app settings
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
+    }
 
 
     private void checkStorageAccessA11() {
         new AlertDialog.Builder(this)
                 .setTitle("Storage Permission")
-                .setMessage("Storage permission is required to access media files. Please enable it.")
-                .setPositiveButton("Allow Access", new DialogInterface.OnClickListener() {
+                .setMessage("Storage permission is required to scan and access media files from the storage. We strongly recommend you to allow this permission. \n\n" +
+                        "Allow Permission ?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @RequiresApi(api = Build.VERSION_CODES.R)
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -144,7 +169,7 @@ public class FilesListActivity extends AppCompatActivity {
                         startActivity(intent);
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -200,30 +225,6 @@ public class FilesListActivity extends AppCompatActivity {
                     }
                 }
             });
-
-    private void showRationaleDialogNotification(){
-        new AlertDialog.Builder(this)
-                .setTitle("Notification Permission")
-                .setMessage("Notification permission is required to control the media playback from notification while background play is enabled. Please enable it in the permissions of the app settings.")
-                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Open app settings
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create()
-                .show();
-    }
 
 
     private void showSettingsRedirectDialog() {
