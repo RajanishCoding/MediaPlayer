@@ -31,8 +31,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mediaplayer.Media;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,40 +78,83 @@ public class FilesListActivity extends AppCompatActivity {
             if (Environment.isExternalStorageManager()) {
                 // Permission is granted
                 queryMediaFiles();
-            } else {
+            }
+            else {
                 checkNotificationAccess();
-                Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivity(intent);
+                checkStorageAccessA11();
             }
         }
         else {
-            checkStorageAccess();
-            checkNotificationAccess();
+            checkStorageAccessA10();
         }
     }
 
     private void checkNotificationAccess() {
-        // Check if the permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED) {
-            // Permission is already granted. Proceed with the action.
-            NotificationEnabled = true;
-        }
-        else if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.POST_NOTIFICATIONS)) {
-            // Permission hasn't been granted yet and the user hasn't declined it previously.
-            // You can explain to the user why the permission is needed.
-            showRationaleDialogNotification();
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
-        } else {
-            // Permission hasn't been granted yet. Request the permission.
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Check if the permission is granted
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED) {
+                // Permission is already granted. Proceed with the action.
+                NotificationEnabled = true;
+            }
+            else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.POST_NOTIFICATIONS)) {
+                // Permission hasn't been granted yet and the user hasn't declined it previously.
+                // You can explain to the user why the permission is needed.
+                NotificationEnabled = false;
+                showRationaleDialogNotification();
+            }
+            else {
+                // Permission hasn't been granted yet. Request the permission.
+                NotificationEnabled = false;
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
         }
     }
 
+    // Register the permissions callback, which handles the user's response to the
+    // system permissions dialog.
+    ActivityResultLauncher<String> requestPermissionLauncher_Notification =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    if (isGranted) {
+                        // Permission is granted. Continue the action or workflow in your
+                        // app.
+                        NotificationEnabled = true;
+                    }
+                    else {
+                        NotificationEnabled = false;
+                    }
+                }
+            });
 
-    private void checkStorageAccess() {
+
+    private void checkStorageAccessA11() {
+        new AlertDialog.Builder(this)
+                .setTitle("Storage Permission")
+                .setMessage("Storage permission is required to access media files. Please enable it.")
+                .setPositiveButton("Allow Access", new DialogInterface.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.R)
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Open permission
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    private void checkStorageAccessA10() {
         // Check if the permission is granted
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.READ_MEDIA_AUDIO) ==
@@ -135,8 +176,8 @@ public class FilesListActivity extends AppCompatActivity {
         }
     }
 
-    // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog.
+
+
     ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
                 @Override
@@ -171,7 +212,7 @@ public class FilesListActivity extends AppCompatActivity {
                         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                         Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
                         intent.setData(uri);
-                        FilesListActivity.this.startActivity(intent);
+                        startActivity(intent);
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -199,7 +240,12 @@ public class FilesListActivity extends AppCompatActivity {
                         FilesListActivity.this.startActivity(intent);
                     }
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
                 .create()
                 .show();
     }
