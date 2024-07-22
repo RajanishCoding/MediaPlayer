@@ -51,7 +51,6 @@ public class FilesListActivity extends AppCompatActivity {
 
     private ConstraintLayout RationaleLayout;
     private boolean NotificationEnabled;
-    private boolean Enabled;
 
 
     @Override
