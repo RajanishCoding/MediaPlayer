@@ -6,7 +6,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FilesListActivity">
+    tools:context=".FilesListActivity"
+    style="@style/LinearLayout" >
 
 
     <!-- Custom Toolbar -->
@@ -68,50 +69,6 @@
     </androidx.appcompat.widget.Toolbar>
 
 
-    <!-- Storage Access Layout -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/StorageAccessLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/selector_rect_radius"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        >
-
-        <TextView
-            android:id="@+id/header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ALLOW ACCESS"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:fontFamily="monospace"
-            style="@style/TextViewStyle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
-
-        <TextView
-            android:id="@+id/content"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/storage_access_text"
-            android:textSize="25sp"
-            style="@style/TextViewStyle"
-            android:paddingHorizontal="20dp"
-            android:layout_marginTop="30dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header"
-            />
-
-
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
     <!-- SwipeRefreshLayout with RecyclerView -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
@@ -141,14 +98,14 @@
         android:layout_marginEnd="35dp"
         android:layout_marginBottom="20dp"
         android:contentDescription="Play_Last"
-        app:layout_constraintBottom_toTopOf="@+id/Select_Media"
+        app:layout_constraintBottom_toTopOf="@+id/PickFile"
         app:layout_constraintEnd_toEndOf="parent"
         app:maxImageSize="30dp"
         app:srcCompat="@android:drawable/ic_media_play"
         app:tint="#FFFFFF" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/Select_Media"
+        android:id="@+id/PickFile"
         style="@style/ButtonStyleVariant"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -161,5 +118,74 @@
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="#FFFFFF" />
 
+
+    <!-- Storage Access Layout -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/StorageAccessLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_rect_radius"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingVertical="20dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ALLOW ACCESS"
+            android:textAlignment="center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            style="@style/TextViewStyle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/content"
+            style="@style/TextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="40dp"
+            android:text="@string/storage_access_text"
+            android:textSize="21sp"
+            android:textStyle="italic"
+            app:layout_constraintBottom_toTopOf="@id/Lower_Buttons"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/header" />
+
+        <LinearLayout
+            android:id="@+id/Lower_Buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <Button
+                android:id="@+id/pickFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="40dp"
+                android:text="Pick a File" />
+
+            <Button
+                android:id="@+id/allowAccess"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Allow Access" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

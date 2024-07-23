@@ -67,6 +67,9 @@ public class FilesListActivity extends AppCompatActivity {
         FilesPath = new ArrayList<>();
         FilesDuration = new ArrayList<>();
 
+        StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
+        Rationale_AllowAccess_Button = findViewById(R.id.allowAccess);
+
 
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -84,13 +87,13 @@ public class FilesListActivity extends AppCompatActivity {
             }
             else {
                 checkNotificationAccess();
-//                StorageRationaleLayout.setVisibility(View.VISIBLE);
-//                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        checkStorageAccessA11();
-//                    }
-//                });
+                StorageRationaleLayout.setVisibility(View.VISIBLE);
+                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        checkStorageAccessA11();
+                    }
+                });
             }
         }
         else {
@@ -164,7 +167,9 @@ public class FilesListActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Open permission
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+                        intent.setData(uri);
                         startActivity(intent);
                     }
                 })
