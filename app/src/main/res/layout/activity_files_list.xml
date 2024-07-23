@@ -39,31 +39,33 @@
 
             <ImageButton
                 android:id="@+id/decoder_button"
+                style="@style/ToolbarIconsStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/ToolbarIconsStyle"
-                android:src="@drawable/baseline_search_24"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="10dp"
+                android:layout_toStartOf="@id/more_button"
                 android:background="@drawable/selector"
                 android:contentDescription="TODO"
-                android:tooltipText="Search"
                 android:padding="8dp"
-                android:layout_toStartOf="@id/more_button"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="10dp"/>
+                android:src="@drawable/baseline_search_24"
+                android:tooltipText="Search"
+                tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
                 android:id="@+id/more_button"
+                style="@style/ToolbarIconsStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/ToolbarIconsStyle"
-                android:src="@drawable/baseline_more_vert_24"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="10dp"
                 android:background="@drawable/selector"
                 android:contentDescription="TODO"
-                android:tooltipText="More Options"
                 android:padding="8dp"
-                android:layout_centerVertical="true"
-                android:layout_alignParentEnd="true"
-                android:layout_marginEnd="10dp"/>
+                android:src="@drawable/baseline_more_vert_24"
+                android:tooltipText="More Options"
+                tools:ignore="TouchTargetSizeCheck" />
         </RelativeLayout>
 
     </androidx.appcompat.widget.Toolbar>
