@@ -17,6 +17,7 @@ import androidx.media.session.MediaButtonReceiver;
 //import androidx.media.session.MediaSessionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 
 import androidx.media3.common.MediaItem;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -96,6 +97,7 @@ public class PlayerService extends Service {
     private void initializePlayer() {
         player = new ExoPlayer.Builder(this).build();
         player.setMediaItem(MediaItem.fromUri(media_path));
+        Log.d("TAG", "initializePlayer: "+ media_path);
         player.prepare();
         player.play();
         updateMediaSessionMetadata();

@@ -15,7 +15,6 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -34,7 +33,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +55,7 @@ public class FilesListActivity extends AppCompatActivity {
 
     private boolean readStorage = false;
     private boolean writeStorage = false;
+    private String TAG = "TAG";
 
 
     @Override
@@ -89,6 +88,7 @@ public class FilesListActivity extends AppCompatActivity {
             if (Environment.isExternalStorageManager()) {
                 // Permission is granted
                 queryMediaFiles();
+                Log.d(TAG, "onCreate: YES");
             }
             else {
                 checkNotificationAccess();
@@ -96,7 +96,7 @@ public class FilesListActivity extends AppCompatActivity {
                 Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        checkStorageAccessA11();
+                        StorageAccessA11_PermissionDialog();
                     }
                 });
             }
@@ -137,6 +137,77 @@ public class FilesListActivity extends AppCompatActivity {
                 }
             });
 
+
+    private static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    private void checkStorageAccessA10() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+//            NotificationEnabled = true;
+            queryMediaFiles();
+        }
+
+        else {
+//            NotificationEnabled = false;
+            requestPermissionsLauncher_StorageA10.launch(REQUIRED_PERMISSIONS);
+        }
+    }
+
+    ActivityResultLauncher<String[]> requestPermissionsLauncher_StorageA10 =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
+                        @Override
+                        public void onActivityResult(Map<String, Boolean> permissions) {
+                            Boolean readPermission = permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE);
+                            Boolean writePermission = permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+                            if (readPermission != null && readPermission && writePermission != null && writePermission) {
+                                // Both permissions are granted
+                                queryMediaFiles();
+                            }
+                            else {
+                                StorageRationaleLayout.setVisibility(View.VISIBLE);
+                                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+                                        intent.setData(uri);
+                                        startActivity(intent);
+                                    }
+                                });
+                            }
+                        }
+                    });
+
+
+    private void StorageAccessA11_PermissionDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Storage Permission")
+                .setMessage(R.string.storage_access_text)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.R)
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Open permission
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
+    }
+
     private void showRationaleDialogNotification(){
         new AlertDialog.Builder(this)
                 .setTitle("Notification Permission")
@@ -163,131 +234,22 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
 
-    private void checkStorageAccessA11() {
-        new AlertDialog.Builder(this)
-                .setTitle("Storage Permission")
-                .setMessage(R.string.storage_access_text)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @RequiresApi(api = Build.VERSION_CODES.R)
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Open permission
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create()
-                .show();
-    }
-
-    private static final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-
-    private void checkStorageAccessA10() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-//            NotificationEnabled = true;
-            queryMediaFiles();
-        }
-        else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE) ||
-                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                showRationaleDialogStorage();
-        }
-        else {
-//            NotificationEnabled = false;
-            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS);
-        }
-    }
-
-    ActivityResultLauncher<String[]> requestPermissionsLauncher_Storage =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
-                        @Override
-                        public void onActivityResult(Map<String, Boolean> permissions) {
-                            Boolean readPermission = permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE);
-                            Boolean writePermission = permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-                            if (readPermission != null && readPermission && writePermission != null && writePermission) {
-                                // Both permissions are granted
-                                queryMediaFiles();
-                            }
-                            else {
-                                // At least one permission is not granted
-                                Toast.makeText(FilesListActivity.this, "Permissions are required for this app to function.", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-
-
-
-
-//    ActivityResultLauncher<String> requestPermissionLauncher =
-//            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
-//                @Override
-//                public void onActivityResult(Boolean isGranted) {
-//                    if (isGranted) {
-//                        // Permission is granted. Continue the action or workflow in your
-//                        // app.
-//                        queryMediaFiles();
-//                        Toast.makeText(FilesListActivity.this, "Yes Allowed", Toast.LENGTH_SHORT).show();
-//                    }
-//                    else {
-//                        Toast.makeText(FilesListActivity.this, "Not Allowed", Toast.LENGTH_SHORT).show();
-//
-//                        if (!ActivityCompat.shouldShowRequestPermissionRationale(
-//                                FilesListActivity.this, Manifest.permission.READ_MEDIA_AUDIO)) {
-//                            showSettingsRedirectDialog();
-//                        } else {
-//                            showPermissionDeniedMessage();
-//                        }
-//                    }
-//                }
-//            });
-
-
-    private void showRationaleDialogStorage() {
-        new AlertDialog.Builder(this)
-                .setTitle("Permission Needed")
-                .setMessage("Storage permission is required to access media files. Please enable it in the permissions of the app settings.")
-                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Open app settings
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        FilesListActivity.this.startActivity(intent);
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create()
-                .show();
-    }
-
-
     @Override
     protected void onResume() {
         super.onResume();
-        // Check if the permission is granted after returning from settings
-        if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.READ_MEDIA_AUDIO) ==
-                PackageManager.PERMISSION_GRANTED) {
-            // Permission is granted. Proceed with the action.
-            queryMediaFiles(); // Example: method to query and display media files
+        // Check if the permission is granted after returning to app.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()){
+                StorageRationaleLayout.setVisibility(View.GONE);
+                queryMediaFiles();
+            }
+        }
+        else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                StorageRationaleLayout.setVisibility(View.GONE);
+                queryMediaFiles();
+            }
         }
     }
 
@@ -378,4 +340,27 @@ public class FilesListActivity extends AppCompatActivity {
 //        // Permission hasn't been granted yet. Request the permission.
 //        requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO);
 //    }
+
+    //    ActivityResultLauncher<String> requestPermissionLauncher =
+//            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+//                @Override
+//                public void onActivityResult(Boolean isGranted) {
+//                    if (isGranted) {
+//                        // Permission is granted. Continue the action or workflow in your
+//                        // app.
+//                        queryMediaFiles();
+//                        Toast.makeText(FilesListActivity.this, "Yes Allowed", Toast.LENGTH_SHORT).show();
+//                    }
+//                    else {
+//                        Toast.makeText(FilesListActivity.this, "Not Allowed", Toast.LENGTH_SHORT).show();
+//
+//                        if (!ActivityCompat.shouldShowRequestPermissionRationale(
+//                                FilesListActivity.this, Manifest.permission.READ_MEDIA_AUDIO)) {
+//                            showSettingsRedirectDialog();
+//                        } else {
+//                            showPermissionDeniedMessage();
+//                        }
+//                    }
+//                }
+//            });
 }
