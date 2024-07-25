@@ -32,9 +32,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FilesListActivity extends AppCompatActivity {
 
@@ -255,57 +258,59 @@ public class FilesListActivity extends AppCompatActivity {
 
 
     private void queryMediaFiles() {
-        String[] projection = new String[] {
+        String[] audioProjection = new String[] {
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.DURATION
         };
 
-//        String selection = sql-where-clause-with-placeholder-variables;
-//        String[] selectionArgs = new String[] {
-//                values-of-placeholder-variables
-//        };
-//        String sortOrder = sql-order-by-clause;
+        String[] videoProjection = new String[] {
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DURATION
+        };
 
-        Cursor cursor = getApplicationContext().getContentResolver().query(
+        // Query audio files
+        Cursor audioCursor = getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
+                audioProjection,
                 null,
                 null,
                 null
         );
 
+        // Query video files
+        Cursor videoCursor = getApplicationContext().getContentResolver().query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                videoProjection,
+                null,
+                null,
+                null
+        );
+
+        // Set to keep track of unique parent folders
+        Set<String> parentFolders = new HashSet<>();
         mediaList = new ArrayList<>();
 
-        Log.d("Cursor", String.valueOf(cursor.getCount()));
-
-        if (cursor != null) {
-            // Retrieve data like file path, display name, duration, etc.
-            int filePath_ind = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-            int displayName_ind = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-            int duration_ind = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-            Log.d("queryMediaFiles", "yes");
-            if (filePath_ind != -1 && displayName_ind != -1 && duration_ind != -1) {
-                while (cursor.moveToNext()) {
-                    String filePath = cursor.getString(filePath_ind);
-                    String displayName = cursor.getString(displayName_ind);
-                    long dur = cursor.getLong(duration_ind);
-                    String duration = MillisToTime(dur);
-
-                    FilesName.add(displayName);
-                    FilesPath.add(filePath);
-                    FilesDuration.add(duration);
-
-                    mediaList.add(new Media(displayName, filePath, duration, ""));
-
-                    Log.d("queryMediaFiles", filePath);
-                    Log.d("queryMediaFiles", displayName);
-                    Log.d("queryMediaFiles", duration);
-                }
-            }
-            cursor.close();
+        // Process audio files
+        if (audioCursor != null) {
+            processCursor(audioCursor, parentFolders);
+            audioCursor.close();
         }
+
+        // Process video files
+        if (videoCursor != null) {
+            processCursor(videoCursor, parentFolders);
+            videoCursor.close();
+        }
+
+        // Retrieve and display files in each parent folder
+        for (String folderPath : parentFolders) {
+            Log.d(TAG, "queryMediaFiles: " + folderPath);
+        }
+
         Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
         Log.d("queryMediaFiles", String.valueOf(FilesPath));
 
@@ -313,6 +318,36 @@ public class FilesListActivity extends AppCompatActivity {
         adapter = new MediaAdapter(this, mediaList);
         recyclerView.setAdapter(adapter);
     }
+
+
+private void processCursor(Cursor cursor, Set<String> parentFolders) {
+    int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+    int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
+    int durationInd = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+
+    if (filePathInd != -1 && displayNameInd != -1 && durationInd != -1) {
+        while (cursor.moveToNext()) {
+            String filePath = cursor.getString(filePathInd);
+            String displayName = cursor.getString(displayNameInd);
+            long duration = cursor.getLong(durationInd);
+            String formattedDuration = MillisToTime(duration);
+
+            // Add parent folder path to the set
+            String parentFolder = new File(filePath).getParent();
+            parentFolders.add(parentFolder);
+
+            FilesName.add(displayName);
+            FilesPath.add(filePath);
+            FilesDuration.add(formattedDuration);
+
+            mediaList.add(new Media(displayName, filePath, formattedDuration, ""));
+
+            Log.d("queryMediaFiles", filePath);
+            Log.d("queryMediaFiles", displayName);
+            Log.d("queryMediaFiles", formattedDuration);
+        }
+    }
+}
 
     public String MillisToTime(long millis) {
 //        int hours = (millis / (1000 * 60 * 60)) % 24;

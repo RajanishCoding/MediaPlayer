@@ -12,12 +12,12 @@
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:backgroundTint="@color/black" />
+        android:visibility="visible"
+        android:orientation="vertical"/>
 
     <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        style="@style/ToolbarStyleMedia"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:contentInsetStart="0dp"
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="2"
-                android:text="Media Player yghixdcjvkc Mchjs s sjrthooahg ioa 8a griuag ruey a a9r 9py 9pe 9p asr or tsttrhr Media Player  8 8apreti kbdjjy e 56u xgf ds6xrsj   ck cMkk ghkk hgchciggcygiccot ivgt hggnij"
+                android:text="Media Player"
                 android:textSize="16sp"
                 android:layout_marginStart="15dp"
                 android:layout_marginEnd="20dp"
@@ -243,7 +243,7 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/crop"
+                app:layout_constraintEnd_toStartOf="@id/fit_crop"
                 app:layout_constraintStart_toEndOf="@id/rotate" >
 
                 <ImageButton
@@ -289,7 +289,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <ImageButton
-                android:id="@+id/crop"
+                android:id="@+id/fit_crop"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:background="@drawable/selector_rect"

@@ -17,7 +17,6 @@
     <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        style="@style/ToolbarStyleMedia"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:contentInsetStart="0dp"
@@ -260,7 +259,7 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/crop"
+                app:layout_constraintEnd_toStartOf="@id/fit_crop"
                 app:layout_constraintStart_toEndOf="@id/rotate" >
 
                 <ImageButton
@@ -312,14 +311,14 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <ImageButton
-                android:id="@+id/crop"
+                android:id="@+id/fit_crop"
 
                 android:layout_width="60dp"
 
                 android:layout_height="50dp"
                 android:background="@drawable/selector_rect"
                 android:contentDescription="Previous"
-                android:src="@drawable/baseline_crop_din_24"
+                android:src="@drawable/baseline_fit_screen_24"
                 android:tooltipText="Previous"
 
                 android:layout_marginEnd="20dp"
