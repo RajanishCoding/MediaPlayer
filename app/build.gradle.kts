@@ -51,13 +51,14 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
 
+
     implementation(libs.glide) // Ensure you use the latest version
     annotationProcessor(libs.compiler)
 
     implementation(libs.androidx.swiperefreshlayout)
 
-    implementation("androidx.media:media:1.7.0")
-    implementation("androidx.core:core:1.11.0")
+    implementation(libs.androidx.media.v170)
+    implementation(libs.core.v1110)
 
 
 }

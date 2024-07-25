@@ -20,6 +20,8 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 
 import androidx.annotation.NonNull;
@@ -27,8 +29,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NavUtils;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.PlayerView;
 
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
@@ -46,6 +55,7 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton backButton;
     private ImageButton rotateButton;
     private SurfaceView surfaceView;
+    private PlayerView playerView;
     private SurfaceHolder surfaceHolder;
     private Handler handler_surface;
     private Runnable runnable_surface;
@@ -83,15 +93,32 @@ public class PlayerActivity extends AppCompatActivity {
     };
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
+        View contentView = findViewById(R.id.main);
+
+        // Set an OnApplyWindowInsetsListener to handle insets
+        ViewCompat.setOnApplyWindowInsetsListener(contentView, new OnApplyWindowInsetsListener() {
+            @NonNull
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(@NonNull View view, @NonNull WindowInsetsCompat insets) {
+                // Get status bar height from WindowInsetsCompat
+                int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+
+                // Update margins or padding
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
+                params.topMargin = statusBarHeight;
+                toolbar.setLayoutParams(params);
+
+                return insets;
+            }
+        });
+
         // Set status bar color
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_dark));
-        getWindow().getDecorView().setSystemUiVisibility(0);
 
         playButton = findViewById(R.id.play);
 
@@ -103,7 +130,8 @@ public class PlayerActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button);
         rotateButton = findViewById(R.id.rotate);
 
-        surfaceView = findViewById(R.id.surface_view);
+        playerView = findViewById(R.id.surface_view);
+
         toolbar = findViewById(R.id.toolbar);
         constraintLayout = findViewById(R.id.full_container);
 
@@ -124,28 +152,28 @@ public class PlayerActivity extends AppCompatActivity {
         }
         else {
             // Player already initialized -- When Rotated
-            player.setVideoSurfaceHolder(surfaceHolder);
+            playerView.setPlayer(player);
             updateUI();
         }
 
 
-        surfaceHolder = surfaceView.getHolder();
-        surfaceHolder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(@NonNull SurfaceHolder holder) {
-                Log.d(TAG, "surfaceCreated");
-            }
-
-            @Override
-            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-
-            }
-
-            @Override
-            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-                player.setVideoSurfaceHolder(null);
-            }
-        });
+//        surfaceHolder = surfaceView.getHolder();
+//        surfaceHolder.addCallback(new SurfaceHolder.Callback() {
+//            @Override
+//            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+//                Log.d(TAG, "surfaceCreated");
+//            }
+//
+//            @Override
+//            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+//
+//            }
+//
+//            @Override
+//            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+//                player.setVideoSurfaceHolder(null);
+//            }
+//        });
 
 
         playButton.setOnClickListener(new View.OnClickListener() {
@@ -198,9 +226,9 @@ public class PlayerActivity extends AppCompatActivity {
                     }
 
                     // Execute your code here, e.g., setting a surface to the player
-                    if (player != null && surfaceView.getHolder().getSurface().isValid()) {
-                        player.setVideoSurfaceHolder(surfaceHolder);
-                    }
+//                    if (player != null && surfaceView.getHolder().getSurface().isValid()) {
+//                        player.setVideoSurfaceHolder(surfaceHolder);
+//                    }
                 }
                 handler.postDelayed(this, 50);
             }
@@ -220,7 +248,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        surfaceView.setOnClickListener(new View.OnClickListener() {
+        playerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!surface_click_frag){
@@ -228,6 +256,7 @@ public class PlayerActivity extends AppCompatActivity {
                     Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
                     constraintLayout.startAnimation(slideOutBottom);
                     toolbar.startAnimation(slideOutTop);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
 
                     slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
                         @Override
@@ -255,6 +284,7 @@ public class PlayerActivity extends AppCompatActivity {
                     Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
                     constraintLayout.startAnimation(slideInBottom);
                     toolbar.startAnimation(slideInTop);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
                     slideInBottom.setAnimationListener(new Animation.AnimationListener() {
                         @Override
@@ -294,8 +324,9 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d("TAG", "initializePlayer: "+ player);
         ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-        player.setVideoSurfaceHolder(surfaceHolder);
-        fitToScreen(player.getVideoSize().width, player.getVideoSize().height, surfaceView.getWidth(), surfaceView.getHeight());
+        playerView.setPlayer(player);
+//        player.setVideoSurfaceHolder(surfaceHolder);
+//        fitToScreen(player.getVideoSize().width, player.getVideoSize().height, surfaceView.getWidth(), surfaceView.getHeight());
 
         player.addListener(new Player.Listener() {
             @Override
@@ -352,20 +383,16 @@ public class PlayerActivity extends AppCompatActivity {
         updateUI();
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     public void adjustAspectRatio(){
-        int videoWidth = player.getVideoSize().width;
-        int videoHeight = player.getVideoSize().height;
-        int viewWidth = surfaceView.getWidth();
-        int viewHeight = surfaceView.getHeight();
-
         if (!isFitScreen) {
             fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
-            fitToScreen(videoWidth, videoHeight, viewWidth, viewHeight);
+            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
             isFitScreen = true;
         }
         else {
             fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
-            cropToScreen(videoWidth, videoHeight, viewWidth, viewHeight);
+            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
             isFitScreen = false;
         }
     }

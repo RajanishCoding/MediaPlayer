@@ -2,6 +2,8 @@
 agp = "8.3.2"
 compiler = "4.15.1"
 core = "1.13.1"
+coreVersion = "1.11.0"
+exoplayerUi = "2.19.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -26,6 +28,9 @@ androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-da
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
+core-v1110 = { module = "androidx.core:core", version.ref = "coreVersion" }
+exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayerUi" }
+exoplayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoplayerUi" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

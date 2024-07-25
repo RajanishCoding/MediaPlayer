@@ -8,11 +8,14 @@
     android:background="@color/black"
     tools:context=".PlayerActivity">
 
-    <SurfaceView
+    <androidx.media3.ui.PlayerView
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:backgroundTint="@color/black" />
+        android:layout_centerInParent="true"
+        app:show_timeout="0"
+        app:use_controller="false"
+        />
 
     <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
