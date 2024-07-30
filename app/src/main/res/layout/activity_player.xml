@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
-    tools:context=".PlayerActivity">
+    tools:context=".PlayerActivity" >
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/surface_view"
@@ -14,7 +14,8 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         app:show_timeout="0"
-        app:use_controller="false"/>
+        app:use_controller="false"
+        />
 
 
     <!-- Custom Toolbar -->

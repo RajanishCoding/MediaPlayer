@@ -119,7 +119,7 @@ public class PlayerService extends Service {
         if (mediaSession != null && player != null) {
             mediaSession.setMetadata(new MediaMetadataCompat.Builder()
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, media_name)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Artist Name") // You can update artist info as needed
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Artist Name")// You can update artist info as needed
                     .build());
         }
     }

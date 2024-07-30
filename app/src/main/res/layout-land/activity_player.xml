@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
-    tools:context=".PlayerActivity">
+    tools:context=".PlayerActivity"
+>
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/surface_view"
@@ -45,7 +46,8 @@
                 android:tooltipText="Back"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="TouchTargetSizeCheck" />
 
             <TextView
                 android:id="@+id/toolbar_title"
@@ -69,63 +71,67 @@
                 android:id="@+id/audio_tracks_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
                 android:background="@drawable/selector_dark"
                 android:contentDescription="Audio Tracks"
-                android:layout_marginEnd="12dp"
                 android:padding="8dp"
                 android:src="@drawable/baseline_audiotrack_24"
                 android:tooltipText="Audio Tracks"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/subtitles_button"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
                 android:id="@+id/subtitles_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
                 android:background="@drawable/selector_dark"
                 android:contentDescription="Subtitles"
-                android:layout_marginEnd="12dp"
                 android:padding="8dp"
                 android:src="@drawable/baseline_subtitles_24"
                 android:tooltipText="Subtitles"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/decoder_button"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="TouchTargetSizeCheck" />
 
             <Button
                 android:id="@+id/decoder_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/selector"
-                android:text="HW"
-                android:textColor="@color/white"
-                android:tooltipText="Decoder"
-                android:paddingHorizontal="8dp"
-
                 android:layout_marginEnd="12dp"
-
+                android:background="@drawable/selector"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                app:layout_constraintEnd_toStartOf="@id/more_button"
+                android:paddingHorizontal="8dp"
+
+                android:text="HW"
+
+                android:textColor="@color/white"
+                android:tooltipText="Decoder"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toStartOf="@id/more_button"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
                 android:id="@+id/more_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="18dp"
                 android:background="@drawable/selector_dark"
                 android:contentDescription="TODO"
-                android:src="@drawable/baseline_more_vert_24"
-                android:tooltipText="More Options"
-
-                android:layout_marginEnd="18dp"
-
                 android:padding="8dp"
-                app:layout_constraintEnd_toEndOf="parent"
+
+                android:src="@drawable/baseline_more_vert_24"
+
+                android:tooltipText="More Options"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="TouchTargetSizeCheck" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.appcompat.widget.Toolbar>
@@ -155,6 +161,9 @@
         android:id="@+id/full_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginRight="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
