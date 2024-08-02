@@ -1,77 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/layout/custom_notification_layout.xml -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:padding="12dp">
 
-    <ImageView
-        android:id="@+id/notification_artwork"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_alignParentStart="true"
-        android:layout_centerVertical="true"
-        android:src="@drawable/default_artwork" />
-
-    <TextView
-        android:id="@+id/notification_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/notification_artwork"
-        android:layout_alignParentTop="true"
-        android:text="Title"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/notification_artist"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/notification_artwork"
-        android:layout_below="@id/notification_title"
-        android:text="Artist"
-        android:textSize="14sp" />
-
-    <SeekBar
-        android:id="@+id/notification_seekbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/notification_artist" />
-
-    <TextView
-        android:id="@+id/notification_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_below="@id/notification_artist"
-        android:text="00:00"
-        android:textSize="12sp" />
+    <!-- Upper Container -->
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/upper_cont"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
         android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/notification_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_play"
-            android:contentDescription="Play" />
+        <ImageView
+            android:id="@+id/notif_icon"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Media Icon"
+            android:src="@drawable/icon"/>
 
-        <ImageButton
-            android:id="@+id/notification_pause"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_pause"
-            android:contentDescription="Pause" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="10dp">
 
-        <ImageButton
-            android:id="@+id/notification_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/baseline_crop_square_24"
-            android:contentDescription="Stop" />
+            <TextView
+                android:id="@+id/notif_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media Title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+
+            <TextView
+                android:id="@+id/notif_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media Description"
+                android:textSize="15sp"/>
+        </LinearLayout>
     </LinearLayout>
-</RelativeLayout>
+
+    <!-- Lower Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Control Buttons -->
+        <LinearLayout
+            android:id="@+id/lower_upper_cont"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/notif_prev"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Previous"
+                android:src="@drawable/baseline_skip_previous_24"/>
+
+            <ImageButton
+                android:id="@+id/notif_play"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginHorizontal="10dp"
+                android:contentDescription="Play"
+                android:src="@drawable/baseline_play_circle_outline_24"/>
+
+            <ImageButton
+                android:id="@+id/notif_next"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Next"
+                android:src="@drawable/baseline_skip_next_24"/>
+        </LinearLayout>
+
+        <!-- Time and ProgressBar -->
+        <LinearLayout
+            android:id="@+id/lower_lower_cont"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/notif_time1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:paddingHorizontal="5dp"/>
+
+            <!-- Use ProgressBar for progress -->
+            <ProgressBar
+                android:id="@+id/notif_seekbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:progress="50"
+                android:indeterminate="false"/>
+
+            <TextView
+                android:id="@+id/notif_time2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:paddingHorizontal="5dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

@@ -6,20 +6,14 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.Settings;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.DisplayCutout;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -35,22 +29,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NavUtils;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.media3.common.Player;
-import androidx.media3.common.TrackSelectionParameters;
-import androidx.media3.common.Tracks;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.source.TrackGroupArray;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
@@ -87,7 +73,7 @@ public class PlayerActivity extends AppCompatActivity {
     private PlayerService playerService;
     private boolean isBound = false;
 
-    WindowInsetsController insetsController = null;
+    private boolean isVideo;
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -222,7 +208,6 @@ public class PlayerActivity extends AppCompatActivity {
         }
         else {
             // Player already initialized -- When Rotated
-
             updateUI();
         }
 
@@ -286,7 +271,12 @@ public class PlayerActivity extends AppCompatActivity {
         };
         handler.postDelayed(updateSeekBar, 50);
 
-        backButton.setOnClickListener(v -> NavUtils.navigateUpFromSameTask(PlayerActivity.this));
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavUtils.navigateUpFromSameTask(PlayerActivity.this);
+            }
+        });
 
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -426,7 +416,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     // Initializing Player
     private void initializePlayer() {
-        Log.d("TAG", "initializePlayer: "+ player);
+        Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
         playerView.setPlayer(player);
@@ -467,6 +457,21 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (player != null) {
+            updateUI();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (player != null) {
+            player.pause();
+        }
+    }
 
     @Override
     protected void onDestroy() {
@@ -485,7 +490,15 @@ public class PlayerActivity extends AppCompatActivity {
         super.onConfigurationChanged(newConfig);
         // Handle configuration changes here
         Log.d(TAG, "onConfigurationChanged: YES");
+
+//        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+//            setContentView(R.layout.activity_player);
+//        }
+//        else {
+//            setContentView(R.layout.activity_player_land);
+//        }
         updateUI();
+
     }
 
     @OptIn(markerClass = UnstableApi.class)

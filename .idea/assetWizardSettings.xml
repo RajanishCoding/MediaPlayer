@@ -18,7 +18,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/crop_din/baseline_crop_din_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/close/baseline_close_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -29,7 +29,8 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="baseline_crop_din_24" />
+                            <entry key="opacityPercent" value="0" />
+                            <entry key="outputName" value="blank" />
                             <entry key="sourceFile" value="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer" />
                           </map>
                         </option>

@@ -149,7 +149,7 @@
             app:layout_constraintTop_toTopOf="parent"/>
 
         <TextView
-            android:id="@+id/content"
+            android:id="@+id/notif_content"
             style="@style/TextViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

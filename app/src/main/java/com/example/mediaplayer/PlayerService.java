@@ -5,46 +5,36 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.media.session.MediaSessionManager;
+import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
-import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
-import androidx.media.session.MediaButtonReceiver;
-//import androidx.media.session.MediaSessionCompat;
-import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.session.MediaSession;
 
 public class PlayerService extends Service {
 
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "media_playback_channel";
     private static ExoPlayer player;
-    private final IBinder binder = new LocalBinder();
-    private String media_name;
-    private String media_path;
-
-    private MediaSessionCompat mediaSession;
-
-    public static ExoPlayer getPlayer() {
-        if (player != null) {
-            return player;
-        }
-        return null;
-    }
-
-    public class LocalBinder extends Binder {
-        public PlayerService getService() {
-            return PlayerService.this;
-        }
-    }
+    private MediaSessionCompat mediaSessionCompat;
+    private String mediaName;
+    private final IBinder binder = (IBinder) new LocalBinder();
+    MediaSession mediaSession;
 
     @Nullable
     @Override
@@ -55,52 +45,60 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        createNotificationChannel();
-        mediaSession = new MediaSessionCompat(this, "MediaSessionTag");
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        mediaSession.setMediaButtonReceiver(null);
+//        createNotificationChannel();
+        mediaSessionCompat = new MediaSessionCompat(this, "MediaSessionTag");
+        mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mediaSessionCompat.setMediaButtonReceiver(null);
+        mediaSessionCompat.setCallback(new MediaSessionCompat.Callback(){});
+
         updateMediaSessionMetadata();
+
+//        handler.postDelayed(updateNotificationRunnable, 100); // Update every second
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        media_name = intent.getStringExtra("name");
-        media_path = intent.getStringExtra("path");
+        mediaName = intent.getStringExtra("name");
+        String mediaPath = intent.getStringExtra("path");
 
         if (player == null) {
-            initializePlayer();
+            initializePlayer(mediaPath);
         }
 
-        if (player != null) {
-            String action = intent.getAction();
-            if (action != null) {
-                switch (action) {
-                    case "ACTION_PLAY":
-                        player.play();
-                        break;
-                    case "ACTION_PAUSE":
-                        player.pause();
-                        break;
-                    case "ACTION_STOP":
-                        player.stop();
-                        stopForeground(true);
-                        stopSelf();
-                        return START_NOT_STICKY;
-                }
-                updateNotification();
+        String action = intent.getAction();
+        if (action != null) {
+            switch (action) {
+                case "ACTION_PLAY":
+                    player.play();
+                    break;
+                case "ACTION_PAUSE":
+                    player.pause();
+                    break;
+                case "ACTION_STOP":
+                    player.stop();
+                    stopForeground(true);
+                    stopSelf();
+                    handler.removeCallbacks(updateNotificationRunnable);
+                    return START_STICKY;
             }
-            startForeground(NOTIFICATION_ID, createNotification());
+            updateNotification();
         }
-        return START_NOT_STICKY;
+
+
+//        startForeground(NOTIFICATION_ID, createNotification());
+        return START_STICKY;
     }
 
-    private void initializePlayer() {
-        player = new ExoPlayer.Builder(this).build();
-        player.setMediaItem(MediaItem.fromUri(media_path));
-        Log.d("TAG", "initializePlayer: "+ media_path);
-        player.prepare();
-        player.play();
-        updateMediaSessionMetadata();
+    @Override
+    public void onTaskRemoved(@Nullable Intent rootIntent) {
+        if (!player.getPlayWhenReady()
+                || player.getMediaItemCount() == 0
+                || player.getPlaybackState() == Player.STATE_ENDED) {
+            // Stop the service if not playing, continue playing in the background
+            // otherwise.
+            stopForeground(true);
+            stopSelf();
+        }
     }
 
     @Override
@@ -110,24 +108,39 @@ public class PlayerService extends Service {
             player.release();
         }
 
-        if (mediaSession != null) {
-            mediaSession.release();
+        if (mediaSessionCompat != null) {
+            mediaSessionCompat.release();
         }
+
+//        handler.removeCallbacks(updateNotificationRunnable);
+    }
+
+    private void initializePlayer(String mediaPath) {
+        player = new ExoPlayer.Builder(this).build();
+        mediaSession = new MediaSession.Builder(this, player).build();
+        player.setMediaItem(MediaItem.fromUri(mediaPath));
+        player.prepare();
+        player.play();
+        updateMediaSessionMetadata();
     }
 
     private void updateMediaSessionMetadata() {
-        if (mediaSession != null && player != null) {
-            mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, media_name)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Artist Name")// You can update artist info as needed
+        if (mediaSessionCompat != null && player != null) {
+            long duration = player.getDuration();
+            long position = player.getCurrentPosition();
+
+            mediaSessionCompat.setMetadata(new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, mediaName)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Artist Name")
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                     .build());
         }
     }
 
+
     private Notification createNotification() {
-        Intent notificationIntent = new Intent(this, PlayerActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+//        PendingIntent playPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY);
+//        PendingIntent pausePendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE);
 
         Intent playIntent = new Intent(this, PlayerService.class).setAction("ACTION_PLAY");
         PendingIntent playPendingIntent = PendingIntent.getService(this, 0, playIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -139,40 +152,116 @@ public class PlayerService extends Service {
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 2, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(media_name)
-                .setContentText("Playing")
-                .setSmallIcon(R.drawable.icon) // Ensure this is a valid drawable
+                .setSmallIcon(R.drawable.icon)
+                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.icon))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
-                .setContentIntent(contentPendingIntent)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_play_arrow_24, "Play", playPendingIntent).build())
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_pause_24, "Pause", pausePendingIntent).build())
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.icon, "Stop", stopPendingIntent).build())
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1, 2) // Show play, pause, and stop in compact view
-                        .setMediaSession(mediaSession.getSessionToken()));
+                .setContentTitle(mediaName)
+                .setContentText("Playing")
+//                .setCustomContentView(remoteViews)
+                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
 
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(0)
+                        .setMediaSession(mediaSessionCompat.getSessionToken()))
+
+                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build())
+                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_previous_24, "Previous", null).build())
+                .addAction(new NotificationCompat.Action.Builder(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, player.isPlaying() ? "Pause" : "Play", player.isPlaying() ? pausePendingIntent : playPendingIntent).build())
+                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_next_24, "Next", null).build())
+                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build());
+
+        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
         return builder.build();
     }
 
+    private Handler handler = new Handler();
+    private Runnable updateNotificationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateNotification();
+            handler.postDelayed(this, 100); // Update every second
+        }
+    };
+
     private void updateNotification() {
         Notification notification = createNotification();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (notificationManager != null) {
-            notificationManager.notify(NOTIFICATION_ID, notification);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
+
+//        Log.d("TAG", "updateNotification: " + player.getCurrentPosition() + "  " + player.getDuration());
+        notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String name = "Media Player";
-            String description = "Media Playback Notifications";
+            CharSequence name = "Media Playback";
+            String description = "Channel for media playback notifications";
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
         }
+    }
+
+    public class LocalBinder extends Binder {
+        public PlayerService getService() {
+            return PlayerService.this;
+        }
+    }
+
+    private class MediaSessionCallback extends MediaSessionCompat.Callback {
+        @Override
+        public void onPlay() {
+            if (player != null) {
+                player.play();
+                updateNotification();
+            }
+        }
+
+        @Override
+        public void onPause() {
+            if (player != null) {
+                player.pause();
+                updateNotification();
+            }
+        }
+
+        @Override
+        public void onStop() {
+            if (player != null) {
+                player.stop();
+                stopForeground(true);
+                stopSelf();
+                handler.removeCallbacks(updateNotificationRunnable);
+            }
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            if (player != null) {
+                player.seekTo(pos);
+                updateNotification();
+            }
+        }
+    }
+
+    public static ExoPlayer getPlayer(){
+        if (player != null){
+            return player;
+        }
+        return null;
     }
 }
