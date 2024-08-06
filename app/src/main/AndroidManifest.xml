@@ -30,7 +30,8 @@
             android:exported="true"
             android:theme="@style/Base.Theme.MediaPlayer"
             android:label="Media Player"
-            android:parentActivityName=".FilesListActivity">
+            android:parentActivityName=".FilesListActivity"
+            android:configChanges="orientation|screenSize">
 
 
         </activity>

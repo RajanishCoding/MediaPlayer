@@ -14,7 +14,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsetsController;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
@@ -74,6 +73,8 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isBound = false;
 
     private boolean isVideo;
+    private boolean isOrientation;
+
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -177,22 +178,7 @@ public class PlayerActivity extends AppCompatActivity {
         // Set status bar color
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_dark));
 
-        playButton = findViewById(R.id.play);
-
-        time1 = findViewById(R.id.time1);
-        time2 = findViewById(R.id.time2);
-        seekbar = findViewById(R.id.seekbar);
-
-        ToolbarText = findViewById(R.id.toolbar_title);
-        backButton = findViewById(R.id.back_button);
-        rotateButton = findViewById(R.id.rotate);
-
-        playerView = findViewById(R.id.surface_view);
-
-        toolbar = findViewById(R.id.toolbar);
-        PlaybackControls_Container = findViewById(R.id.full_container);
-
-        fitcropButton = findViewById(R.id.fit_crop);
+        initializeViews();
 
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
@@ -271,12 +257,7 @@ public class PlayerActivity extends AppCompatActivity {
         };
         handler.postDelayed(updateSeekBar, 50);
 
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NavUtils.navigateUpFromSameTask(PlayerActivity.this);
-            }
-        });
+        backButton.setOnClickListener(v -> NavUtils.navigateUpFromSameTask(PlayerActivity.this));
 
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -414,6 +395,26 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
+    public void initializeViews() {
+        playButton = findViewById(R.id.play);
+
+        time1 = findViewById(R.id.time1);
+        time2 = findViewById(R.id.time2);
+        seekbar = findViewById(R.id.seekbar);
+
+        ToolbarText = findViewById(R.id.toolbar_title);
+        backButton = findViewById(R.id.back_button);
+        rotateButton = findViewById(R.id.rotate);
+
+        playerView = findViewById(R.id.surface_view);
+
+        toolbar = findViewById(R.id.toolbar);
+        PlaybackControls_Container = findViewById(R.id.full_container);
+
+        fitcropButton = findViewById(R.id.fit_crop);
+    }
+
+
     // Initializing Player
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
@@ -456,6 +457,19 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("isOrientation", true);
+        Log.d(TAG, "onSaveInstanceState: YES : " + isOrientation);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        isOrientation = savedInstanceState.getBoolean("isOrientation");
+        Log.d(TAG, "onRestoreInstanceState: YES : " + isOrientation);
+    }
 
     @Override
     protected void onResume() {
@@ -469,13 +483,27 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (player != null) {
-            player.pause();
+            Log.d(TAG, "onPause: "+ isOrientation);
+            if (isOrientation) {
+                isOrientation = false;
+            }
+            else {
+                player.pause();
+            }
         }
     }
 
     @Override
+    protected void onStop(){
+        super.onStop();
+        Log.d(TAG, "onStop: ");
+    }
+
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy: ");
         handler.removeCallbacks(updateSeekBar);
         if (isFinishing()) {
             if (player != null) {
@@ -491,12 +519,14 @@ public class PlayerActivity extends AppCompatActivity {
         // Handle configuration changes here
         Log.d(TAG, "onConfigurationChanged: YES");
 
-//        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            setContentView(R.layout.activity_player);
-//        }
-//        else {
-//            setContentView(R.layout.activity_player_land);
-//        }
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setContentView(R.layout.activity_player);
+        }
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+            setContentView(R.layout.activity_player_land);
+        }
+
+        initializeViews();
         updateUI();
 
     }
