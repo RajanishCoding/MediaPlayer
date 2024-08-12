@@ -7,16 +7,16 @@
     android:layout_height="match_parent"
     android:background="@color/black"
     tools:context=".PlayerActivity"
->
+    >
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/surface_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        app:show_timeout="0"
-        app:use_controller="false"
-        />
+    <!--    <androidx.media3.ui.PlayerView-->
+    <!--        android:id="@+id/surface_view"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_centerInParent="true"-->
+    <!--        app:show_timeout="0"-->
+    <!--        app:use_controller="false"-->
+    <!--    />-->
 
     <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
@@ -58,12 +58,13 @@
                 android:maxLines="2"
                 android:text="Media Player yghixdcjvkc Mchjs s sjrthooahg ioa 8a griuag ruey a a9r 9py 9pe 9p asr or tsttrhr Media Player  8 8apreti kbdjjy e 56u xgf ds6xrsj   ck cMkk ghkk hgchciggcygiccot ivgt hggnij"
                 android:textSize="17sp"
+
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="30dp"
-                app:layout_constraintBottom_toBottomOf="parent"
 
                 app:layout_constraintEnd_toStartOf="@id/audio_tracks_button"
 
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/back_button"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -106,9 +107,7 @@
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:paddingHorizontal="8dp"
-
                 android:text="HW"
-
                 android:textColor="@color/white"
                 android:tooltipText="Decoder"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -120,13 +119,13 @@
                 android:id="@+id/more_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+
                 android:layout_marginEnd="18dp"
+
                 android:background="@drawable/selector_dark"
                 android:contentDescription="TODO"
                 android:padding="8dp"
-
                 android:src="@drawable/baseline_more_vert_24"
-
                 android:tooltipText="More Options"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -163,7 +162,6 @@
         android:layout_height="wrap_content"
         android:clickable="true"
         android:focusable="true"
-        android:layout_marginRight="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -243,25 +241,23 @@
                 android:contentDescription="Lock Screen"
                 android:src="@drawable/baseline_lock_open_24"
                 android:tooltipText="Lock Screen"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
                 android:id="@+id/rotate"
 
                 android:layout_width="60dp"
+                android:layout_marginStart="20dp"
 
                 android:layout_height="50dp"
                 android:background="@drawable/selector_rect"
                 android:contentDescription="Rotate Screen"
                 android:src="@drawable/baseline_screen_rotation_24"
                 android:tooltipText="Rotate Screen"
-
-                android:layout_marginStart="20dp"
-
-                app:layout_constraintStart_toEndOf="@id/lock"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/lock"
                 app:layout_constraintTop_toTopOf="parent" />
 
 
@@ -270,9 +266,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/fit_crop"
-                app:layout_constraintStart_toEndOf="@id/rotate" >
+                app:layout_constraintStart_toEndOf="@id/rotate"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <ImageButton
                     android:id="@+id/prev"
@@ -326,31 +322,31 @@
                 android:id="@+id/fit_crop"
 
                 android:layout_width="60dp"
+                android:layout_marginEnd="20dp"
 
                 android:layout_height="50dp"
                 android:background="@drawable/selector_rect"
                 android:contentDescription="Previous"
                 android:src="@drawable/baseline_fit_screen_24"
+
                 android:tooltipText="Previous"
 
-                android:layout_marginEnd="20dp"
-
-                app:layout_constraintEnd_toStartOf="@id/pip"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/pip"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
                 android:id="@+id/pip"
 
                 android:layout_width="60dp"
-                android:layout_height="50dp"
 
+                android:layout_height="50dp"
                 android:background="@drawable/selector_rect"
                 android:contentDescription="Previous"
                 android:src="@drawable/baseline_pip_alt_24"
                 android:tooltipText="Previous"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

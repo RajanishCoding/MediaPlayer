@@ -26,6 +26,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.app.NavUtils;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.OnApplyWindowInsetsListener;
@@ -36,6 +37,8 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+
+import java.util.Locale;
 
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
@@ -74,6 +77,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isVideo;
     private boolean isOrientation;
+    private boolean isPlay;
 
 
     private final ServiceConnection connection = new ServiceConnection() {
@@ -99,6 +103,8 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
+        Log.d(TAG, "onCreate: ");
 
         View mainView = findViewById(R.id.main);
         ViewCompat.setOnApplyWindowInsetsListener(mainView, new OnApplyWindowInsetsListener() {
@@ -262,12 +268,15 @@ public class PlayerActivity extends AppCompatActivity {
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                onLandscape();
                 Log.d(TAG, "onRotate: " + "Landscape");
             }
             else {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                onPortrait();
                 Log.d(TAG, "onRotate: " + "Portrait");
             }
+            isOrientation = true;
         });
 
 //        View decorView = getWindow().getDecorView();
@@ -310,14 +319,8 @@ public class PlayerActivity extends AppCompatActivity {
 //                        }
 //                    }
 //                    else {
-                    getWindow().getDecorView().setSystemUiVisibility(
-                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                                    View.SYSTEM_UI_FLAG_FULLSCREEN |
-                                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    );
+
+                    Fullscreen();
 
                     slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
                         @Override
@@ -354,12 +357,8 @@ public class PlayerActivity extends AppCompatActivity {
 //                        }
 //                    }
 //                    else {
-                    getWindow().getDecorView().setSystemUiVisibility(
-                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                                    View.SYSTEM_UI_FLAG_VISIBLE
-                    );
+
+                    notFullscreen();
 
 
                     slideInBottom.setAnimationListener(new Animation.AnimationListener() {
@@ -385,11 +384,22 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+
         // Fit to Screen and Crop to Screen Button Setting
         fitcropButton.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                adjustAspectRatio();
+                if (!isFitScreen) {
+                    fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
+                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+                    isFitScreen = true;
+                }
+                else {
+                    fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
+                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+                    isFitScreen = false;
+                }
             }
         });
     }
@@ -414,8 +424,6 @@ public class PlayerActivity extends AppCompatActivity {
         fitcropButton = findViewById(R.id.fit_crop);
     }
 
-
-    // Initializing Player
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
@@ -457,48 +465,191 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean("isOrientation", true);
-        Log.d(TAG, "onSaveInstanceState: YES : " + isOrientation);
+
+    private void onLandscape(){
+        Log.d(TAG, "onLandscape: YES");
+        View back = findViewById(R.id.back_button);
+        View tool_title = findViewById(R.id.toolbar_title);
+        View audio = findViewById(R.id.audio_tracks_button);
+        View subtitle = findViewById(R.id.subtitles_button);
+        View decoder = findViewById(R.id.decoder_button);
+        View more = findViewById(R.id.more_button);
+        View text1 = findViewById(R.id.time1);
+        View text2 = findViewById(R.id.time2);
+        View lock = findViewById(R.id.lock);
+        View rotate = findViewById(R.id.rotate);
+        View prev = findViewById(R.id.prev);
+        View play = findViewById(R.id.play);
+        View next = findViewById(R.id.next);
+        View crop = findViewById(R.id.fit_crop);
+        View pip = findViewById(R.id.pip);
+        View lower_container = findViewById(R.id.lower_container);
+
+        setMargin(back, 0, 15);
+
+        setMargin(tool_title, 0, 20);
+        setMargin(tool_title, 1, 30);
+        setConstraint(tool_title, ConstraintSet.END, audio, ConstraintSet.START);
+
+        audio.setVisibility(View.VISIBLE);
+        subtitle.setVisibility(View.VISIBLE);
+
+        setMargin(more, 1, 18);
+
+        setPadding(text1, 0, 12);
+        setPadding(text1, 1, 12);
+        setPadding(text2, 0, 12);
+        setPadding(text2, 1, 12);
+
+        setSize(lock, 0, 60);
+
+        setSize(rotate, 0, 60);
+        setMargin(rotate, 0, 20);
+
+        setSize(prev, 0, 85);
+        setSize(play, 0, 110);
+        setSize(next, 0, 85);
+
+        setSize(crop, 0, 60);
+        setMargin(crop, 1, 20);
+
+        setSize(pip, 0, 60);
+
+        setPadding(lower_container, 0, 20);
+        setPadding(lower_container, 1, 20);
     }
 
+    private void onPortrait(){
+        Log.d(TAG, "onPortrait: YES");
+        View back = findViewById(R.id.back_button);
+        View tool_title = findViewById(R.id.toolbar_title);
+        View audio = findViewById(R.id.audio_tracks_button);
+        View subtitle = findViewById(R.id.subtitles_button);
+        View decoder = findViewById(R.id.decoder_button);
+        View more = findViewById(R.id.more_button);
+        View text1 = findViewById(R.id.time1);
+        View text2 = findViewById(R.id.time2);
+        View lock = findViewById(R.id.lock);
+        View rotate = findViewById(R.id.rotate);
+        View prev = findViewById(R.id.prev);
+        View play = findViewById(R.id.play);
+        View next = findViewById(R.id.next);
+        View crop = findViewById(R.id.fit_crop);
+        View pip = findViewById(R.id.pip);
+        View lower_container = findViewById(R.id.lower_container);
+
+        setMargin(back, 0, 8);
+
+        setMargin(tool_title, 0, 15);
+        setMargin(tool_title, 1, 20);
+        setConstraint(tool_title, ConstraintSet.END, decoder, ConstraintSet.START);
+
+        audio.setVisibility(View.GONE);
+        subtitle.setVisibility(View.GONE);
+
+        setMargin(more, 1, 10);
+
+        setPadding(text1, 0, 5);
+        setPadding(text1, 1, 5);
+        setPadding(text2, 0, 5);
+        setPadding(text2, 1, 5);
+
+        setSize(lock, 0, 50);
+
+        setSize(rotate, 0, 50);
+        setMargin(rotate, 0, 0);
+
+        setSize(prev, 0, 50);
+        setSize(play, 0, 60);
+        setSize(next, 0, 50);
+
+        setSize(crop, 0, 50);
+        setMargin(crop, 1, 0);
+
+        setSize(pip, 0, 50);
+
+        setPadding(lower_container, 0, 15);
+        setPadding(lower_container, 1, 15);
+    }
+
+    private void setSize(View view, int side, int dp){
+        int px = DpToPixel(dp, this);
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) view.getLayoutParams();
+
+        if(side == 0) {
+            params.width = px;
+        }
+        else if(side == 1) {
+            params.height = px;
+        }
+
+        view.setLayoutParams(params);
+    }
+
+    private void setMargin(View view, int side, int dp){
+        int px = DpToPixel(dp, this);
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) view.getLayoutParams();
+
+        if(side == 0) {
+            params.setMarginStart(px);
+        }
+        else if(side == 1) {
+            params.setMarginEnd(px);
+        }
+
+        view.setLayoutParams(params);
+    }
+
+    private void setPadding(View view, int side, int dp){
+        int px = DpToPixel(dp, this);
+
+        int currentLeftPadding = view.getPaddingLeft();
+        int currentTopPadding = view.getPaddingTop();
+        int currentRightPadding = view.getPaddingRight();
+        int currentBottomPadding = view.getPaddingBottom();
+
+        if (side == 0) {
+            view.setPadding(px, currentTopPadding, currentRightPadding, currentBottomPadding);
+        }
+        else if (side == 1) {
+            view.setPadding(currentLeftPadding, currentTopPadding, px, currentBottomPadding);
+        }
+    }
+
+    private void setConstraint(View StartView, int StartSide, View EndView, int EndSide){
+        ConstraintLayout layout = (ConstraintLayout) StartView.getParent();
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(layout);
+        constraintSet.connect(StartView.getId(), StartSide, EndView.getId(), EndSide);
+        constraintSet.applyTo(layout);
+    }
+
+
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        isOrientation = savedInstanceState.getBoolean("isOrientation");
-        Log.d(TAG, "onRestoreInstanceState: YES : " + isOrientation);
+    protected void onPause() {
+        super.onPause();
+        if (player != null) {
+            Log.d(TAG, "onPause: ");
+
+            if (player.isPlaying()) {
+                player.pause();
+                isPlay = true;
+            }
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (player != null) {
-            updateUI();
-        }
-    }
+            Log.d(TAG, "onPause: ");
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (player != null) {
-            Log.d(TAG, "onPause: "+ isOrientation);
-            if (isOrientation) {
-                isOrientation = false;
-            }
-            else {
-                player.pause();
+            if (isPlay) {
+                player.play();
+                isPlay = false;
             }
         }
     }
-
-    @Override
-    protected void onStop(){
-        super.onStop();
-        Log.d(TAG, "onStop: ");
-    }
-
 
     @Override
     protected void onDestroy() {
@@ -517,38 +668,37 @@ public class PlayerActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Handle configuration changes here
-        Log.d(TAG, "onConfigurationChanged: YES");
-
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.activity_player);
-        }
-        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-            setContentView(R.layout.activity_player_land);
-        }
-
-        initializeViews();
-        updateUI();
-
     }
 
-    @OptIn(markerClass = UnstableApi.class)
-    public void adjustAspectRatio(){
-        if (!isFitScreen) {
-            fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
-            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-            isFitScreen = true;
-        }
-        else {
-            fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
-            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-            isFitScreen = false;
-        }
+
+    private void Fullscreen() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_FULLSCREEN |
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
     }
 
+    private void notFullscreen() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                        View.SYSTEM_UI_FLAG_VISIBLE
+        );
+    }
 
     public String MillisToTime(long millis) {
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
+
+    public int DpToPixel(float dp, Context context) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return (int) (dp * density + 0.5f);
     }
 }
