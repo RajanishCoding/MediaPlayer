@@ -6,13 +6,15 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:orientation="horizontal"
-    android:padding="8dp"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="8dp"
+    android:minHeight="80dp"
     >
 
     <!-- Thumbnail with Duration Overlay -->
     <RelativeLayout
         android:layout_width="100dp"
-        android:layout_height="100dp">
+        android:layout_height="56.25dp">
 
         <ImageView
             android:id="@+id/thumbnail"

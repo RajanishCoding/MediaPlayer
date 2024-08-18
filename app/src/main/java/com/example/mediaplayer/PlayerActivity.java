@@ -1,11 +1,14 @@
 package com.example.mediaplayer;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -18,6 +21,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.OptIn;
@@ -32,6 +36,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -78,6 +83,8 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isVideo;
     private boolean isOrientation;
     private boolean isPlay;
+
+    private View buffer_view;
 
 
     private final ServiceConnection connection = new ServiceConnection() {
@@ -126,8 +133,8 @@ public class PlayerActivity extends AppCompatActivity {
                 Log.d(TAG, "onApplyWindowInsets: " + cutoutSize_Left);
                 Log.d(TAG, "onApplyWindowInsets: " + cutoutSize_Right);
 
-                int orientation = getResources().getConfiguration().orientation;
-                int rotation = getWindowManager().getDefaultDisplay().getRotation();
+//                int orientation = getResources().getConfiguration().orientation;
+//                int rotation = getWindowManager().getDefaultDisplay().getRotation();
 
                 // Update margins or padding
                 ViewGroup.MarginLayoutParams params_toolbar = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
@@ -183,8 +190,28 @@ public class PlayerActivity extends AppCompatActivity {
 
         // Set status bar color
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_dark));
+        notFullscreen();
 
-        initializeViews();
+
+        playButton = findViewById(R.id.play);
+
+        time1 = findViewById(R.id.time1);
+        time2 = findViewById(R.id.time2);
+        seekbar = findViewById(R.id.seekbar);
+
+        ToolbarText = findViewById(R.id.toolbar_title);
+        backButton = findViewById(R.id.back_button);
+        rotateButton = findViewById(R.id.rotate);
+
+        playerView = findViewById(R.id.surface_view);
+
+        toolbar = findViewById(R.id.toolbar);
+        PlaybackControls_Container = findViewById(R.id.full_container);
+
+        fitcropButton = findViewById(R.id.fit_crop);
+
+        buffer_view = findViewById(R.id.buffer_layout);
+        buffer_view.setVisibility(View.VISIBLE);
 
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
@@ -197,10 +224,6 @@ public class PlayerActivity extends AppCompatActivity {
             serviceIntent.putExtra("path", media_path);
             bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
             startService(serviceIntent);
-        }
-        else {
-            // Player already initialized -- When Rotated
-            updateUI();
         }
 
 
@@ -279,27 +302,6 @@ public class PlayerActivity extends AppCompatActivity {
             isOrientation = true;
         });
 
-//        View decorView = getWindow().getDecorView();
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//            decorView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-//                @NonNull
-//                @Override
-//                public WindowInsets onApplyWindowInsets(@NonNull View view, @NonNull WindowInsets insets) {
-//                    // Adjust padding for the notch area
-//                    DisplayCutout cutout = insets.getDisplayCutout();
-//                    if (cutout != null) {
-//                        view.setPadding(
-//                                cutout.getSafeInsetLeft(),
-//                                cutout.getSafeInsetTop(),
-//                                cutout.getSafeInsetRight(),
-//                                cutout.getSafeInsetBottom()
-//                        );
-//                    }
-//                    return insets.consumeSystemWindowInsets();
-//                }
-//            });
-//        }
 
         playerView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -405,49 +407,45 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    public void initializeViews() {
-        playButton = findViewById(R.id.play);
-
-        time1 = findViewById(R.id.time1);
-        time2 = findViewById(R.id.time2);
-        seekbar = findViewById(R.id.seekbar);
-
-        ToolbarText = findViewById(R.id.toolbar_title);
-        backButton = findViewById(R.id.back_button);
-        rotateButton = findViewById(R.id.rotate);
-
-        playerView = findViewById(R.id.surface_view);
-
-        toolbar = findViewById(R.id.toolbar);
-        PlaybackControls_Container = findViewById(R.id.full_container);
-
-        fitcropButton = findViewById(R.id.fit_crop);
-    }
-
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
-        playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+//        player.setMediaItem(MediaItem.fromUri(media_path));
+//        player.prepare();
         playerView.setPlayer(player);
 
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
-                if (playbackState == Player.STATE_READY) {
-                    seekbar.setMax((int) player.getDuration());
-                    time1.setText(MillisToTime(player.getCurrentPosition()));
-                    time2.setText(MillisToTime(player.getDuration()));
-                }
+                switch (playbackState) {
+                    case Player.STATE_BUFFERING:
+                        buffer_view.setVisibility(View.VISIBLE);
+                        Log.d(TAG, "onBuffering: YES");
+                        break;
 
-                if (playbackState == Player.STATE_ENDED) {
-                    player.pause();
-                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                    seekbar.setProgress(0);
-                    player.seekTo(0);
+                    case Player.STATE_READY:
+                        buffer_view.setVisibility(View.GONE);
+                        seekbar.setMax((int) player.getDuration());
+                        time1.setText(MillisToTime(player.getCurrentPosition()));
+                        time2.setText(MillisToTime(player.getDuration()));
+                        break;
+
+                    case Player.STATE_ENDED:
+                        player.pause();
+                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                        seekbar.setProgress(0);
+                        player.seekTo(0);
+                        break;
+
+                    case Player.STATE_IDLE:
+                        Log.d(TAG, "onPlaybackStateChanged: IDLE");
+                        break;
                 }
             }
         });
     }
+
 
     private void updateUI() {
         playerView.setPlayer(player);
@@ -656,6 +654,7 @@ public class PlayerActivity extends AppCompatActivity {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
         handler.removeCallbacks(updateSeekBar);
+
         if (isFinishing()) {
             if (player != null) {
                 player.release();  // Ensure the player is released to avoid memory leaks

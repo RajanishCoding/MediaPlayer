@@ -2,7 +2,12 @@ package com.example.mediaplayer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.MediaController2;
+import android.media.ThumbnailUtils;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +24,7 @@ import java.util.List;
 public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHolder> {
     private List<Media> mediaList;
     private Context context;
+    Media media;
 
 
     public MediaAdapter(Context context, List<Media> mediaList) {
@@ -35,11 +41,11 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
 
     @Override
     public void onBindViewHolder(VideoViewHolder holder, int position) {
-        Media media = mediaList.get(position);
+        media = mediaList.get(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.duration.setText(media.getDuration());
-        Glide.with(holder.thumbnail.getContext()).load(R.drawable.icon).into(holder.thumbnail);
+//        holder.thumbnail.setImageBitmap(media.getThumbnail());
 
         Log.d("Media Added", "Added");
 
@@ -55,6 +61,8 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
             }
         });
     }
+
+
 
     @Override
     public int getItemCount() {

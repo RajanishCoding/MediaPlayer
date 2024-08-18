@@ -15,8 +15,10 @@ import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -35,6 +37,7 @@ public class PlayerService extends Service {
     private String mediaName;
     private final IBinder binder = (IBinder) new LocalBinder();
     MediaSession mediaSession;
+    private boolean buffering;
 
     @Nullable
     @Override
@@ -45,6 +48,9 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+//\        buffer_view = findViewById()
+
 //        createNotificationChannel();
         mediaSessionCompat = new MediaSessionCompat(this, "MediaSessionTag");
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -122,7 +128,9 @@ public class PlayerService extends Service {
         player.prepare();
         player.play();
         updateMediaSessionMetadata();
+
     }
+
 
     private void updateMediaSessionMetadata() {
         if (mediaSessionCompat != null && player != null) {
@@ -265,3 +273,4 @@ public class PlayerService extends Service {
         return null;
     }
 }
+

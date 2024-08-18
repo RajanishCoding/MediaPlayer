@@ -6,6 +6,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +19,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -33,11 +38,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FilesListActivity extends AppCompatActivity {
 
@@ -319,38 +327,92 @@ public class FilesListActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    private ExecutorService executorService = Executors.newFixedThreadPool(4); // Create a thread pool
 
-private void processCursor(Cursor cursor, Set<String> parentFolders) {
-    int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-    int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-    int durationInd = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+    private void processCursor(Cursor cursor, Set<String> parentFolders) {
+        int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+        int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
+        int durationInd = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
-    if (filePathInd != -1 && displayNameInd != -1 && durationInd != -1) {
-        while (cursor.moveToNext()) {
-            String filePath = cursor.getString(filePathInd);
-            String displayName = cursor.getString(displayNameInd);
-            long duration = cursor.getLong(durationInd);
-            String formattedDuration = MillisToTime(duration);
+        if (filePathInd != -1 && displayNameInd != -1 && durationInd != -1) {
+            while (cursor.moveToNext()) {
+                String filePath = cursor.getString(filePathInd);
+                String displayName = cursor.getString(displayNameInd);
+                long duration = cursor.getLong(durationInd);
+                String formattedDuration = MillisToTime(duration);
 
-            // Add parent folder path to the set
-            String parentFolder = new File(filePath).getParent();
-            parentFolders.add(parentFolder);
+                // Add parent folder path to the set
+                String parentFolder = new File(filePath).getParent();
+                parentFolders.add(parentFolder);
 
-            FilesName.add(displayName);
-            FilesPath.add(filePath);
-            FilesDuration.add(formattedDuration);
+                FilesName.add(displayName);
+                FilesPath.add(filePath);
+                FilesDuration.add(formattedDuration);
 
-            mediaList.add(new Media(displayName, filePath, formattedDuration, ""));
+                Media media = new Media(displayName, filePath, formattedDuration, BitmapFactory.decodeResource(getResources(), R.drawable.icon));
+                mediaList.add(media);
 
-            Log.d("queryMediaFiles", filePath);
-            Log.d("queryMediaFiles", displayName);
-            Log.d("queryMediaFiles", formattedDuration);
+                // Offload thumbnail generation to background thread
+//                executorService.execute(() -> {
+//                    Bitmap thumbnail = getThumbnail(filePath);
+//                    media.setThumbnail(thumbnail);
+//
+//                    // Notify the RecyclerView to update the item if it's currently visible
+//                    runOnUiThread(() -> {
+//                        int index = mediaList.indexOf(media);
+//                        if (index >= 0) {
+//                            adapter.notifyItemChanged(index); // Assuming `adapter` is your RecyclerView.Adapter
+//                        }
+//                    });
+//                });
+
+                Log.d("queryMediaFiles", filePath);
+                Log.d("queryMediaFiles", displayName);
+                Log.d("queryMediaFiles", formattedDuration);
+            }
         }
     }
-}
+
+    private Bitmap getThumbnail(String filePath) {
+//        Bitmap thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, 1);
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        Bitmap thumbnail = null;
+
+        try {
+            retriever.setDataSource(filePath);
+            Bitmap frame = retriever.getFrameAtTime(1000000); // Get frame at 30 second (1000000 microseconds)
+            byte[] art = retriever.getEmbeddedPicture();
+
+            if (art != null) {
+                thumbnail = BitmapFactory.decodeByteArray(art, 0, art.length);
+            }
+            else {
+                if (frame != null) {
+                    thumbnail = frame;
+                }
+                else {
+                    thumbnail = BitmapFactory.decodeResource(getResources(), R.drawable.icon);
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            // Handle cases where the file is invalid or data source is unsupported
+        }
+        finally {
+            try {
+                retriever.release();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return thumbnail;
+    }
 
     public String MillisToTime(long millis) {
-//        int hours = (millis / (1000 * 60 * 60)) % 24;
+    //        int hours = (millis / (1000 * 60 * 60)) % 24;
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;
 

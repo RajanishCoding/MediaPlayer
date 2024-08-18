@@ -1,12 +1,15 @@
 package com.example.mediaplayer;
 
+import android.graphics.Bitmap;
+import android.widget.ImageView;
+
 public class Media {
     private String name;
     private String path;
     private String duration;
-    private String thumbnailUrl;
+    private Bitmap thumbnailUrl;
 
-    public Media(String name, String path, String duration, String thumbnailUrl) {
+    public Media(String name, String path, String duration, Bitmap thumbnailUrl) {
         this.name = name;
         this.path = path;
         this.duration = duration;
@@ -25,7 +28,11 @@ public class Media {
         return duration;
     }
 
-    public String getThumbnailUrl() {
+    public Bitmap getThumbnail() {
         return thumbnailUrl;
+    }
+
+    public void setThumbnail(Bitmap thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 }
