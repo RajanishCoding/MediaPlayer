@@ -64,7 +64,10 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
+            >
 
             <ImageButton
                 android:id="@+id/back_button"
@@ -189,6 +192,8 @@
         android:id="@+id/full_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -198,7 +203,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="5dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/lower_container">
@@ -246,7 +251,7 @@
             android:id="@+id/lower_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             android:paddingHorizontal="15dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -288,8 +293,8 @@
 
                 <ImageButton
                     android:id="@+id/prev"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="54dp"
+                    android:layout_height="44dp"
                     android:background="@drawable/selector_rect"
                     android:contentDescription="Previous"
                     android:src="@drawable/baseline_skip_previous_24"

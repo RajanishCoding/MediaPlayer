@@ -2,8 +2,10 @@ package com.example.mediaplayer;
 import android.Manifest;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -37,8 +39,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -169,29 +175,29 @@ public class FilesListActivity extends AppCompatActivity {
 
     ActivityResultLauncher<String[]> requestPermissionsLauncher_StorageA10 =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
-                        @Override
-                        public void onActivityResult(Map<String, Boolean> permissions) {
-                            Boolean readPermission = permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE);
-                            Boolean writePermission = permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                @Override
+                public void onActivityResult(Map<String, Boolean> permissions) {
+                    Boolean readPermission = permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE);
+                    Boolean writePermission = permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-                            if (readPermission != null && readPermission && writePermission != null && writePermission) {
-                                // Both permissions are granted
-                                queryMediaFiles();
+                    if (readPermission != null && readPermission && writePermission != null && writePermission) {
+                        // Both permissions are granted
+                        queryMediaFiles();
+                    }
+                    else {
+                        StorageRationaleLayout.setVisibility(View.VISIBLE);
+                        Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+                                intent.setData(uri);
+                                startActivity(intent);
                             }
-                            else {
-                                StorageRationaleLayout.setVisibility(View.VISIBLE);
-                                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                                        intent.setData(uri);
-                                        startActivity(intent);
-                                    }
-                                });
-                            }
-                        }
-                    });
+                        });
+                    }
+                }
+            });
 
 
     private void StorageAccessA11_PermissionDialog() {
@@ -323,11 +329,13 @@ public class FilesListActivity extends AppCompatActivity {
         Log.d("queryMediaFiles", String.valueOf(FilesPath));
 
         Log.d("TAG", "media list: " + mediaList);
+        saveMediaListToPreferences();
+        Log.d(TAG, "queryMediaFiles: "+ loadMediaListFromPreferences());
         adapter = new MediaAdapter(this, mediaList);
         recyclerView.setAdapter(adapter);
     }
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(4); // Create a thread pool
+//    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Create a thread pool
 
     private void processCursor(Cursor cursor, Set<String> parentFolders) {
         int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
@@ -352,7 +360,7 @@ public class FilesListActivity extends AppCompatActivity {
                 Media media = new Media(displayName, filePath, formattedDuration, BitmapFactory.decodeResource(getResources(), R.drawable.icon));
                 mediaList.add(media);
 
-                // Offload thumbnail generation to background thread
+//              Offload thumbnail generation to background thread
 //                executorService.execute(() -> {
 //                    Bitmap thumbnail = getThumbnail(filePath);
 //                    media.setThumbnail(thumbnail);
@@ -373,46 +381,26 @@ public class FilesListActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap getThumbnail(String filePath) {
-//        Bitmap thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, 1);
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        Bitmap thumbnail = null;
-
-        try {
-            retriever.setDataSource(filePath);
-            Bitmap frame = retriever.getFrameAtTime(1000000); // Get frame at 30 second (1000000 microseconds)
-            byte[] art = retriever.getEmbeddedPicture();
-
-            if (art != null) {
-                thumbnail = BitmapFactory.decodeByteArray(art, 0, art.length);
-            }
-            else {
-                if (frame != null) {
-                    thumbnail = frame;
-                }
-                else {
-                    thumbnail = BitmapFactory.decodeResource(getResources(), R.drawable.icon);
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            // Handle cases where the file is invalid or data source is unsupported
-        }
-        finally {
-            try {
-                retriever.release();
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return thumbnail;
+    public void saveMediaListToPreferences() {
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("MediaPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(mediaList);
+        editor.putString("mediaList", json);
+        editor.apply();
     }
 
+    public List<Media> loadMediaListFromPreferences() {
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = prefs.getString("mediaList", null);
+        Type type = new TypeToken<ArrayList<Media>>() {}.getType();
+        return gson.fromJson(json, type);
+    }
+
+
     public String MillisToTime(long millis) {
-    //        int hours = (millis / (1000 * 60 * 60)) % 24;
+        //        int hours = (millis / (1000 * 60 * 60)) % 24;
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;
 

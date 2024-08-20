@@ -52,7 +52,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
 
-
+    implementation(libs.gson)
 
     implementation(libs.glide) // Ensure you use the latest version
     annotationProcessor(libs.compiler)

@@ -84,6 +84,9 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isOrientation;
     private boolean isPlay;
 
+    private boolean isInAnimation;
+    private boolean isOutAnimation;
+
     private View buffer_view;
 
 
@@ -307,81 +310,14 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!surface_click_frag){
-                    Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
-                    Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
-                    PlaybackControls_Container.startAnimation(slideOutBottom);
-                    toolbar.startAnimation(slideOutTop);
-
-
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                        WindowInsetsController insetsController = getWindow().getInsetsController();
-//                        if (insetsController != null) {
-//                            insetsController.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-//                        }
-//                    }
-//                    else {
-
                     Fullscreen();
+                    outAnimation();
 
-                    slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            toolbar.setVisibility(View.GONE);
-                            PlaybackControls_Container.setVisibility(View.GONE);
-                            surface_click_frag = true;
-                            Log.d("Top", "onAnimationEnd: Yes");
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-
-                        }
-                    });
                 }
 
                 else {
-                    Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
-                    Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
-                    PlaybackControls_Container.startAnimation(slideInBottom);
-                    toolbar.startAnimation(slideInTop);
-
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                        WindowInsetsController insetsController = getWindow().getInsetsController();
-//                        if (insetsController != null) {
-//                            insetsController.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
-//                        }
-//                    }
-//                    else {
-
                     notFullscreen();
-
-
-                    slideInBottom.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                            toolbar.setVisibility(View.VISIBLE);
-                            PlaybackControls_Container.setVisibility(View.VISIBLE);
-                            surface_click_frag = false;
-                            Log.d("Bottom", "onAnimationStart: Yes");
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-
-                        }
-                    });
+                    inAnimation();
                 }
             }
         });
@@ -463,6 +399,60 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
+    private void outAnimation() {
+        Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
+        Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
+        PlaybackControls_Container.startAnimation(slideOutBottom);
+        toolbar.startAnimation(slideOutTop);
+        
+
+        slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                toolbar.setVisibility(View.GONE);
+                PlaybackControls_Container.setVisibility(View.GONE);
+                surface_click_frag = true;
+                Log.d("Top", "onAnimationEnd: Yes");
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
+    private void inAnimation() {
+        Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
+        Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
+        PlaybackControls_Container.startAnimation(slideInBottom);
+        toolbar.startAnimation(slideInTop);
+
+        slideInBottom.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                toolbar.setVisibility(View.VISIBLE);
+                PlaybackControls_Container.setVisibility(View.VISIBLE);
+                surface_click_frag = false;
+                Log.d("Bottom", "onAnimationStart: Yes");
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
 
     private void onLandscape(){
         Log.d(TAG, "onLandscape: YES");
@@ -679,6 +669,15 @@ public class PlayerActivity extends AppCompatActivity {
                         View.SYSTEM_UI_FLAG_FULLSCREEN |
                         View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//                        WindowInsetsController insetsController = getWindow().getInsetsController();
+//                        if (insetsController != null) {
+//                            insetsController.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+//                        }
+//                    }
+//                    else {
     }
 
     private void notFullscreen() {
@@ -688,6 +687,15 @@ public class PlayerActivity extends AppCompatActivity {
                         View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                         View.SYSTEM_UI_FLAG_VISIBLE
         );
+
+        //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//                        WindowInsetsController insetsController = getWindow().getInsetsController();
+//                        if (insetsController != null) {
+//                            insetsController.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
+//                        }
+//                    }
+//                    else {
     }
 
     public String MillisToTime(long millis) {
