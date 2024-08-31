@@ -29,13 +29,16 @@
 
 
     <!-- Toolbar Colors -->
-    <color name="toolbar_background">#FFFFFF</color>
+    <color name="toolbar_background">#CEE3FF</color>
     <color name="toolbar_text">#000000</color>
     <color name="toolbar_icons">#000000</color>
 
-    <color name="toolbar_background_dark">#000000</color>
+    <color name="toolbar_background_dark">#040F73</color>
     <color name="toolbar_text_dark">#FFFFFF</color>
     <color name="toolbar_icons_dark">#FFFFFF</color>
+    
+    <color name="toolbar_background_player_transparent">@android:color/transparent</color>
+    <color name="toolbar_background_player_black">#80000000</color>
 
     <!-- Button Colors -->
     <color name="button_background">#0004C6</color>
@@ -60,8 +63,15 @@
     <color name="text_view_text_variant_dark">#BDBDBD</color>
 
     <!-- Overlay Colors -->
-    <color name="overlayColorLight">#33000000</color> <!-- Light theme: 20% black -->
-    <color name="overlayColorDark">#33FFFFFF</color> <!-- Dark theme: 20% white -->
+    <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
+    <color name="overlayButtonDark">#33FFFFFF</color> <!-- Dark theme -->
+
+    <color name="overlayThumbnailLight">#C6D6E3</color>
+    <color name="overlayThumbnailDark">#6B757F</color>
+
+    <color name="overlayListLight">#59B1C9D5</color>
+    <color name="overlayListDark">#59636C7D</color>
+
     <color name="overlayColorRect">#3F51B5</color> <!-- Dark theme -->
 
     <attr name="overlayColor" format="reference|color" />

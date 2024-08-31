@@ -8,10 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,7 +18,6 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -43,15 +39,14 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class FilesListActivity extends AppCompatActivity {
 
@@ -70,9 +65,13 @@ public class FilesListActivity extends AppCompatActivity {
     private Button Rationale_AllowAccess_Button;
     private boolean NotificationEnabled;
 
-    private boolean readStorage = false;
-    private boolean writeStorage = false;
+    private boolean readStorage;
+    private boolean writeStorage;
+    private boolean isSetAdapterNeeded;
     private String TAG = "TAG";
+    public boolean isInsert;
+
+
 
 
     @Override
@@ -95,7 +94,7 @@ public class FilesListActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                queryMediaFiles(); // Example: Refresh media list
+                queryMediaFiles(true); // Example: Refresh media list
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -104,7 +103,7 @@ public class FilesListActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {
                 // Permission is granted
-                queryMediaFiles();
+                queryMediaFiles(false);
                 Log.d(TAG, "onCreate: YES");
             }
             else {
@@ -164,7 +163,7 @@ public class FilesListActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 //            NotificationEnabled = true;
-            queryMediaFiles();
+            queryMediaFiles(false);
         }
 
         else {
@@ -182,7 +181,7 @@ public class FilesListActivity extends AppCompatActivity {
 
                     if (readPermission != null && readPermission && writePermission != null && writePermission) {
                         // Both permissions are granted
-                        queryMediaFiles();
+                        queryMediaFiles(false);
                     }
                     else {
                         StorageRationaleLayout.setVisibility(View.VISIBLE);
@@ -258,20 +257,22 @@ public class FilesListActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()){
                 StorageRationaleLayout.setVisibility(View.GONE);
-                queryMediaFiles();
+                queryMediaFiles(true);
             }
         }
         else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 StorageRationaleLayout.setVisibility(View.GONE);
-                queryMediaFiles();
+                queryMediaFiles(true);
             }
         }
     }
 
+    List<Media> storedMediaList;
 
-    private void queryMediaFiles() {
+    private void queryMediaFiles(boolean refresh) {
+
         String[] audioProjection = new String[] {
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
@@ -328,11 +329,28 @@ public class FilesListActivity extends AppCompatActivity {
         Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
         Log.d("queryMediaFiles", String.valueOf(FilesPath));
 
-        Log.d("TAG", "media list: " + mediaList);
-        saveMediaListToPreferences();
-        Log.d(TAG, "queryMediaFiles: "+ loadMediaListFromPreferences());
-        adapter = new MediaAdapter(this, mediaList);
-        recyclerView.setAdapter(adapter);
+        storedMediaList = loadMediaListFromPreferences();
+
+        Log.d("TAG", "Media list: " + mediaList);
+        Log.d(TAG, "Media list: - Stored: " + storedMediaList);
+
+
+
+        if (!refresh) {
+            saveMediaListToPreferences(mediaList);
+            adapter = new MediaAdapter(this, mediaList);
+            recyclerView.setAdapter(adapter);
+            Log.d(TAG, "Refresh: Yes");
+        }
+
+        else if (isInsert){
+            saveMediaListToPreferences(mediaList);
+            adapter = new MediaAdapter(this, mediaList);
+            recyclerView.setAdapter(adapter);
+            isInsert = false;
+            Log.d(TAG, "isInsert: " + isInsert);
+        }
+
     }
 
 //    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Create a thread pool
@@ -357,8 +375,30 @@ public class FilesListActivity extends AppCompatActivity {
                 FilesPath.add(filePath);
                 FilesDuration.add(formattedDuration);
 
+//                storedMediaList = loadMediaListFromPreferences();
+
                 Media media = new Media(displayName, filePath, formattedDuration, BitmapFactory.decodeResource(getResources(), R.drawable.icon));
                 mediaList.add(media);
+
+
+                if (storedMediaList != null) {
+                    if (!isInsert) {
+                        isInsert = isInsertFiles(storedMediaList, media);
+//                        Log.d(TAG, "processCursor: " + isInsert + " : " + media.getName());
+                    }
+                }
+
+//                else {
+//                    mediaList.add(media);
+//                }
+
+
+
+//                if (cachedMediaList != null) {
+//                    for (Media media : cachedMediaList) {
+//                        cachedMediaMap.put(media.getPath(), media);
+//                    }
+//                }
 
 //              Offload thumbnail generation to background thread
 //                executorService.execute(() -> {
@@ -374,14 +414,30 @@ public class FilesListActivity extends AppCompatActivity {
 //                    });
 //                });
 
-                Log.d("queryMediaFiles", filePath);
-                Log.d("queryMediaFiles", displayName);
-                Log.d("queryMediaFiles", formattedDuration);
+//                Log.d("tag", filePath);
+                Log.d("tag", displayName);
+                Log.d("tag", formattedDuration);
             }
         }
     }
 
-    public void saveMediaListToPreferences() {
+    public boolean isInsertFiles(List<Media> storedList, Media media) {
+        boolean f = false;
+        for (Media m: storedList) {
+            if (Objects.equals(m.getName(), media.getName())) {
+                f = true;
+                break;
+            }
+        }
+        if (!f) {
+            Log.d(TAG, "isInsertFiles: YES");
+            return true;
+        }
+        Log.d(TAG, "isInsertFiles: NO");
+        return false;
+    }
+
+    public void saveMediaListToPreferences(List<Media> mediaList) {
         SharedPreferences prefs = getApplicationContext().getSharedPreferences("MediaPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         Gson gson = new Gson();
@@ -400,11 +456,14 @@ public class FilesListActivity extends AppCompatActivity {
 
 
     public String MillisToTime(long millis) {
-        //        int hours = (millis / (1000 * 60 * 60)) % 24;
+        long hours = (millis / (1000 * 60 * 60)) % 24;
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;
 
-        return String.format("%02d:%02d", minutes, seconds);
+        if (hours >= 1) {
+            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
+        }
+        return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
 
 //    if (ContextCompat.checkSelfPermission(

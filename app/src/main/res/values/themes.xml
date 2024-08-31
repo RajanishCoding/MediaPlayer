@@ -22,7 +22,7 @@
         <item name="colorControlNormal">@color/white</item> <!-- Thumb color -->
 
         <!-- Overlay Colors -->
-        <item name="overlayColor">@color/overlayColorLight</item> <!-- Light theme: 20% black -->
+        <item name="overlayColor">@color/overlayButtonLight</item> <!-- Light theme: 20% black -->
     </style>
 
 
@@ -55,8 +55,8 @@
     </style>
 
     <!-- Linear Layout Style -->
-    <style name="LinearLayout">
-        <item name="android:background">@color/toolbar_background</item>
+    <style name="FilesListBG">
+        <item name="android:background">@drawable/background_shape</item>
     </style>
 
 

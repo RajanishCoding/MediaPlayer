@@ -3,6 +3,11 @@
   <component name="WizardSettings">
     <option name="children">
       <map>
+        <entry key="imageWizard">
+          <value>
+            <PersistentState />
+          </value>
+        </entry>
         <entry key="vectorWizard">
           <value>
             <PersistentState>
@@ -28,10 +33,10 @@
                         </option>
                         <option name="values">
                           <map>
+                            <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="ffffff" />
-                            <entry key="opacityPercent" value="0" />
-                            <entry key="outputName" value="blank" />
-                            <entry key="sourceFile" value="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer" />
+                            <entry key="outputName" value="video2" />
+                            <entry key="sourceFile" value="C:\Users\rajan\Downloads\video2.svg" />
                           </map>
                         </option>
                       </PersistentState>

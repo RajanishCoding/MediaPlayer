@@ -17,6 +17,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
@@ -89,6 +91,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     private View buffer_view;
 
+    private boolean isTime1ButtonClicked;
+    private boolean isTime2ButtonClicked;
+
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -96,8 +101,10 @@ public class PlayerActivity extends AppCompatActivity {
             PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
             playerService = binder.getService();
             player = PlayerService.getPlayer();
+            Log.d("service", "onServiceConnected: YES: " + player);
             if (player != null) {
                 initializePlayer();
+                Log.d("service", "isPlayer: YES");
             }
             isBound = true;
         }
@@ -191,8 +198,6 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        // Set status bar color
-        getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_dark));
         notFullscreen();
 
 
@@ -237,9 +242,11 @@ public class PlayerActivity extends AppCompatActivity {
                     if (!player.isPlaying()) {
                         player.play();
                         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                        Log.d(TAG, "onPLAY: YES");
                     } else {
                         player.pause();
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                        Log.d(TAG, "onPLAY: NO");
                     }
                 }
             }
@@ -248,7 +255,19 @@ public class PlayerActivity extends AppCompatActivity {
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                time1.setText(MillisToTime(progress));
+                if (isTime1ButtonClicked) {
+                    time1.setText("-" + MillisToTime(player.getDuration() - progress));
+                }
+                else {
+                    time1.setText(MillisToTime(progress));
+                }
+
+                if (isTime2ButtonClicked) {
+                    time2.setText("-" + MillisToTime(player.getDuration() - progress));
+                }
+                else {
+                    time2.setText(MillisToTime(player.getDuration()));
+                }
             }
 
             @Override
@@ -309,13 +328,12 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!surface_click_frag){
+                if (!surface_click_frag && !isInAnimation && !isOutAnimation){
                     Fullscreen();
                     outAnimation();
-
                 }
 
-                else {
+                else if (!isInAnimation && !isOutAnimation) {
                     notFullscreen();
                     inAnimation();
                 }
@@ -339,6 +357,30 @@ public class PlayerActivity extends AppCompatActivity {
                     isFitScreen = false;
                 }
             }
+        });
+
+        time1.setOnClickListener(v -> {
+            if (!isTime1ButtonClicked) {
+                time1.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
+                isTime1ButtonClicked = true;
+            }
+            else {
+                time1.setText(MillisToTime(player.getCurrentPosition()));
+                isTime1ButtonClicked = false;
+            }
+            Log.d(TAG, "onClickTime1: " + isTime1ButtonClicked);
+        });
+
+        time2.setOnClickListener(v -> {
+            if (!isTime2ButtonClicked) {
+                time2.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
+                isTime2ButtonClicked = true;
+            }
+            else {
+                time2.setText(MillisToTime(player.getDuration()));
+                isTime2ButtonClicked = false;
+            }
+            Log.d(TAG, "onClickTime2: " + isTime2ButtonClicked);
         });
     }
 
@@ -365,6 +407,7 @@ public class PlayerActivity extends AppCompatActivity {
                         seekbar.setMax((int) player.getDuration());
                         time1.setText(MillisToTime(player.getCurrentPosition()));
                         time2.setText(MillisToTime(player.getDuration()));
+                        Log.d(TAG, "onSTATE_READY: Yes");
                         break;
 
                     case Player.STATE_ENDED:
@@ -409,11 +452,12 @@ public class PlayerActivity extends AppCompatActivity {
         slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-
+                isOutAnimation = true;
             }
 
             @Override
             public void onAnimationEnd(Animation animation) {
+                isOutAnimation = false;
                 toolbar.setVisibility(View.GONE);
                 PlaybackControls_Container.setVisibility(View.GONE);
                 surface_click_frag = true;
@@ -436,6 +480,7 @@ public class PlayerActivity extends AppCompatActivity {
         slideInBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
+                isInAnimation = true;
                 toolbar.setVisibility(View.VISIBLE);
                 PlaybackControls_Container.setVisibility(View.VISIBLE);
                 surface_click_frag = false;
@@ -444,7 +489,7 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onAnimationEnd(Animation animation) {
-
+                isInAnimation = false;
             }
 
             @Override
@@ -619,10 +664,10 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            if (player.isPlaying()) {
-                player.pause();
-                isPlay = true;
-            }
+//            if (player.isPlaying()) {
+//                player.pause();
+//                isPlay = true;
+//            }
         }
     }
 
@@ -645,12 +690,14 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d(TAG, "onDestroy: ");
         handler.removeCallbacks(updateSeekBar);
 
-        if (isFinishing()) {
-            if (player != null) {
-                player.release();  // Ensure the player is released to avoid memory leaks
-                player = null;  // Set the static player to null
-            }
-        }
+//        if (isFinishing()) {
+//            if (player != null) {
+//                player.release();  // Ensure the player is released to avoid memory leaks
+//                player = null;  // Set the static player to null
+//                Log.d("finish", "onFinish: YES");
+//                playerService.stopService();
+//            }
+//        }
     }
 
     @Override
@@ -661,23 +708,33 @@ public class PlayerActivity extends AppCompatActivity {
 
 
     private void Fullscreen() {
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_FULLSCREEN |
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        );
+//        getWindow().getDecorView().setSystemUiVisibility(
+//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+//                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+//                        View.SYSTEM_UI_FLAG_FULLSCREEN |
+//                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//        );
 
+    getWindow().getDecorView().setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+    );
+
+        // Set status bar color
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_transparent));
+        getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_transparent));
+
+//
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                        WindowInsetsController insetsController = getWindow().getInsetsController();
-//                        if (insetsController != null) {
-//                            insetsController.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-//                        }
-//                    }
-//                    else {
+//            WindowInsetsController insetsController = getWindow().getInsetsController();
+//            if (insetsController != null) {
+//                insetsController.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+//                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+//            }
+//        }
     }
 
     private void notFullscreen() {
@@ -687,6 +744,11 @@ public class PlayerActivity extends AppCompatActivity {
                         View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                         View.SYSTEM_UI_FLAG_VISIBLE
         );
+
+        // Set status bar color
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
+        getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
+
 
         //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 //                        WindowInsetsController insetsController = getWindow().getInsetsController();
@@ -699,8 +761,13 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     public String MillisToTime(long millis) {
+        long hours = (millis / (1000 * 60 * 60)) % 24;
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;
+
+        if (hours >= 1) {
+            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
+        }
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
 

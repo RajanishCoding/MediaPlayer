@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
-        <shape android:shape="oval">
-            <solid android:color="@color/overlayButtonDark" /> <!-- Semi-transparent black overlay -->
+        <shape android:shape="rectangle">
+            <solid android:color="@color/overlayListDark" /> <!-- Semi-transparent black overlay -->
         </shape>
     </item>
     <item>
         <shape>
             <solid android:color="@android:color/transparent" /> <!-- No overlay -->
+<!--            <solid android:color="@color/overlayListDark" /> &lt;!&ndash; Semi-transparent black overlay &ndash;&gt;-->
         </shape>
     </item>
 </selector>

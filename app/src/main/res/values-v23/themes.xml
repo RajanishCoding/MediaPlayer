@@ -24,7 +24,7 @@
         <item name="colorControlNormal">@color/white</item> <!-- Thumb color -->
 
         <!-- Overlay Colors -->
-        <item name="overlayColor">@color/overlayColorLight</item> <!-- Light theme: 20% black -->
+        <item name="overlayColor">@color/overlayButtonLight</item> <!-- Light theme: 20% black -->
     </style>
 
     <style name="Base.Theme.MediaPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -50,6 +50,6 @@
         <item name="colorControlNormal">@color/white</item> <!-- Thumb color -->
 
         <!-- Overlay Colors -->
-        <item name="overlayColor">@color/overlayColorLight</item> <!-- Light theme: 20% black -->
+        <item name="overlayColor">@color/overlayButtonLight</item> <!-- Light theme: 20% black -->
     </style>
 </resources>

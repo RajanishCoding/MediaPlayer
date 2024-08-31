@@ -237,7 +237,7 @@
                 android:layout_width="60dp"
 
                 android:layout_height="50dp"
-                android:background="@drawable/selector_rect"
+                android:background="@drawable/selector_player_buttons"
                 android:contentDescription="Lock Screen"
                 android:src="@drawable/baseline_lock_open_24"
                 android:tooltipText="Lock Screen"
@@ -252,7 +252,7 @@
                 android:layout_marginStart="20dp"
 
                 android:layout_height="50dp"
-                android:background="@drawable/selector_rect"
+                android:background="@drawable/selector_player_buttons"
                 android:contentDescription="Rotate Screen"
                 android:src="@drawable/baseline_screen_rotation_24"
                 android:tooltipText="Rotate Screen"
@@ -276,7 +276,7 @@
                     android:layout_width="85dp"
 
                     android:layout_height="50dp"
-                    android:background="@drawable/selector_rect"
+                    android:background="@drawable/selector_player_buttons"
                     android:contentDescription="Previous"
                     android:src="@drawable/baseline_skip_previous_24"
                     android:tooltipText="Previous"
@@ -291,7 +291,7 @@
                     android:layout_width="110dp"
 
                     android:layout_height="50dp"
-                    android:background="@drawable/selector_rect"
+                    android:background="@drawable/selector_player_buttons"
                     android:contentDescription="Play"
                     android:src="@drawable/baseline_play_circle_outline_24"
                     android:tooltipText="Play/Pause"
@@ -307,7 +307,7 @@
                     android:layout_width="85dp"
 
                     android:layout_height="50dp"
-                    android:background="@drawable/selector_rect"
+                    android:background="@drawable/selector_player_buttons"
                     android:contentDescription="Next"
                     android:src="@drawable/baseline_skip_next_24"
                     android:tooltipText="Next"
@@ -325,7 +325,7 @@
                 android:layout_marginEnd="20dp"
 
                 android:layout_height="50dp"
-                android:background="@drawable/selector_rect"
+                android:background="@drawable/selector_player_buttons"
                 android:contentDescription="Previous"
                 android:src="@drawable/baseline_fit_screen_24"
 
@@ -341,7 +341,7 @@
                 android:layout_width="60dp"
 
                 android:layout_height="50dp"
-                android:background="@drawable/selector_rect"
+                android:background="@drawable/selector_player_buttons"
                 android:contentDescription="Previous"
                 android:src="@drawable/baseline_pip_alt_24"
                 android:tooltipText="Previous"

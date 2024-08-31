@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Shadow layer (faux shadow using a darker color with some transparency) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/> <!-- Shadow color (transparent black) -->
+            <corners android:radius="7.5dp"/>
+        </shape>
+    </item>
+
+    <!-- Main shape layer -->
+    <item android:left="2dp" android:top="2dp"> <!-- Offset the main content to show the shadow -->
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/> <!-- Main content background -->
+            <corners android:radius="7.5dp"/>
+        </shape>
+    </item>
+</layer-list>

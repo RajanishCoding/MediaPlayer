@@ -22,7 +22,7 @@
         <item name="colorControlNormal">@color/white</item> <!-- Thumb color -->
 
         <!-- Overlay Colors -->
-        <item name="overlayColor">@color/overlayColorDark</item> <!-- Dark theme: 20% white -->
+        <item name="overlayColor">@color/overlayButtonDark</item> <!-- Dark theme: 20% white -->
     </style>
 
 
@@ -52,8 +52,8 @@
         <item name="colorControlActivated">@color/button_background_pressed_variant</item> <!-- Color when activated/progress -->
     </style>
 
-    <style name="LinearLayout">
-        <item name="android:background">@color/toolbar_background_dark</item>
+    <style name="FilesListBG">
+        <item name="android:background">@drawable/background_shape</item>
     </style>
 
 
