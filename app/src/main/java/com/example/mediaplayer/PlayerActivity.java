@@ -6,19 +6,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.GestureDetector;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
@@ -38,6 +47,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
@@ -82,7 +92,6 @@ public class PlayerActivity extends AppCompatActivity {
     private PlayerService playerService;
     private boolean isBound = false;
 
-    private boolean isVideo;
     private boolean isOrientation;
     private boolean isPlay;
 
@@ -94,26 +103,21 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isTime1ButtonClicked;
     private boolean isTime2ButtonClicked;
 
+    private boolean isBufferingFinished;
+    private boolean isVideoFile;
+    private boolean isBackgroundPlay;
 
-    private final ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
-            playerService = binder.getService();
-            player = PlayerService.getPlayer();
-            Log.d("service", "onServiceConnected: YES: " + player);
-            if (player != null) {
-                initializePlayer();
-                Log.d("service", "isPlayer: YES");
-            }
-            isBound = true;
-        }
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+    private GestureDetector gestureDetector;
+    private AudioManager audioManager;
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            isBound = false;
-        }
-    };
+    private int screenWidth;
+    private int halfWidth;
+    private int Q3_Width;
+    private int Q4_Width;
+
+    private TextView volumeText;
 
 
     @Override
@@ -199,7 +203,7 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         notFullscreen();
-
+        updateScreenDimension();
 
         playButton = findViewById(R.id.play);
 
@@ -221,18 +225,23 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
 
+        volumeText = findViewById(R.id.volume_text);
+
+        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
 
-
-        if (player == null){
-            Intent serviceIntent = new Intent(this, PlayerService.class);
-            serviceIntent.putExtra("name", media_name);
-            serviceIntent.putExtra("path", media_path);
-            bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
-            startService(serviceIntent);
-        }
+        Intent serviceIntent = new Intent(this, PlayerService.class);
+        serviceIntent.putExtra("name", media_name);
+        serviceIntent.putExtra("path", media_path);
+        bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
+        startService(serviceIntent);
 
 
         playButton.setOnClickListener(new View.OnClickListener() {
@@ -308,7 +317,12 @@ public class PlayerActivity extends AppCompatActivity {
         };
         handler.postDelayed(updateSeekBar, 50);
 
-        backButton.setOnClickListener(v -> NavUtils.navigateUpFromSameTask(PlayerActivity.this));
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -324,19 +338,16 @@ public class PlayerActivity extends AppCompatActivity {
             isOrientation = true;
         });
 
-
-        playerView.setOnClickListener(new View.OnClickListener() {
+        playerView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                if (!surface_click_frag && !isInAnimation && !isOutAnimation){
-                    Fullscreen();
-                    outAnimation();
+            public boolean onTouch(View v, MotionEvent event) {
+                gestureDetector.onTouchEvent(event);
+
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    player.setPlaybackSpeed(1);
                 }
 
-                else if (!isInAnimation && !isOutAnimation) {
-                    notFullscreen();
-                    inAnimation();
-                }
+                return true;
             }
         });
 
@@ -382,8 +393,113 @@ public class PlayerActivity extends AppCompatActivity {
             }
             Log.d(TAG, "onClickTime2: " + isTime2ButtonClicked);
         });
+
+
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                // Handle single tap
+                if (!surface_click_frag && !isInAnimation && !isOutAnimation){
+                    Fullscreen();
+                    outAnimation();
+                }
+
+                else if (!isInAnimation && !isOutAnimation) {
+                    notFullscreen();
+                    inAnimation();
+                }
+
+                return super.onSingleTapUp(e);
+            }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                if (e.getX() <= Q3_Width) {
+                    player.seekTo(player.getCurrentPosition() - 5000);
+                    Log.d(TAG, "onDoubleTap: " + Q3_Width + " " + e.getX() + " " + screenWidth);
+                }
+
+                else if (e.getX() <= 2*Q3_Width) {
+                    if (player != null) {
+                        if (!player.isPlaying()) {
+                            player.play();
+                            playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                            Log.d(TAG, "onPLAY: YES");
+                        } else {
+                            player.pause();
+                            playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                            Log.d(TAG, "onPLAY: NO");
+                        }
+                        Log.d(TAG, "onDoubleTap: " + 2*Q3_Width + " " + e.getX() + " " + screenWidth);
+                    }
+                }
+
+                else {
+                    player.seekTo(player.getCurrentPosition() + 5000);
+                    Log.d(TAG, "onDoubleTap: " + 3*Q3_Width + " " + e.getX() + " " + screenWidth);
+                }
+
+                return super.onDoubleTap(e);
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                if (e.getX() < halfWidth) {
+                    ;
+                }
+                else {
+                    player.setPlaybackSpeed(2);
+                }
+                // Handle long press
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+
+                return super.onScroll(e1, e2, distanceX, distanceY);
+            }
+
+            @Override
+            public boolean onDoubleTapEvent(MotionEvent e) {
+                // Handle double tap event
+                return super.onDoubleTapEvent(e);
+            }
+        });
     }
 
+
+    public boolean isVideo(String filePath) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            String mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
+            Log.d(TAG, "MIME type: " + mimeType);
+
+            if (mimeType != null && mimeType.startsWith("video")) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false; // In case of an error, consider it not a video
+        }
+        finally {
+            try {
+                retriever.release();
+            }
+            catch (Exception e) {
+                Log.e(TAG, "isVideo: " + e);
+            }
+        }
+    }
 
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
@@ -393,13 +509,37 @@ public class PlayerActivity extends AppCompatActivity {
 //        player.prepare();
         playerView.setPlayer(player);
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                isVideoFile = isVideo(media_path);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isVideoFile) {
+                            isBackgroundPlay = false;
+                        }
+                        else {
+                            isBackgroundPlay = true;
+                        }
+//                        saveData("isBackgroundPlay", null, isBackgroundPlay);
+                        Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
+                        intent.putExtra("bgPlay", isBackgroundPlay);
+                        LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
+                    }
+                });
+            }
+        }).start();
+
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 switch (playbackState) {
                     case Player.STATE_BUFFERING:
+                        isBufferingFinished = false;
                         buffer_view.setVisibility(View.VISIBLE);
-                        Log.d(TAG, "onBuffering: YES");
+//                        Log.d(TAG, "onBuffering: YES");
                         break;
 
                     case Player.STATE_READY:
@@ -407,7 +547,8 @@ public class PlayerActivity extends AppCompatActivity {
                         seekbar.setMax((int) player.getDuration());
                         time1.setText(MillisToTime(player.getCurrentPosition()));
                         time2.setText(MillisToTime(player.getDuration()));
-                        Log.d(TAG, "onSTATE_READY: Yes");
+                        isBufferingFinished = true;
+//                        Log.d(TAG, "onSTATE_READY: Yes");
                         break;
 
                     case Player.STATE_ENDED:
@@ -425,6 +566,20 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
+    public boolean getIsBackgroundPlay() {
+        return isBackgroundPlay;
+    }
+
+
+    private void saveData(String key, String sValue, Boolean bValue) {
+        if (sValue != null) {
+            editor.putString(key, sValue);
+        }
+        else {
+            editor.putBoolean(key, bValue);
+        }
+        editor.apply();
+    }
 
     private void updateUI() {
         playerView.setPlayer(player);
@@ -656,7 +811,7 @@ public class PlayerActivity extends AppCompatActivity {
         constraintSet.connect(StartView.getId(), StartSide, EndView.getId(), EndSide);
         constraintSet.applyTo(layout);
     }
-
+    
 
     @Override
     protected void onPause() {
@@ -664,10 +819,10 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-//            if (player.isPlaying()) {
-//                player.pause();
-//                isPlay = true;
-//            }
+            if (player.isPlaying() && !isBackgroundPlay) {
+                player.pause();
+                isPlay = true;
+            }
         }
     }
 
@@ -677,7 +832,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            if (isPlay) {
+            if (isPlay && !isBackgroundPlay) {
                 player.play();
                 isPlay = false;
             }
@@ -690,22 +845,43 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d(TAG, "onDestroy: ");
         handler.removeCallbacks(updateSeekBar);
 
-//        if (isFinishing()) {
-//            if (player != null) {
-//                player.release();  // Ensure the player is released to avoid memory leaks
-//                player = null;  // Set the static player to null
-//                Log.d("finish", "onFinish: YES");
-//                playerService.stopService();
-//            }
-//        }
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
+        }
+
+        if (isFinishing() && !isBackgroundPlay) {
+            if (player != null) {
+                player.stop();
+                Log.d("finish", "onFinish: YES");
+            }
+        }
     }
+
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Handle configuration changes here
+        updateScreenDimension();
+        Log.d(TAG, "onConfigurationChanged: " + getResources().getDisplayMetrics().heightPixels + " " + getResources().getDisplayMetrics().widthPixels);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            adjustVolume(keyCode);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+
+    private void adjustVolume(int keyCode) {
+        int direction = keyCode == KeyEvent.KEYCODE_VOLUME_UP ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
+        audioManager.adjustVolume(direction, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+
+        volumeText.setText(String.valueOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)));
+    }
 
     private void Fullscreen() {
 //        getWindow().getDecorView().setSystemUiVisibility(
@@ -758,6 +934,35 @@ public class PlayerActivity extends AppCompatActivity {
 //                        }
 //                    }
 //                    else {
+    }
+
+    private final ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
+            PlayerService playerService = binder.getService();
+            player = PlayerService.getPlayer();
+            Log.d("service", "onServiceConnected: YES: " + player);
+            if (player != null) {
+                initializePlayer();
+                Log.d("service", "isPlayer: YES");
+            }
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
+    private void updateScreenDimension() {
+        screenWidth = getResources().getDisplayMetrics().widthPixels;
+        halfWidth = screenWidth / 2;
+        Q3_Width = screenWidth / 3;
+        Q4_Width = screenWidth / 4;
+
+        Log.d(TAG, "updateScreenDimension: " + screenWidth);
     }
 
     public String MillisToTime(long millis) {

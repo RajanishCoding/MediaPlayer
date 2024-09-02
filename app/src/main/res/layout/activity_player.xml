@@ -70,7 +70,7 @@
             android:layout_height="match_parent"
             android:clickable="true"
             android:focusable="true"
-            >
+            tools:ignore="TouchTargetSizeCheck">
 
             <ImageButton
                 android:id="@+id/back_button"
@@ -92,12 +92,12 @@
                 style="@style/ToolbarTitleStyleMedia"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="20dp"
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:text="Media Player"
                 android:textSize="16sp"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="20dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/decoder_button"
                 app:layout_constraintStart_toEndOf="@+id/back_button"
@@ -113,10 +113,10 @@
                 android:padding="8dp"
                 android:src="@drawable/baseline_audiotrack_24"
                 android:tooltipText="Audio Tracks"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/subtitles_button"
                 app:layout_constraintTop_toTopOf="parent"
-                android:visibility="gone"
                 tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
@@ -129,10 +129,10 @@
                 android:padding="8dp"
                 android:src="@drawable/baseline_subtitles_24"
                 android:tooltipText="Subtitles"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/decoder_button"
                 app:layout_constraintTop_toTopOf="parent"
-                android:visibility="gone"
                 tools:ignore="TouchTargetSizeCheck" />
 
             <Button
@@ -169,6 +169,41 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.appcompat.widget.Toolbar>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="TODO"
+                android:src="@drawable/media3_icon_volume_up" />
+            
+            <TextView
+                android:id="@+id/volume_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="10"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!--    <ImageView-->
     <!--        android:id="@+id/imageView"-->
@@ -348,7 +383,7 @@
                 android:layout_height="50dp"
                 android:background="@drawable/selector_player_buttons"
                 android:contentDescription="Previous"
-                android:src="@drawable/baseline_fit_screen_24"
+                android:src="@drawable/baseline_crop_din_24"
                 android:tooltipText="Previous"
                 app:layout_constraintEnd_toStartOf="@id/pip"
                 app:layout_constraintBottom_toBottomOf="parent"
