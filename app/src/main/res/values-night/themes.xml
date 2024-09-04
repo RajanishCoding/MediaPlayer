@@ -64,7 +64,7 @@
 
     <!-- Toolbar Foreground Styles -->
     <style name="ToolbarIconsStyle">
-        <item name="android:tint">@android:color/transparent</item>
+        <item name="android:tint">@color/toolbar_icons_dark</item>
     </style>
 
     <style name="ToolbarTitleStyle">

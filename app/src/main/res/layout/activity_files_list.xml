@@ -43,11 +43,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginEnd="10dp"
+                android:layout_marginEnd="15dp"
                 android:layout_toStartOf="@id/more_button"
-                android:background="@drawable/selector"
+                android:background="@drawable/ripple_effect"
                 android:contentDescription="TODO"
-                android:padding="8dp"
+                android:padding="3dp"
                 android:src="@drawable/baseline_search_24"
                 android:tooltipText="Search"
                 tools:ignore="TouchTargetSizeCheck" />
@@ -59,10 +59,10 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:layout_marginEnd="10dp"
-                android:background="@drawable/selector"
+                android:layout_marginEnd="15dp"
+                android:background="@drawable/ripple_effect"
                 android:contentDescription="TODO"
-                android:padding="8dp"
+                android:padding="3dp"
                 android:src="@drawable/baseline_more_vert_24"
                 android:tooltipText="More Options"
                 tools:ignore="TouchTargetSizeCheck" />
@@ -74,22 +74,113 @@
     <!-- SwipeRefreshLayout with RecyclerView -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintBottom_toTopOf="@id/bottomNavBar"
+        >
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginStart="1dp"
             android:layout_marginEnd="1dp" />
+
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
+    <LinearLayout
+        android:id="@+id/bottomNavBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@drawable/shape_navbar_layout" >
+
+        <LinearLayout
+            android:id="@+id/leftButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingVertical="5dp"
+            android:gravity="center"
+            android:background="@drawable/ripple_effect">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/ToolbarIconsStyle"
+                android:src="@drawable/video2" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="All Files"
+                android:includeFontPadding="false"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/middleButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingVertical="5dp"
+            android:gravity="center"
+            android:background="@drawable/ripple_effect">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/ToolbarIconsStyle"
+                android:src="@drawable/music1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Audio"
+                android:includeFontPadding="false" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rightButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingVertical="5dp"
+            android:gravity="center"
+            android:background="@drawable/ripple_effect" >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/ToolbarIconsStyle"
+                android:src="@drawable/media3_icon_settings" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Settings"
+                android:includeFontPadding="false"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -121,7 +212,7 @@
         app:tint="#FFFFFF" />
 
 
-    <!-- Storage Access Layout A11-->
+    <!-- Storage Access Layout -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/StorageAccessLayout"
         android:layout_width="match_parent"

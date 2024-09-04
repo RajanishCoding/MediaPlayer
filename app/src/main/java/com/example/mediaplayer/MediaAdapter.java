@@ -55,6 +55,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
             Glide.with(holder.thumbnail.getContext())
             .asBitmap()
             .load(media.getPath()) // Unique identifier, ensures correct thumbnail
+            .placeholder(R.drawable.music1)
             .override(420)
             .centerCrop()
             .into(new CustomTarget<Bitmap>() {
@@ -73,6 +74,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
                     Glide.with(holder.thumbnail.getContext()).load(getThumbnail(media.getPath()))
+                    .placeholder(R.drawable.music1)
                     .override(420)
                     .into(holder.thumbnail);
 

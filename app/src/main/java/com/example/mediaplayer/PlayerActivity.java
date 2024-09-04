@@ -55,7 +55,11 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+
 
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
@@ -89,7 +93,6 @@ public class PlayerActivity extends AppCompatActivity {
     private String media_name;
     private String media_path;
 
-    private PlayerService playerService;
     private boolean isBound = false;
 
     private boolean isOrientation;
@@ -120,6 +123,7 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView volumeText;
 
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -505,8 +509,25 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-//        player.setMediaItem(MediaItem.fromUri(media_path));
-//        player.prepare();
+        ArrayList<String> songList = FilesListActivity.getSongList();
+        Log.d(TAG, "initializePlayer: " + FilesListActivity.getSongList());
+
+        player.setMediaItem(MediaItem.fromUri(media_path));
+        player.prepare();
+        player.play();
+
+        if (songList != null) {
+            for (String path : songList) {
+                if (!Objects.equals(path, media_path)) {
+                    player.addMediaItem(MediaItem.fromUri(path));
+                }
+            }
+        }
+        Log.d(TAG, "initializePlayer: " + player.getMediaItemCount());
+//        for (MediaItem mediaItem : player) {
+//            Log.d(TAG, "initializePlayer: " + player.getMediaItems(i).requestMetadata);
+//        }
+
         playerView.setPlayer(player);
 
         new Thread(new Runnable() {
@@ -673,16 +694,16 @@ public class PlayerActivity extends AppCompatActivity {
         View pip = findViewById(R.id.pip);
         View lower_container = findViewById(R.id.lower_container);
 
-        setMargin(back, 0, 15);
+        setMargin(back, 0, 20); // 7
 
-        setMargin(tool_title, 0, 20);
-        setMargin(tool_title, 1, 30);
+        setMargin(tool_title, 0, 25); // 5
+        setMargin(tool_title, 1, 35); // 10
         setConstraint(tool_title, ConstraintSet.END, audio, ConstraintSet.START);
 
         audio.setVisibility(View.VISIBLE);
         subtitle.setVisibility(View.VISIBLE);
 
-        setMargin(more, 1, 18);
+        setMargin(more, 1, 23); // 8
 
         setPadding(text1, 0, 12);
         setPadding(text1, 1, 12);
@@ -726,16 +747,16 @@ public class PlayerActivity extends AppCompatActivity {
         View pip = findViewById(R.id.pip);
         View lower_container = findViewById(R.id.lower_container);
 
-        setMargin(back, 0, 8);
+        setMargin(back, 0, 13);
 
-        setMargin(tool_title, 0, 15);
-        setMargin(tool_title, 1, 20);
+        setMargin(tool_title, 0, 20);
+        setMargin(tool_title, 1, 25);
         setConstraint(tool_title, ConstraintSet.END, decoder, ConstraintSet.START);
 
         audio.setVisibility(View.GONE);
         subtitle.setVisibility(View.GONE);
 
-        setMargin(more, 1, 10);
+        setMargin(more, 1, 15);
 
         setPadding(text1, 0, 5);
         setPadding(text1, 1, 5);
@@ -937,6 +958,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private final ServiceConnection connection = new ServiceConnection() {
+        @OptIn(markerClass = UnstableApi.class)
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;

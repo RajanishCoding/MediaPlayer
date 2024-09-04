@@ -53,7 +53,8 @@ public class FilesListActivity extends AppCompatActivity {
     private PlayerView playerView;
     private ExoPlayer player;
     private ArrayList<String> FilesName;
-    private ArrayList<String> FilesPath;
+    private static ArrayList<String> FilesPath;
+    private static ArrayList<String> AudioFilesPath;
     private ArrayList<String> FilesDuration;
 
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -85,6 +86,7 @@ public class FilesListActivity extends AppCompatActivity {
 
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
+        AudioFilesPath = new ArrayList<>();
         FilesDuration = new ArrayList<>();
 
         StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
@@ -311,13 +313,13 @@ public class FilesListActivity extends AppCompatActivity {
 
         // Process audio files
         if (audioCursor != null) {
-            processCursor(audioCursor, parentFolders);
+            processCursor(audioCursor, parentFolders, true);
             audioCursor.close();
         }
 
         // Process video files
         if (videoCursor != null) {
-            processCursor(videoCursor, parentFolders);
+            processCursor(videoCursor, parentFolders, false);
             videoCursor.close();
         }
 
@@ -355,7 +357,7 @@ public class FilesListActivity extends AppCompatActivity {
 
 //    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Create a thread pool
 
-    private void processCursor(Cursor cursor, Set<String> parentFolders) {
+    private void processCursor(Cursor cursor, Set<String> parentFolders, boolean isAudio) {
         int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
         int durationInd = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
@@ -374,6 +376,10 @@ public class FilesListActivity extends AppCompatActivity {
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
                 FilesDuration.add(formattedDuration);
+
+                if (isAudio) {
+                    AudioFilesPath.add(filePath);
+                }
 
 //                storedMediaList = loadMediaListFromPreferences();
 
@@ -464,6 +470,13 @@ public class FilesListActivity extends AppCompatActivity {
             return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
         }
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
+
+    public static ArrayList<String> getSongList() {
+        if (AudioFilesPath != null) {
+            return AudioFilesPath;
+        }
+        return null;
     }
 
 //    if (ContextCompat.checkSelfPermission(

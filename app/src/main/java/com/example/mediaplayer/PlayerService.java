@@ -17,29 +17,39 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media.session.MediaButtonReceiver;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.session.DefaultMediaNotificationProvider;
+import androidx.media3.session.MediaController;
+import androidx.media3.session.MediaNotification;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
+import androidx.media3.session.MediaStyleNotificationHelper;
 
 import java.util.Objects;
 
+@UnstableApi
 public class PlayerService extends MediaSessionService {
 
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "media_playback_channel";
+
     private static ExoPlayer player;
     private MediaSessionCompat mediaSessionCompat;
     private String mediaName;
@@ -48,6 +58,8 @@ public class PlayerService extends MediaSessionService {
 
     private boolean isInitialized;
     private String currentMediaPath;
+    private MediaNotification.Provider notificationProvider;
+
 
     private PlayerActivity playerActivity;
 
@@ -79,8 +91,10 @@ public class PlayerService extends MediaSessionService {
         return mediaSession;
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
         mediaName = intent.getStringExtra("name");
         String mediaPath = intent.getStringExtra("path");
 
@@ -91,7 +105,6 @@ public class PlayerService extends MediaSessionService {
             initializePlayer(mediaPath);
             currentMediaPath = mediaPath;
         }
-
 
         String action = intent.getAction();
         if (action != null) {
@@ -121,9 +134,22 @@ public class PlayerService extends MediaSessionService {
         if (!player.getPlayWhenReady()
                 || player.getMediaItemCount() == 0
                 || player.getPlaybackState() == Player.STATE_ENDED) {
-            // Stop the service if not playing, continue playing in the background
-            // otherwise.
-            stopForeground(true);
+
+            if (player != null) {
+                player.release();
+            }
+
+            if (mediaSessionCompat != null) {
+                mediaSessionCompat.release();
+                mediaSessionCompat = null;
+            }
+
+            if (mediaSession != null) {
+                mediaSession.release();
+                mediaSession = null;
+            }
+
+            stopForegroundNotification();
             stopSelf();
         }
     }
@@ -132,12 +158,12 @@ public class PlayerService extends MediaSessionService {
     private void initializePlayer(String mediaPath) {
         isInitialized = true;
         Log.d(TAG, "initializePlayerS: YES");
-        player.setMediaItem(MediaItem.fromUri(mediaPath));
-        player.prepare();
-        player.play();
+//        player.setMediaItem(MediaItem.fromUri(mediaPath));
+//        player.prepare();
+//        player.play();
         updateMediaSessionMetadata();
         Log.d(TAG, "initializePlayerL: YES");
-
+        startForegroundNotification();
     }
 
 
@@ -156,7 +182,7 @@ public class PlayerService extends MediaSessionService {
 
 
     private Notification createNotification() {
-//        PendingIntent playPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY);
+//        PendingIntent playPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT);
 //        PendingIntent pausePendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE);
 
         Intent playIntent = new Intent(this, PlayerService.class).setAction("ACTION_PLAY");
@@ -176,19 +202,17 @@ public class PlayerService extends MediaSessionService {
                 .setContentTitle(mediaName)
                 .setContentText("Playing")
 //                .setCustomContentView(remoteViews)
-                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
+//                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
 
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0)
-                        .setMediaSession(mediaSessionCompat.getSessionToken()))
+                .setStyle(new MediaStyleNotificationHelper.MediaStyle(mediaSession)
+                        .setShowActionsInCompactView(0, 1, 2))
 
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build())
                 .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_previous_24, "Previous", null).build())
                 .addAction(new NotificationCompat.Action.Builder(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, player.isPlaying() ? "Pause" : "Play", player.isPlaying() ? pausePendingIntent : playPendingIntent).build())
                 .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_next_24, "Next", null).build())
                 .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build());
 
-        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
+//        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
         return builder.build();
     }
 
@@ -242,10 +266,16 @@ public class PlayerService extends MediaSessionService {
 
         if (mediaSessionCompat != null) {
             mediaSessionCompat.release();
+            mediaSessionCompat = null;
         }
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
+        if (mediaSession != null) {
+            mediaSession.release();
+            mediaSession = null;
+        }
+
         stopForegroundNotification();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
         handler.removeCallbacks(updateNotificationRunnable);
     }
 
@@ -259,6 +289,7 @@ public class PlayerService extends MediaSessionService {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        super.onBind(intent);
         return binder;
     }
 
@@ -277,15 +308,13 @@ public class PlayerService extends MediaSessionService {
     };
 
     private void startForegroundNotification() {
-//        startForeground(NOTIFICATION_ID, createNotification());
-//        handler.postDelayed(updateNotificationRunnable, 100); // Start updating notifications
-        ;
+        startForeground(NOTIFICATION_ID, createNotification());
+        handler.postDelayed(updateNotificationRunnable, 100); // Start updating notifications
     }
 
     private void stopForegroundNotification() {
-//        stopForeground(true);
-//        handler.removeCallbacks(updateNotificationRunnable); // Stop updating notifications
-        ;
+        stopForeground(true);
+        handler.removeCallbacks(updateNotificationRunnable); // Stop updating notifications
     }
 
 
