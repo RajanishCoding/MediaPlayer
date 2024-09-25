@@ -29,16 +29,26 @@
 
 
     <!-- Toolbar Colors -->
-    <color name="toolbar_background">#CEE3FF</color>
+    <color name="toolbar_background">#D0E2F0</color>
     <color name="toolbar_text">#000000</color>
     <color name="toolbar_icons">#000000</color>
 
-    <color name="toolbar_background_dark">#040F73</color>
+    <color name="toolbar_background_dark">#060B31</color>
     <color name="toolbar_text_dark">#FFFFFF</color>
     <color name="toolbar_icons_dark">#FFFFFF</color>
     
     <color name="toolbar_background_player_transparent">@android:color/transparent</color>
     <color name="toolbar_background_player_black">#80000000</color>
+
+    <!-- Navigation Bar View -->
+    <color name="nav_bgcolor">#D3D6E1</color>
+    <color name="nav_bgcolor_dark">#030D33</color>
+    <color name="nav_selected_color">#3A5EE1</color>
+    <color name="nav_selected_color_dark">#5170E1</color>
+    <color name="nav_unselected_color">#696B92</color>
+    <color name="nav_unselected_color_dark">#9A9BBE</color>
+    <color name="nav_text_color">#31313C</color>
+    <color name="nav_text_color_dark">#C7C8EF</color>
 
     <!-- Button Colors -->
     <color name="button_background">#0004C6</color>

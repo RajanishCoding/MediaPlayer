@@ -16,25 +16,30 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.media3.exoplayer.ExoPlayer;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 //import androidx.media3.exoplayer.Player;
-import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -50,8 +55,6 @@ import java.util.Set;
 
 public class FilesListActivity extends AppCompatActivity {
 
-    private PlayerView playerView;
-    private ExoPlayer player;
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
     private static ArrayList<String> AudioFilesPath;
@@ -68,11 +71,12 @@ public class FilesListActivity extends AppCompatActivity {
 
     private boolean readStorage;
     private boolean writeStorage;
+    private boolean isStorageAccessed;
     private boolean isSetAdapterNeeded;
     private String TAG = "TAG";
     public boolean isInsert;
 
-
+    private BottomNavigationView bottomNavigationView;
 
 
     @Override
@@ -81,8 +85,10 @@ public class FilesListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_files_list);
 
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerViewVideo);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        bottomNavigationView = findViewById(R.id.bottomNavBar);
 
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
@@ -96,64 +102,39 @@ public class FilesListActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                queryMediaFiles(true); // Example: Refresh media list
+//                queryMediaFiles(true); // Example: Refresh media list
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
 
+        CheckAndAsk_StorageAccess();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()) {
-                // Permission is granted
-                queryMediaFiles(false);
-                Log.d(TAG, "onCreate: YES");
-            }
-            else {
-                checkNotificationAccess();
-                StorageRationaleLayout.setVisibility(View.VISIBLE);
-                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        StorageAccessA11_PermissionDialog();
+        bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                if (item.getItemId() == R.id.nav_video) {
+                    if (!isStorageAccessed) {
+                        return false;
                     }
-                });
-            }
-        }
-        else {
-            checkStorageAccessA10();
-        }
-    }
-
-    private void checkNotificationAccess() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Check if the permission is granted
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                NotificationEnabled = true;
-            }
-
-            else if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, Manifest.permission.POST_NOTIFICATIONS)) {
-                NotificationEnabled = false;
-                showRationaleDialogNotification();
-            }
-
-            else {
-                NotificationEnabled = false;
-                requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
-            }
-        }
-    }
-
-    // system permissions dialog.
-    ActivityResultLauncher<String> requestPermissionLauncher_Notification =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
-                @Override
-                public void onActivityResult(Boolean isGranted) {
-                    NotificationEnabled = isGranted;
+                    loadFragment(new VideoFragment(), false);
+                    return true;
                 }
-            });
+
+                else if (item.getItemId() == R.id.nav_audio) {
+                    if (!isStorageAccessed) {
+                        return false;
+                    }
+                    loadFragment(new AudioFragment(), false);
+                    return true;
+                }
+
+                else {
+                    loadFragment(new SettingsFragment(), false);
+                    return true;
+                }
+            }
+        });
+    }
 
 
     private static final String[] REQUIRED_PERMISSIONS = {
@@ -161,18 +142,13 @@ public class FilesListActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private void checkStorageAccessA10() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-//            NotificationEnabled = true;
-            queryMediaFiles(false);
-        }
-
-        else {
-//            NotificationEnabled = false;
-            requestPermissionsLauncher_StorageA10.launch(REQUIRED_PERMISSIONS);
-        }
-    }
+    ActivityResultLauncher<String> requestPermissionLauncher_Notification =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    NotificationEnabled = isGranted;
+                }
+            });
 
     ActivityResultLauncher<String[]> requestPermissionsLauncher_StorageA10 =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
@@ -183,9 +159,12 @@ public class FilesListActivity extends AppCompatActivity {
 
                     if (readPermission != null && readPermission && writePermission != null && writePermission) {
                         // Both permissions are granted
-                        queryMediaFiles(false);
+                        isStorageAccessed = true;
+                        StorageRationaleLayout.setVisibility(View.GONE);
+                        loadFragment(new VideoFragment(), true);
                     }
                     else {
+                        isStorageAccessed = false;
                         StorageRationaleLayout.setVisibility(View.VISIBLE);
                         Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -200,8 +179,90 @@ public class FilesListActivity extends AppCompatActivity {
                 }
             });
 
+    // Only check if permission is Allowed or not
+    private boolean checkStorageAccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        }
+        else {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
 
-    private void StorageAccessA11_PermissionDialog() {
+    // Check and Decide for, which permission is needed
+    private void CheckAndAsk_StorageAccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            CheckAndAsk_StorageAccessA11();
+        else
+            CheckAndAsk_StorageAccessA10();
+    }
+
+    // Check and Asks the permission for android 11 and above
+    private void CheckAndAsk_StorageAccessA10() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+//            NotificationEnabled = true;
+            isStorageAccessed = true;
+            loadFragment(new VideoFragment(), true);
+        }
+
+        else {
+            isStorageAccessed = false;
+            requestPermissionsLauncher_StorageA10.launch(REQUIRED_PERMISSIONS);
+        }
+    }
+
+    // Check and Asks the permission for android 10 and below
+    private void CheckAndAsk_StorageAccessA11() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                isStorageAccessed = true;
+                loadFragment(new VideoFragment(), true);
+//                queryMediaFiles(false);
+                Log.d(TAG, "onCreate: YES");
+            }
+            else {
+                isStorageAccessed = false;
+                CheckAndAsk_NotificationAccess();
+                StorageRationaleLayout.setVisibility(View.VISIBLE);
+                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showPermissionDialog_StorageAccessA11();
+                    }
+                });
+            }
+        }
+
+
+    }
+
+    // Check and Asks the permission for Notification for Android 13 and above
+    private void CheckAndAsk_NotificationAccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Check if the permission is granted
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED) {
+                NotificationEnabled = true;
+            }
+
+            else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.POST_NOTIFICATIONS)) {
+                NotificationEnabled = false;
+                showRationaleDialog_Notification();
+            }
+
+            else {
+                NotificationEnabled = false;
+                requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+    }
+
+    // Permission Confirmation Dialog for android 11 and above
+    private void showPermissionDialog_StorageAccessA11() {
         new AlertDialog.Builder(this)
                 .setTitle("Storage Permission")
                 .setMessage(R.string.storage_access_text)
@@ -226,7 +287,8 @@ public class FilesListActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showRationaleDialogNotification(){
+    // Permission Rationale Dialog
+    private void showRationaleDialog_Notification(){
         new AlertDialog.Builder(this)
                 .setTitle("Notification Permission")
                 .setMessage("Notification permission is required to control the media playback from notification while background play is enabled.\n\n" +
@@ -252,24 +314,57 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Check if the permission is granted after returning to app.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()){
-                StorageRationaleLayout.setVisibility(View.GONE);
-                queryMediaFiles(true);
-            }
-        }
-        else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                StorageRationaleLayout.setVisibility(View.GONE);
-                queryMediaFiles(true);
-            }
+    private void loadFragment(Fragment fragment, boolean isAdd) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
+
+        if (isAdd)
+            fragmentTransaction.add(R.id.fragmentContainer, fragment);
+        else
+            fragmentTransaction.replace(R.id.fragmentContainer, fragment);
+
+        fragmentTransaction.commit();
+    }
+
+    private boolean isFragmentAlreadyActive() {
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+        return currentFragment != null;
+    }
+
+
+    private void unloadFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
+
+        if (currentFragment != null) {
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(currentFragment);
+            fragmentTransaction.commit();
         }
     }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Check if the permission is granted after returning to app
+        isStorageAccessed = checkStorageAccess();
+
+        if (isStorageAccessed) {
+            StorageRationaleLayout.setVisibility(View.GONE);
+
+            if (!isFragmentAlreadyActive()) {
+                loadFragment(new VideoFragment(), true);
+            }
+//            queryMediaFiles(true);
+        }
+        else {
+            unloadFragment();
+            CheckAndAsk_StorageAccess();
+        }
+    }
+
 
     List<Media> storedMediaList;
 
@@ -321,6 +416,8 @@ public class FilesListActivity extends AppCompatActivity {
         if (videoCursor != null) {
             processCursor(videoCursor, parentFolders, false);
             videoCursor.close();
+
+            
         }
 
         // Retrieve and display files in each parent folder

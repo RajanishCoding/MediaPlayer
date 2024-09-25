@@ -47,7 +47,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
         Media media = mediaList.get(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
-        holder.duration.setText(media.getDuration());
+        holder.duration.setText(media.getSize());
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
 
@@ -149,6 +149,20 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
         return thumbnail;
     }
 
+    public void addMediaItem(Media media) {
+        mediaList.add(media);  // Add new item to the list
+        notifyItemInserted(mediaList.size() - 1);  // Notify the adapter of the new item
+    }
+
+    public void addMediaItems(List<Media> newMediaItems) {
+        int startPosition = mediaList.size();
+        mediaList.addAll(newMediaItems);
+        notifyItemRangeInserted(startPosition, newMediaItems.size());
+    }
+
+    public void addAllMediaItems() {
+        notifyDataSetChanged();
+    }
 
     @Override
     public int getItemCount() {

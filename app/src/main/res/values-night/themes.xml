@@ -57,6 +57,13 @@
     </style>
 
 
+    <!-- Navigation Bar View Styles -->
+    <style name="NavBarStyle">
+        <item name="android:background">@color/nav_bgcolor_dark</item>
+        <item name="itemIconTint">@color/selector_navbar_items</item>
+        <item name="itemTextColor">@color/nav_text_color_dark</item>
+    </style>
+
     <!-- Toolbar Style -->
     <style name="ToolbarStyle" parent="Widget.AppCompat.Toolbar">
         <item name="android:background">@color/toolbar_background_dark</item>
