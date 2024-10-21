@@ -1,104 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/selector_list_view"
-    android:gravity="center"
-    android:orientation="horizontal"
-    android:paddingVertical="9dp"
-    android:paddingHorizontal="12dp"
-    android:minHeight="70dp"
->
 
-    <!-- Thumbnail with Duration Overlay -->
+<!--<androidx.constraintlayout.widget.ConstraintLayout-->
+<!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="wrap_content"-->
+<!--    android:background="@drawable/selector_list_view"-->
+<!--    android:gravity="center"-->
+<!--    android:orientation="horizontal"-->
+<!--    android:paddingVertical="4dp"-->
+<!--    android:minHeight="70dp">-->
+
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/thumbnailLayout"
-        android:layout_width="106dp"
-        android:layout_height="65.625dp"
-        android:backgroundTint="@color/black"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" >
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_list_view"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingVertical="9dp"
+        android:paddingHorizontal="12dp"
+        android:minHeight="70dp">
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:cardCornerRadius="7.5dp"
-            app:cardElevation="1.8dp"
-            android:layout_margin="3dp">
+        <!-- Thumbnail with Duration Overlay -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/thumbnailLayout"
+            android:layout_width="106dp"
+            android:layout_height="65.625dp"
+            android:backgroundTint="@color/black"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" >
 
-            <ImageView
-                android:id="@+id/thumbnail"
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/selector_list_image"
-                android:contentDescription="TODO"
-                android:scaleType="center"
-                android:src="@drawable/music1" />
+                app:cardCornerRadius="7.5dp"
+                app:cardElevation="1.8dp"
+                android:layout_margin="3dp">
 
-        </androidx.cardview.widget.CardView>
+                <ImageView
+                    android:id="@+id/thumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/selector_list_image"
+                    android:contentDescription="TODO"
+                    android:scaleType="center"
+                    android:src="@drawable/music1" />
 
-        <TextView
-            android:id="@+id/duration"
-            android:layout_width="wrap_content"
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:background="@drawable/selector_thumbnail_text"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="1dp"
+                android:text="00:00:00"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:elevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Media Info -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@drawable/selector_thumbnail_text"
-            android:paddingHorizontal="4dp"
-            android:paddingVertical="1dp"
-            android:text="00:00:00"
-            android:textColor="@color/white"
-            android:textSize="11sp"
-            android:elevation="4dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:layout_marginStart="10dp"
+            app:layout_constraintStart_toEndOf="@id/thumbnailLayout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Video Title -->
+            <TextView
+                android:id="@+id/name"
+                style="@style/TextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:text="Name"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/> <!-- Set text dynamically in onBindViewHolder -->
+
+            <!-- Artist Name -->
+            <TextView
+                android:id="@+id/path"
+                style="@style/TextViewStyleVariant"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Path"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-condensed"
+                app:layout_constraintTop_toBottomOf="@id/name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Media Info -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        app:layout_constraintStart_toEndOf="@id/thumbnailLayout"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+<!--</androidx.constraintlayout.widget.ConstraintLayout>-->
 
-        <!-- Video Title -->
-        <TextView
-            android:id="@+id/name"
-            style="@style/TextViewStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="3"
-            android:text="Name"
-            android:textSize="16sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/> <!-- Set text dynamically in onBindViewHolder -->
-
-        <!-- Artist Name -->
-        <TextView
-            android:id="@+id/path"
-            style="@style/TextViewStyleVariant"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="Path"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-condensed"
-            app:layout_constraintTop_toBottomOf="@id/name"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>

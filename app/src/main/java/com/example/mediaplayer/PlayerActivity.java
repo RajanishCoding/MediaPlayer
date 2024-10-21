@@ -1,23 +1,18 @@
 package com.example.mediaplayer;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -25,14 +20,12 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.OptIn;
@@ -42,7 +35,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.app.NavUtils;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
@@ -52,11 +44,12 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.analytics.AnalyticsListener;
+import androidx.media3.exoplayer.video.VideoRendererEventListener;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -76,6 +69,8 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton playButton;
     private ImageButton backButton;
     private ImageButton rotateButton;
+    private ImageButton decoderButton;
+
     private SurfaceView surfaceView;
     private PlayerView playerView;
     private SurfaceHolder surfaceHolder;
@@ -119,8 +114,51 @@ public class PlayerActivity extends AppCompatActivity {
     private int halfWidth;
     private int Q3_Width;
     private int Q4_Width;
+    private float totalScrollX = 0f;
+    private float totalScrollY1 = 0f;
+    private float totalScrollY2 = 0f;
 
+    private View volumeLayout;
+    private View brightnessLayout;
     private TextView volumeText;
+    private TextView brightnessText;
+
+    private View seekLayout;
+    private TextView seekCurrentTimeText;
+    private TextView seekTimeText;
+
+    private View speedLayout;
+
+    private View forwardLayout;
+    private View rewindLayout;
+    private TextView forwardText;
+    private TextView rewindText;
+
+    private long doubleTapSeekTime = 10000;
+
+    private int seekCurrentTime;
+    private int seekTime;
+
+    private boolean isLongPressed;
+    private boolean isScrolling;
+    private boolean isSeeking;
+    private boolean isVolumeChanging;
+    private boolean isBrightnessChanging;
+
+    private boolean isControlsShowing;
+    private boolean isControlsHidden;
+    private boolean isControlsShowingByAction;
+
+    private boolean isSeekbarMoving;
+
+    private enum GestureDirection { NONE, HORIZONTAL, VERTICAL }
+    private GestureDirection gestureDirection = GestureDirection.NONE;
+
+    private boolean isPlaying;
+    private boolean wasPlaying;
+
+    private boolean isFirstTimeBuffering = false;
+    private boolean isFirstTimePlaying = false;
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -218,6 +256,7 @@ public class PlayerActivity extends AppCompatActivity {
         ToolbarText = findViewById(R.id.toolbar_title);
         backButton = findViewById(R.id.back_button);
         rotateButton = findViewById(R.id.rotate);
+        decoderButton = findViewById(R.id.decoder_button);
 
         playerView = findViewById(R.id.surface_view);
 
@@ -229,12 +268,28 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
 
+        volumeLayout = findViewById(R.id.volume_layout);
+        brightnessLayout = findViewById(R.id.brightness_layout);
+        speedLayout = findViewById(R.id.speed_layout);
         volumeText = findViewById(R.id.volume_text);
+        brightnessText = findViewById(R.id.brightness_text);
+
+        seekLayout = findViewById(R.id.seek_layout);
+        seekCurrentTimeText = findViewById(R.id.seek_current_time);
+        seekTimeText = findViewById(R.id.seek_time);
+
+        forwardLayout = findViewById(R.id.forward_layout);
+        rewindLayout = findViewById(R.id.rewind_layout);
+        forwardText = findViewById(R.id.forward_text);
+        rewindText = findViewById(R.id.rewind_text);
 
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
 
 
         Intent intent = getIntent();
@@ -267,7 +322,32 @@ public class PlayerActivity extends AppCompatActivity {
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                isSeekbarMoving = true;
+
+                if(isControlsShowing) {
+                    if (controlsRunnable != null) {
+                        handler.removeCallbacks(controlsRunnable);
+                    }
+                }
+
+                seekTimeText.setVisibility(View.GONE);
+                seekLayout.setVisibility(View.VISIBLE);
+                seekLayout.startAnimation(fadeIn);
+
+                wasPlaying = player.isPlaying();
+                player.pause();
+                f = true;
+            }
+
+            @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    player.seekTo(progress);
+                    seekCurrentTime = (int) player.getCurrentPosition();
+                    seekCurrentTimeText.setText(MillisToTime(seekCurrentTime));
+                }
+
                 if (isTime1ButtonClicked) {
                     time1.setText("-" + MillisToTime(player.getDuration() - progress));
                 }
@@ -284,13 +364,35 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                f = true;
-            }
-
-            @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                player.seekTo(seekBar.getProgress());
+//                player.seekTo(seekBar.getProgress());
+                isSeekbarMoving = false;
+
+                if (isControlsShowing) {
+                    controlsToast();
+                }
+
+                if (wasPlaying) {
+                    player.play();
+                    wasPlaying = false;
+                }
+
+                seekTime = 0;
+                seekLayout.startAnimation(fadeOut);
+                fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {}
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        seekLayout.setVisibility(View.GONE);
+                        seekTimeText.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {}
+                });
+
                 f = false;
             }
         });
@@ -305,21 +407,18 @@ public class PlayerActivity extends AppCompatActivity {
                     }
 
                     if (player.isPlaying()){
+                        isPlaying = true;
                         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
                     }
                     else {
+                        isPlaying = false;
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                     }
-
-                    // Execute your code here, e.g., setting a surface to the player
-//                    if (player != null && surfaceView.getHolder().getSurface().isValid()) {
-//                        player.setVideoSurfaceHolder(surfaceHolder);
-//                    }
                 }
                 handler.postDelayed(this, 50);
             }
         };
-        handler.postDelayed(updateSeekBar, 50);
+        handler.postDelayed(updateSeekBar, 100);
 
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -341,20 +440,6 @@ public class PlayerActivity extends AppCompatActivity {
             }
             isOrientation = true;
         });
-
-        playerView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gestureDetector.onTouchEvent(event);
-
-                if (event.getAction() == MotionEvent.ACTION_UP) {
-                    player.setPlaybackSpeed(1);
-                }
-
-                return true;
-            }
-        });
-
 
         // Fit to Screen and Crop to Screen Button Setting
         fitcropButton.setOnClickListener(new View.OnClickListener() {
@@ -399,6 +484,72 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
 
+        playerView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (isLongPressed) {
+                    isLongPressed = false;
+                    player.setPlaybackSpeed(1);
+                    speedLayout.startAnimation(fadeOut);
+                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            speedLayout.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                        }
+                    });
+                }
+
+                if (isSeeking) {
+                    if (isControlsShowing) {
+                        controlsToast();
+                    }
+                    else {
+                        hideBottomControls();
+                    }
+
+                    if (wasPlaying) {
+                        player.play();
+                        wasPlaying = false;
+                    }
+
+                    seekTime = 0;
+                    seekLayout.startAnimation(fadeOut);
+                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {}
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            seekLayout.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {}
+                    });
+                }
+
+                if (isScrolling) {
+                    isScrolling = false; isSeeking = false; isVolumeChanging = false; isBrightnessChanging = false;
+                    gestureDirection = GestureDirection.NONE;
+                    Log.d("Scrolling", "onScroll: " + gestureDirection.name());
+                }
+
+
+            }
+
+            v.performClick();
+            return true;
+        });
+
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
@@ -409,13 +560,14 @@ public class PlayerActivity extends AppCompatActivity {
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 // Handle single tap
                 if (!surface_click_frag && !isInAnimation && !isOutAnimation){
+                    handler.removeCallbacks(controlsRunnable);
                     Fullscreen();
-                    outAnimation();
+                    hideControls();
                 }
 
-                else if (!isInAnimation && !isOutAnimation) {
+                else if (!isInAnimation && !isOutAnimation && !isSeeking) {
                     notFullscreen();
-                    inAnimation();
+                    showControls();
                 }
 
                 return super.onSingleTapUp(e);
@@ -423,29 +575,33 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                if (e.getX() <= Q3_Width) {
-                    player.seekTo(player.getCurrentPosition() - 5000);
-                    Log.d(TAG, "onDoubleTap: " + Q3_Width + " " + e.getX() + " " + screenWidth);
-                }
-
-                else if (e.getX() <= 2*Q3_Width) {
-                    if (player != null) {
-                        if (!player.isPlaying()) {
-                            player.play();
-                            playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                            Log.d(TAG, "onPLAY: YES");
-                        } else {
-                            player.pause();
-                            playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                            Log.d(TAG, "onPLAY: NO");
-                        }
-                        Log.d(TAG, "onDoubleTap: " + 2*Q3_Width + " " + e.getX() + " " + screenWidth);
+                if (!isLongPressed && !isScrolling) {
+                    if (e.getX() <= Q3_Width) {
+                        player.seekTo(player.getCurrentPosition() - doubleTapSeekTime);
+                        showRewindLayout(rewindLayout, rewindText);
+                        Log.d(TAG, "onDoubleTap: " + Q3_Width + " " + e.getX() + " " + screenWidth);
                     }
-                }
-
-                else {
-                    player.seekTo(player.getCurrentPosition() + 5000);
-                    Log.d(TAG, "onDoubleTap: " + 3*Q3_Width + " " + e.getX() + " " + screenWidth);
+                    else if (e.getX() <= 2 * Q3_Width) {
+                        if (player != null) {
+                            if (!player.isPlaying()) {
+                                player.play();
+                                isPlaying = true;
+                                playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                                Log.d(TAG, "onPLAY: YES");
+                            } else {
+                                player.pause();
+                                isPlaying = false;
+                                playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                                Log.d(TAG, "onPLAY: NO");
+                            }
+                            Log.d(TAG, "onDoubleTap: " + 2 * Q3_Width + " " + e.getX() + " " + screenWidth);
+                        }
+                    }
+                    else {
+                        player.seekTo(player.getCurrentPosition() + doubleTapSeekTime);
+                        showForwardLayout(forwardLayout, forwardText);
+                        Log.d(TAG, "onDoubleTap: " + 3 * Q3_Width + " " + e.getX() + " " + screenWidth);
+                    }
                 }
 
                 return super.onDoubleTap(e);
@@ -453,17 +609,111 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onLongPress(MotionEvent e) {
-                if (e.getX() < halfWidth) {
-                    ;
+                if(isPlaying && !isScrolling) {
+                    isLongPressed = true;
+                    hideLayouts(volumeLayout, brightnessLayout);
+
+                    if (e.getX() < halfWidth) {
+                        ;
+                    }
+                    else {
+                        speedLayout.setVisibility(View.VISIBLE);
+                        speedLayout.startAnimation(fadeIn);
+
+                        player.setPlaybackSpeed(2);
+                    }
                 }
-                else {
-                    player.setPlaybackSpeed(2);
-                }
-                // Handle long press
             }
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                Log.d("Scrolling", "onScroll: " + gestureDirection.name() + "  " + isSeeking);
+                isScrolling = true;
+
+                if (gestureDirection == GestureDirection.NONE && !isLongPressed) {
+                    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+                        if(isControlsShowing) {
+                            if (controlsRunnable != null) {
+                                handler.removeCallbacks(controlsRunnable);
+                            }
+                        }
+                        else {
+                            showBottomControls();
+                        }
+
+                        seekTimeText.setVisibility(View.VISIBLE);
+                        seekLayout.setVisibility(View.VISIBLE);
+                        seekLayout.startAnimation(fadeIn);
+
+                        wasPlaying = player.isPlaying();
+                        player.pause();
+                        isControlsShowingByAction = true;
+
+                        // Lock as horizontal gesture (seeking)
+                        gestureDirection = GestureDirection.HORIZONTAL;
+                    }
+                    else {
+                        // Lock as vertical gesture (volume/brightness adjustment)
+                        gestureDirection = GestureDirection.VERTICAL;
+                    }
+                }
+
+                if (gestureDirection == GestureDirection.HORIZONTAL) {
+                    isSeeking = true;
+                    totalScrollX += distanceX;
+
+                    if (Math.abs(totalScrollX) > 20) {
+                        if (totalScrollX > 0) {
+                            performSeekByTouch(-1000, false);
+                        }
+                        else {
+                            performSeekByTouch(1000, false);
+                        }
+                        totalScrollX = 0;
+                    }
+                }
+
+                else if (gestureDirection == GestureDirection.VERTICAL) {
+                    if (e1.getX() < halfWidth) {
+                        isVolumeChanging = true;
+                        totalScrollY1 += distanceY;
+
+                        if (Math.abs(totalScrollY1) > 50) {
+                            if (totalScrollY1 > 0) {
+                                // Scrolled on left, increase volume
+                                adjustBrightness(0.034f);
+                            }
+                            else {
+                                // Scrolled on right, decrease volume
+                                adjustBrightness(-0.034f);
+                            }
+
+                            totalScrollY1 = 0;
+                        }
+                    }
+
+                    else {
+                        isBrightnessChanging = true;
+                        totalScrollY2 += distanceY;
+
+                        if (Math.abs(totalScrollY2) > 50) {
+                            float maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                            int incrementValue = (int) ((5.0 / 150) * maxVolume);
+                            incrementValue = Math.max(1, incrementValue);
+
+                            if (totalScrollY2 > 0) {
+                                // Scrolled on left, increase volume
+                                adjustVolume(incrementValue);
+                            }
+                            else {
+                                // Scrolled on right, decrease volume
+                                adjustVolume(-incrementValue);
+                            }
+
+                            totalScrollY2 = 0;
+                        }
+                    }
+                }
 
                 return super.onScroll(e1, e2, distanceX, distanceY);
             }
@@ -530,46 +780,40 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView.setPlayer(player);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                isVideoFile = isVideo(media_path);
+        new Thread(() -> {
+            isVideoFile = isVideo(media_path);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isVideoFile) {
-                            isBackgroundPlay = false;
-                        }
-                        else {
-                            isBackgroundPlay = true;
-                        }
+            runOnUiThread(() -> {
+                if (isVideoFile) {
+                    isBackgroundPlay = false;
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    onLandscape();
+                }
+                else {
+                    isBackgroundPlay = true;
+                }
 //                        saveData("isBackgroundPlay", null, isBackgroundPlay);
-                        Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
-                        intent.putExtra("bgPlay", isBackgroundPlay);
-                        LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
-                    }
-                });
-            }
+                Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
+                intent.putExtra("bgPlay", isBackgroundPlay);
+                LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
+            });
         }).start();
 
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 switch (playbackState) {
-                    case Player.STATE_BUFFERING:
-                        isBufferingFinished = false;
-                        buffer_view.setVisibility(View.VISIBLE);
-//                        Log.d(TAG, "onBuffering: YES");
-                        break;
-
                     case Player.STATE_READY:
-                        buffer_view.setVisibility(View.GONE);
-                        seekbar.setMax((int) player.getDuration());
-                        time1.setText(MillisToTime(player.getCurrentPosition()));
-                        time2.setText(MillisToTime(player.getDuration()));
-                        isBufferingFinished = true;
-//                        Log.d(TAG, "onSTATE_READY: Yes");
+                        Log.d("playback", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
+                        if (!isFirstTimePlaying) {
+                            isBufferingFinished = true;
+                            buffer_view.setVisibility(View.GONE);
+                            seekbar.setMax((int) player.getDuration());
+                            time1.setText(!isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
+                            time2.setText(!isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
+                            isFirstTimePlaying = true;
+                            controlsToast();
+                        }
                         break;
 
                     case Player.STATE_ENDED:
@@ -579,10 +823,26 @@ public class PlayerActivity extends AppCompatActivity {
                         player.seekTo(0);
                         break;
 
+                    case Player.STATE_BUFFERING:
+                        break;
+
                     case Player.STATE_IDLE:
                         Log.d(TAG, "onPlaybackStateChanged: IDLE");
                         break;
                 }
+            }
+        });
+
+        player.addAnalyticsListener(new AnalyticsListener() {
+            @Override
+            public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
+                if (decoderName.contains("hardware")) {
+                    decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
+                }
+                else {
+                    decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
+                }
+                Log.d("DecoderInfo", "Decoder Name: " + decoderName);
             }
         });
     }
@@ -618,12 +878,45 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void outAnimation() {
+
+    private void showControls() {
+        isControlsHidden = false; isControlsShowing = true;
+
+        Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
+        Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
+        PlaybackControls_Container.startAnimation(slideInBottom);
+        toolbar.startAnimation(slideInTop);
+
+        slideInBottom.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isInAnimation = true;
+                toolbar.setVisibility(View.VISIBLE);
+                PlaybackControls_Container.setVisibility(View.VISIBLE);
+                surface_click_frag = false;
+                Log.d("Bottom", "onAnimationStart: Yes");
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                isInAnimation = false;
+                controlsToast();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
+    private void hideControls() {
+        isControlsShowing = false; isControlsHidden = true;
+
         Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
         Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
         PlaybackControls_Container.startAnimation(slideOutBottom);
         toolbar.startAnimation(slideOutTop);
-        
 
         slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -647,25 +940,37 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void inAnimation() {
+    private void showBottomControls() {
         Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
-        Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
         PlaybackControls_Container.startAnimation(slideInBottom);
-        toolbar.startAnimation(slideInTop);
 
         slideInBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-                isInAnimation = true;
-                toolbar.setVisibility(View.VISIBLE);
                 PlaybackControls_Container.setVisibility(View.VISIBLE);
-                surface_click_frag = false;
-                Log.d("Bottom", "onAnimationStart: Yes");
             }
 
             @Override
+            public void onAnimationEnd(Animation animation){}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
+    private void hideBottomControls() {
+        Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
+        PlaybackControls_Container.startAnimation(slideOutBottom);
+
+        slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
             public void onAnimationEnd(Animation animation) {
-                isInAnimation = false;
+                PlaybackControls_Container.setVisibility(View.GONE);
             }
 
             @Override
@@ -673,6 +978,21 @@ public class PlayerActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+
+    private Runnable controlsRunnable;
+    private void controlsToast() {
+        if (controlsRunnable != null) {
+            handler.removeCallbacks(controlsRunnable);
+        }
+
+        controlsRunnable = () -> {
+            Fullscreen();
+            hideControls();
+        };
+
+        handler.postDelayed(controlsRunnable, 2000);
     }
 
     private void onLandscape(){
@@ -693,6 +1013,14 @@ public class PlayerActivity extends AppCompatActivity {
         View crop = findViewById(R.id.fit_crop);
         View pip = findViewById(R.id.pip);
         View lower_container = findViewById(R.id.lower_container);
+
+        View rewind_layout = findViewById(R.id.rewind_layout);
+        View rewind_image = findViewById(R.id.rewind_image);
+        View rewind_text = findViewById(R.id.rewind_text);
+
+        View forward_layout = findViewById(R.id.forward_layout);
+        View forward_image = findViewById(R.id.forward_image);
+        View forward_text = findViewById(R.id.forward_text);
 
         setMargin(back, 0, 20); // 7
 
@@ -726,6 +1054,20 @@ public class PlayerActivity extends AppCompatActivity {
 
         setPadding(lower_container, 0, 20);
         setPadding(lower_container, 1, 20);
+
+        setSize(rewind_layout, 0, 230);
+        setSize(rewind_layout, 1, ViewGroup.LayoutParams.MATCH_PARENT);
+        setMargin(rewind_image, 3, -2);
+        rewind_layout.setScaleY(1.2f);
+        rewind_image.setScaleY(1.0f / 1.2f);
+        rewind_text.setScaleY(1.0f / 1.2f);
+
+        setSize(forward_layout, 0, 230);
+        setSize(forward_layout, 1, ViewGroup.LayoutParams.MATCH_PARENT);
+        setMargin(forward_image, 3, -2);
+        forward_layout.setScaleY(1.2f);
+        forward_image.setScaleY(1.0f / 1.2f);
+        forward_text.setScaleY(1.0f / 1.2f);
     }
 
     private void onPortrait(){
@@ -746,6 +1088,14 @@ public class PlayerActivity extends AppCompatActivity {
         View crop = findViewById(R.id.fit_crop);
         View pip = findViewById(R.id.pip);
         View lower_container = findViewById(R.id.lower_container);
+
+        View rewind_layout = findViewById(R.id.rewind_layout);
+        View rewind_image = findViewById(R.id.rewind_image);
+        View rewind_text = findViewById(R.id.rewind_text);
+
+        View forward_layout = findViewById(R.id.forward_layout);
+        View forward_image = findViewById(R.id.forward_image);
+        View forward_text = findViewById(R.id.forward_text);
 
         setMargin(back, 0, 13);
 
@@ -779,10 +1129,32 @@ public class PlayerActivity extends AppCompatActivity {
 
         setPadding(lower_container, 0, 15);
         setPadding(lower_container, 1, 15);
+
+        setSize(rewind_layout, 0, 130);
+        setSize(rewind_layout, 1, 380);
+        setMargin(rewind_image, 3, -3);
+        rewind_layout.setScaleY(1.2f);
+        rewind_image.setScaleY(1.0f / 1.2f);
+        rewind_text.setScaleY(1.0f / 1.2f);
+
+        setSize(forward_layout, 0, 130);
+        setSize(forward_layout, 1, 380);
+        setMargin(forward_image, 3, -3);
+        forward_layout.setScaleY(1.2f);
+        forward_image.setScaleY(1.0f / 1.2f);
+        forward_text.setScaleY(1.0f / 1.2f);
     }
 
     private void setSize(View view, int side, int dp){
-        int px = DpToPixel(dp, this);
+        int px;
+
+        if (dp == ViewGroup.LayoutParams.MATCH_PARENT || dp == ViewGroup.LayoutParams.WRAP_CONTENT) {
+            px = dp;
+        }
+        else {
+            px = DpToPixel(dp, this);  // Convert dp to pixels
+        }
+
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) view.getLayoutParams();
 
         if(side == 0) {
@@ -797,16 +1169,43 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void setMargin(View view, int side, int dp){
         int px = DpToPixel(dp, this);
-        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) view.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
 
-        if(side == 0) {
-            params.setMarginStart(px);
-        }
-        else if(side == 1) {
-            params.setMarginEnd(px);
+        if (layoutParams instanceof ConstraintLayout.LayoutParams) {
+            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) layoutParams;
+
+            if(side == 0) {
+                params.setMarginStart(px);
+            }
+            else if(side == 1) {
+                params.setMarginEnd(px);
+            }
+            else if (side == 2) {
+                params.setMargins(params.leftMargin, px, params.rightMargin, params.bottomMargin);
+            }
+            else if (side == 3) {
+                params.setMargins(params.leftMargin, params.topMargin, params.rightMargin, px);
+            }
+            view.setLayoutParams(params);
         }
 
-        view.setLayoutParams(params);
+        else if (layoutParams instanceof LinearLayout.LayoutParams) {
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) layoutParams;
+
+            if(side == 0) {
+                params.setMarginStart(px);
+            }
+            else if(side == 1) {
+                params.setMarginEnd(px);
+            }
+            else if (side == 2) {
+                params.setMargins(params.leftMargin, px, params.rightMargin, params.bottomMargin);
+            }
+            else if (side == 3) {
+                params.setMargins(params.leftMargin, params.topMargin, params.rightMargin, px);
+            }
+            view.setLayoutParams(params);
+        }
     }
 
     private void setPadding(View view, int side, int dp){
@@ -890,18 +1289,238 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            adjustVolume(keyCode);
+            float maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int incrementValue = (int) ((5.0 / 150) * maxVolume);
+            incrementValue = Math.max(1, incrementValue);
+
+            int direction = keyCode == KeyEvent.KEYCODE_VOLUME_UP ? incrementValue : -incrementValue;
+            adjustVolume(direction);
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
+    private long videoDuration;
+    private float scrollSensitivity = 50f;
+    private long totalScrollDistance = 0;
 
-    private void adjustVolume(int keyCode) {
-        int direction = keyCode == KeyEvent.KEYCODE_VOLUME_UP ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
-        audioManager.adjustVolume(direction, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+    private void performSeekByTouch(int incrementValue, boolean fromUser) {
+        int seekValue = (int) player.getCurrentPosition() + incrementValue;
+        player.seekTo(seekValue);
+        seekbar.setProgress(seekValue);
 
-        volumeText.setText(String.valueOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)));
+        seekCurrentTime = (int) player.getCurrentPosition();
+        seekCurrentTimeText.setText(MillisToTime(seekCurrentTime));
+
+        seekTime += incrementValue > 0 ? 1 : -1;
+
+        String sign = seekTime >= 0 ? "+" : "-";
+        seekTimeText.setText(sign + SecToMin(Math.abs(seekTime)));
+    }
+
+
+    private void adjustVolume(int incrementValue) {
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume + incrementValue, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+
+        volumeText.setText(String.valueOf(getCurrentVolumeLevelText()));
+        hideLayouts(brightnessLayout);
+        showCustomToast(volumeLayout, 800);
+    }
+
+    private void adjustBrightness(float incrementValue) {
+        // Get current window attributes
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+
+        // Calculating new brightness, ensuring it's between 0 and 1
+        layoutParams.screenBrightness = Math.max(0, Math.min(layoutParams.screenBrightness + incrementValue, 1));
+
+        // Applying new brightness
+        getWindow().setAttributes(layoutParams);
+
+        brightnessText.setText(String.valueOf(getCurrentBrightnessLevelText()));
+        hideLayouts(volumeLayout);
+        showCustomToast(brightnessLayout, 800);
+    }
+
+    private void hideLayouts(View... layouts) {
+        for (View layout : layouts) {
+            if (layout.getVisibility() == View.VISIBLE) {
+                layout.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private int getCurrentVolumeLevelText() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        return (int) ((currentVolume / (float) maxVolume) * 150);
+    }
+
+    private int getCurrentBrightnessLevelText() {
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        return (int) (layoutParams.screenBrightness * 30);
+    }
+
+
+    private Runnable toastRunnable;
+
+    private void showCustomToast(View toastView, long duration) {
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+
+        if (toastView.getVisibility() == View.GONE) {
+            toastView.setVisibility(View.VISIBLE);
+            toastView.startAnimation(fadeIn);
+        }
+
+        // Removing any existing callbacks to prevent the past callbacks interrupting present callbacks.
+        if (toastRunnable != null) {
+            handler.removeCallbacks(toastRunnable);
+        }
+
+        toastRunnable = () -> {
+            toastView.startAnimation(fadeOut);
+
+            fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    toastView.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+        };
+
+        handler.postDelayed(toastRunnable, duration);
+    }
+
+
+    private Runnable rewindTextRunnable, rewindFadeOutRunnable, forwardTextRunnable, forwardFadeOutRunnable;
+    private int tapCount = 0;
+
+    private void showRewindLayout(View layout, TextView timeText) {
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+
+        tapCount++;
+
+        String time = String.valueOf((doubleTapSeekTime / 1000) * tapCount);
+        timeText.setText(time + " sec");
+
+        layout.setPressed(true);
+        layout.postDelayed(() -> layout.setPressed(false), 300);
+
+        if (layout.getVisibility() == View.GONE) {
+            layout.setVisibility(View.VISIBLE);
+            layout.startAnimation(fadeIn);
+        }
+
+        // Resetting the timer of handler
+        if (rewindTextRunnable != null) {
+            handler.removeCallbacks(rewindTextRunnable);
+        }
+
+
+        rewindTextRunnable = () -> {
+            tapCount = 0;
+        };
+
+        handler.postDelayed(rewindTextRunnable, 700);
+
+
+        // Resetting the timer of handler
+        if (rewindFadeOutRunnable != null) {
+            handler.removeCallbacks(rewindFadeOutRunnable);
+        }
+
+        rewindFadeOutRunnable = () -> {
+            layout.startAnimation(fadeOut);
+
+            fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    layout.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+
+        };
+
+        handler.postDelayed(rewindFadeOutRunnable, 700);
+    }
+
+    private void showForwardLayout(View layout, TextView timeText) {
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+
+        tapCount++;
+
+        String time = String.valueOf((doubleTapSeekTime / 1000) * tapCount);
+        timeText.setText(time + " sec");
+
+        layout.setPressed(true);
+        layout.postDelayed(() -> layout.setPressed(false), 300);
+
+        if (layout.getVisibility() == View.GONE) {
+            layout.setVisibility(View.VISIBLE);
+            layout.startAnimation(fadeIn);
+        }
+
+        // Resetting the timer of handler
+        if (forwardTextRunnable != null) {
+            handler.removeCallbacks(forwardTextRunnable);
+        }
+
+
+        forwardTextRunnable = () -> {
+            tapCount = 0;
+        };
+
+        handler.postDelayed(forwardTextRunnable, 700);
+
+
+        // Resetting the timer of handler
+        if (forwardFadeOutRunnable != null) {
+            handler.removeCallbacks(forwardFadeOutRunnable);
+        }
+
+        forwardFadeOutRunnable = () -> {
+            layout.startAnimation(fadeOut);
+
+            fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    layout.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+
+        };
+
+        handler.postDelayed(forwardFadeOutRunnable, 700);
     }
 
     private void Fullscreen() {
@@ -996,6 +1615,13 @@ public class PlayerActivity extends AppCompatActivity {
             return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
         }
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
+
+    public String SecToMin(int totalSeconds) {
+        int min = totalSeconds / 60;
+        int sec = totalSeconds % 60;
+
+        return String.format(Locale.ROOT, "%02d:%02d", min, sec);
     }
 
     public int DpToPixel(float dp, Context context) {

@@ -69,6 +69,18 @@
     </androidx.appcompat.widget.Toolbar>
 
 
+    <TextView
+        android:id="@+id/found_text_audio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No audio files found"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:visibility="gone" />
+
+
+
     <!-- SwipeRefreshLayout with RecyclerView -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"

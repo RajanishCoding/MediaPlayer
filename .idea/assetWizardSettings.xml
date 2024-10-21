@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/volume_up/baseline_volume_up_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/fast_rewind/baseline_fast_rewind_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -35,8 +35,8 @@
                           <map>
                             <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="hw" />
-                            <entry key="sourceFile" value="C:\Users\rajan\Downloads\HW.svg" />
+                            <entry key="outputName" value="portrait_seek_shape" />
+                            <entry key="sourceFile" value="C:\Users\rajan\Downloads\Untitled design (1).svg" />
                           </map>
                         </option>
                       </PersistentState>

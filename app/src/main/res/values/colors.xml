@@ -33,7 +33,7 @@
     <color name="toolbar_text">#000000</color>
     <color name="toolbar_icons">#000000</color>
 
-    <color name="toolbar_background_dark">#030623</color>
+    <color name="toolbar_background_dark">#02041C</color>
     <color name="toolbar_text_dark">#FFFFFF</color>
     <color name="toolbar_icons_dark">#FFFFFF</color>
     
@@ -42,9 +42,9 @@
 
     <!-- Navigation Bar View -->
     <color name="nav_bgcolor">#D3D6E1</color>
-    <color name="nav_bgcolor_dark">#020B28</color>
+    <color name="nav_bgcolor_dark">#020421</color>
     <color name="nav_selected_color">#3A5EE1</color>
-    <color name="nav_selected_color_dark">#5170E1</color>
+    <color name="nav_selected_color_dark">#1565C0</color>
     <color name="nav_unselected_color">#696B92</color>
     <color name="nav_unselected_color_dark">#9A9BBE</color>
     <color name="nav_text_color">#31313C</color>
@@ -60,7 +60,7 @@
     <color name="button_text_dark">#FFFFFF</color>
 
     <!-- Button Variant Colors -->
-    <color name="button_background_variant">#482BFF</color>
+    <color name="button_background_variant">#2440D3</color>
     <color name="button_background_pressed_variant">#018786</color>
     <color name="button_text_variant">#000000</color>
 
@@ -81,6 +81,14 @@
 
     <color name="overlayListLight">#59B1C9D5</color>
     <color name="overlayListDark">#59636C7D</color>
+
+    <color name="overlayToastDark">#80000000</color>
+
+    <color name="overlayseeklayoutDark">#A6000000</color>
+
+    <color name="overlayForwardDark">#4D000000</color>
+
+    <color name="overlayForwardRipple">#26FFFFFF</color>
 
     <color name="overlayColorRect">#3F51B5</color> <!-- Dark theme -->
 

@@ -3,8 +3,6 @@ package com.example.mediaplayer;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.BitmapFactory;
-import android.nfc.Tag;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -41,6 +40,8 @@ public class AudioFragment extends Fragment {
     private RecyclerView recyclerView;
     private MediaAdapter adapter;
     private List<Media> mediaList;
+
+    private TextView foundText;
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
@@ -74,6 +75,8 @@ public class AudioFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.recyclerViewAudio);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        foundText = view.findViewById(R.id.found_text_audio);
 
         mediaList = new ArrayList<>();
 
@@ -135,28 +138,32 @@ public class AudioFragment extends Fragment {
                 Log.d("audio", "Load_Or_Query_MediaList: ");
 
                 // If no media files in preferences, query media files
-                queryMediaFiles(false);
-
-                // Saving the media files to preferences
-                saveMediaListToPreferences(mediaList);
+                mediaList.clear();
+                mediaList.addAll(queryMediaFiles(false));
             }
             else {
                 isFilesStored = true;
-                queryMediaFiles(false);
             }
 
             requireActivity().runOnUiThread(() -> {
                 if (isAdded()) {
                     if (!isFilesStored) {
-                        recyclerView.setAdapter(adapter);
+                        if (mediaList.isEmpty())
+                            foundText.setVisibility(View.VISIBLE);
+                        else
+                            foundText.setVisibility(View.GONE);
+
+                        adapter.notifyDataSetChanged();
+                        saveMediaListToPreferences(mediaList);
                     }
 
                     else {
+                        foundText.setVisibility(View.GONE);
                         mediaList.clear();
                         mediaList.addAll(storedMediaList);
                         adapter.notifyDataSetChanged();
 
-//                        Check_And_Insert_Files(mediaList);
+                        Check_And_Update_Files();
                     }
 
                     Log.d("Hello", "UIThread-Stored: " + storedMediaList);
@@ -179,7 +186,9 @@ public class AudioFragment extends Fragment {
         });
     }
 
-    private void queryMediaFiles(boolean refresh) {
+    private List<Media> queryMediaFiles(boolean refresh) {
+        List<Media> mediaList = new ArrayList<>();
+        
         String[] audioProjection = new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
@@ -201,7 +210,7 @@ public class AudioFragment extends Fragment {
 
         // Process video files
         if (audioCursor != null) {
-            processCursor(audioCursor, parentFolders);
+            mediaList.addAll(processCursor(audioCursor, parentFolders));
             Log.d(TAG, "Audio list Count: " + audioCursor.getCount());
             audioCursor.close();
         }
@@ -215,9 +224,13 @@ public class AudioFragment extends Fragment {
         Log.d("queryMediaFiles", String.valueOf(FilesPath));
 
         Log.d(TAG, "Audio list: " + mediaList);
+
+        return mediaList;
     }
 
-    private void processCursor(Cursor cursor, Set<String> parentFolders) {
+    private List<Media> processCursor(Cursor cursor, Set<String> parentFolders) {
+        List<Media> mediaList = new ArrayList<>();
+
         int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
         int sizeInd = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE);
@@ -253,31 +266,79 @@ public class AudioFragment extends Fragment {
                 Log.d(TAG, formattedSize);
             }
         }
+        return mediaList;
     }
 
-    private void Check_And_Insert_Files(List<Media> mediaList) {
-        for (int i = 0; i < mediaList.size(); i++) {
-            boolean f = true;
-            for (int j = 0; j < storedMediaList.size(); j++) {
-                if (!mediaList.get(i).getName().equals(storedMediaList.get(j).getName())) {
-                    f = true;
-                }
-                else {
-                    f = false;
-                }
-            }
-            if (f) {
-                MediaAdapter mediaAdapter = new MediaAdapter(requireContext(), storedMediaList);
-                mediaAdapter.addMediaItem(mediaList.get(i));
 
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        saveMediaListToPreferences(media);
-//                    }
-//                })
+    private void Check_And_Update_Files() {
+        new Thread(() -> {
+            // For Deletion
+            List<Media> removingMediaList = new ArrayList<>();
+            List<Media> newMediaList = new ArrayList<>(queryMediaFiles(false));
+            Set<String> newListNames = new HashSet<>();
+
+            for (Media m : newMediaList) {
+                newListNames.add(m.getName());
             }
-        }
+
+            for (Media m : storedMediaList) {
+                if (!newListNames.contains(m.getName())) {
+                    removingMediaList.add(m);
+                }
+            }
+
+
+            // For Insertion
+            List<Media> addingMediaList = new ArrayList<>();
+            Set<String> storedListNames = new HashSet<>();
+
+            for (Media m : storedMediaList) {
+                storedListNames.add(m.getName());
+            }
+
+            for (Media m : newMediaList) {
+                if (!storedListNames.contains(m.getName())) {
+                    addingMediaList.add(m);
+                }
+            }
+
+//            for (int i = 0; i < newMediaList.size(); i++) {
+//                boolean found = false;
+//                for (int j = 0; j < storedMediaList.size(); j++) {
+//                    if (newMediaList.get(i).getName().equals(storedMediaList.get(j).getName())) {
+//                        found = true;
+//                        break;
+//                    }
+//                    else {
+//                        found = false;
+//                    }
+//                }
+//
+//                if (!found) {
+//                    newMediaList.add(newMediaList.get(i));
+//                    adapter.notifyItemInserted(newMediaList.size() - 1);
+//                }
+//            }
+
+            requireActivity().runOnUiThread(() -> {
+//                mediaList.removeAll(removingMediaList);
+
+                for (Media m : removingMediaList) {
+                    int index = mediaList.indexOf(m);
+                    if (index >= 0) {
+                        mediaList.remove(index);
+                        adapter.notifyItemRemoved(index);
+                    }
+                }
+
+                mediaList.addAll(addingMediaList);
+
+
+                adapter.notifyDataSetChanged();
+                saveMediaListToPreferences(mediaList);
+            });
+
+        }).start();
     }
 
 
@@ -298,19 +359,21 @@ public class AudioFragment extends Fragment {
     }
 
 
-    public void saveMediaListToPreferences(List<Media> mediaList) {
-        try {
-            SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            Gson gson = new Gson();
-            String json = gson.toJson(mediaList);
-            editor.putString("audioList", json);
-            editor.apply();
-        }
-        catch (Exception e) {
-            Log.e(TAG, "saveMediaListToPreferences: ", e);
-        }
+    private void saveMediaListToPreferences(List<Media> mediaList) {
+        new Thread(() -> {
+            try {
+                SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                Gson gson = new Gson();
+                String json = gson.toJson(mediaList);
+                editor.putString("audioList", json);
+                editor.apply();
+            } catch (Exception e) {
+                Log.e(TAG, "saveMediaListToPreferences: ", e);
+            }
+        }).start();
     }
+
 
     public List<Media> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);

@@ -60,9 +60,6 @@ public class FilesListActivity extends AppCompatActivity {
     private static ArrayList<String> AudioFilesPath;
     private ArrayList<String> FilesDuration;
 
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerView;
-    private MediaAdapter adapter;
     private List<Media> mediaList;
 
     private ConstraintLayout StorageRationaleLayout;
@@ -84,10 +81,6 @@ public class FilesListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_files_list);
 
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        recyclerView = findViewById(R.id.recyclerViewVideo);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         bottomNavigationView = findViewById(R.id.bottomNavBar);
 
         FilesName = new ArrayList<>();
@@ -99,13 +92,13 @@ public class FilesListActivity extends AppCompatActivity {
         Rationale_AllowAccess_Button = findViewById(R.id.allowAccess);
 
 
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-//                queryMediaFiles(true); // Example: Refresh media list
-                swipeRefreshLayout.setRefreshing(false);
-            }
-        });
+//        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+////                queryMediaFiles(true); // Example: Refresh media list
+//                swipeRefreshLayout.setRefreshing(false);
+//            }
+//        });
 
         CheckAndAsk_StorageAccess();
 
@@ -317,12 +310,15 @@ public class FilesListActivity extends AppCompatActivity {
     private void loadFragment(Fragment fragment, boolean isAdd) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
+        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
 
-        if (isAdd)
-            fragmentTransaction.add(R.id.fragmentContainer, fragment);
-        else
-            fragmentTransaction.replace(R.id.fragmentContainer, fragment);
+        if (!fragment.getClass().isInstance(currentFragment)) {
+            if (isAdd)
+                fragmentTransaction.add(R.id.fragmentContainer, fragment);
+            else
+                fragmentTransaction.replace(R.id.fragmentContainer, fragment);
+
+        }
 
         fragmentTransaction.commit();
     }
@@ -365,209 +361,6 @@ public class FilesListActivity extends AppCompatActivity {
         }
     }
 
-
-    List<Media> storedMediaList;
-
-    private void queryMediaFiles(boolean refresh) {
-
-        String[] audioProjection = new String[] {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.DURATION
-        };
-
-        String[] videoProjection = new String[] {
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DATA,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.DURATION
-        };
-
-        // Query audio files
-        Cursor audioCursor = getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                audioProjection,
-                null,
-                null,
-                null
-        );
-
-        // Query video files
-        Cursor videoCursor = getApplicationContext().getContentResolver().query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                videoProjection,
-                null,
-                null,
-                null
-        );
-
-        // Set to keep track of unique parent folders
-        Set<String> parentFolders = new HashSet<>();
-        mediaList = new ArrayList<>();
-
-        // Process audio files
-        if (audioCursor != null) {
-            processCursor(audioCursor, parentFolders, true);
-            audioCursor.close();
-        }
-
-        // Process video files
-        if (videoCursor != null) {
-            processCursor(videoCursor, parentFolders, false);
-            videoCursor.close();
-
-            
-        }
-
-        // Retrieve and display files in each parent folder
-        for (String folderPath : parentFolders) {
-            Log.d(TAG, "queryMediaFiles: " + folderPath);
-        }
-
-        Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
-        Log.d("queryMediaFiles", String.valueOf(FilesPath));
-
-        storedMediaList = loadMediaListFromPreferences();
-
-        Log.d("TAG", "Media list: " + mediaList);
-        Log.d(TAG, "Media list: - Stored: " + storedMediaList);
-
-
-
-        if (!refresh) {
-            saveMediaListToPreferences(mediaList);
-            adapter = new MediaAdapter(this, mediaList);
-            recyclerView.setAdapter(adapter);
-            Log.d(TAG, "Refresh: Yes");
-        }
-
-        else if (isInsert){
-            saveMediaListToPreferences(mediaList);
-            adapter = new MediaAdapter(this, mediaList);
-            recyclerView.setAdapter(adapter);
-            isInsert = false;
-            Log.d(TAG, "isInsert: " + isInsert);
-        }
-
-    }
-
-//    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Create a thread pool
-
-    private void processCursor(Cursor cursor, Set<String> parentFolders, boolean isAudio) {
-        int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-        int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-        int durationInd = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-
-        if (filePathInd != -1 && displayNameInd != -1 && durationInd != -1) {
-            while (cursor.moveToNext()) {
-                String filePath = cursor.getString(filePathInd);
-                String displayName = cursor.getString(displayNameInd);
-                long duration = cursor.getLong(durationInd);
-                String formattedDuration = MillisToTime(duration);
-
-                // Add parent folder path to the set
-                String parentFolder = new File(filePath).getParent();
-                parentFolders.add(parentFolder);
-
-                FilesName.add(displayName);
-                FilesPath.add(filePath);
-                FilesDuration.add(formattedDuration);
-
-                if (isAudio) {
-                    AudioFilesPath.add(filePath);
-                }
-
-//                storedMediaList = loadMediaListFromPreferences();
-
-                Media media = new Media(displayName, filePath, formattedDuration, BitmapFactory.decodeResource(getResources(), R.drawable.icon));
-                mediaList.add(media);
-
-
-                if (storedMediaList != null) {
-                    if (!isInsert) {
-                        isInsert = isInsertFiles(storedMediaList, media);
-//                        Log.d(TAG, "processCursor: " + isInsert + " : " + media.getName());
-                    }
-                }
-
-//                else {
-//                    mediaList.add(media);
-//                }
-
-
-
-//                if (cachedMediaList != null) {
-//                    for (Media media : cachedMediaList) {
-//                        cachedMediaMap.put(media.getPath(), media);
-//                    }
-//                }
-
-//              Offload thumbnail generation to background thread
-//                executorService.execute(() -> {
-//                    Bitmap thumbnail = getThumbnail(filePath);
-//                    media.setThumbnail(thumbnail);
-//
-//                    // Notify the RecyclerView to update the item if it's currently visible
-//                    runOnUiThread(() -> {
-//                        int index = mediaList.indexOf(media);
-//                        if (index >= 0) {
-//                            adapter.notifyItemChanged(index); // Assuming `adapter` is your RecyclerView.Adapter
-//                        }
-//                    });
-//                });
-
-//                Log.d("tag", filePath);
-                Log.d("tag", displayName);
-                Log.d("tag", formattedDuration);
-            }
-        }
-    }
-
-    public boolean isInsertFiles(List<Media> storedList, Media media) {
-        boolean f = false;
-        for (Media m: storedList) {
-            if (Objects.equals(m.getName(), media.getName())) {
-                f = true;
-                break;
-            }
-        }
-        if (!f) {
-            Log.d(TAG, "isInsertFiles: YES");
-            return true;
-        }
-        Log.d(TAG, "isInsertFiles: NO");
-        return false;
-    }
-
-    public void saveMediaListToPreferences(List<Media> mediaList) {
-        SharedPreferences prefs = getApplicationContext().getSharedPreferences("MediaPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(mediaList);
-        editor.putString("mediaList", json);
-        editor.apply();
-    }
-
-    public List<Media> loadMediaListFromPreferences() {
-        SharedPreferences prefs = getApplicationContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = prefs.getString("mediaList", null);
-        Type type = new TypeToken<ArrayList<Media>>() {}.getType();
-        return gson.fromJson(json, type);
-    }
-
-
-    public String MillisToTime(long millis) {
-        long hours = (millis / (1000 * 60 * 60)) % 24;
-        long minutes = (millis / (1000 * 60)) % 60;
-        long seconds = (millis / 1000) % 60;
-
-        if (hours >= 1) {
-            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
-        }
-        return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
-    }
 
     public static ArrayList<String> getSongList() {
         if (AudioFilesPath != null) {
