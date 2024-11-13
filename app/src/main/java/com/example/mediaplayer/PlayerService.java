@@ -31,10 +31,12 @@ import androidx.core.app.NotificationManagerCompat;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media.session.MediaButtonReceiver;
+import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.MediaNotification;
@@ -78,7 +80,9 @@ public class PlayerService extends MediaSessionService {
 
         updateMediaSessionMetadata();
 
-        player = new ExoPlayer.Builder(this).build();
+        player = new ExoPlayer.Builder(this)
+                .setTrackSelector(new DefaultTrackSelector(this))
+                .build();
         mediaSession = new MediaSession.Builder(this, player).build();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS_CHANGED"));

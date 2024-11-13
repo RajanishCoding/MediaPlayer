@@ -8,6 +8,7 @@
     android:background="@color/black"
     tools:context=".PlayerActivity" >
 
+
     <androidx.media3.ui.PlayerView
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
@@ -331,12 +332,12 @@
                 android:tooltipText="Audio Tracks"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/subtitles_button"
+                app:layout_constraintEnd_toStartOf="@id/sub_tracks_button"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
-                android:id="@+id/subtitles_button"
+                android:id="@+id/sub_tracks_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="22dp"
@@ -383,8 +384,168 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </androidx.appcompat.widget.Toolbar>
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/audioTracksContainer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/gradient_sidebar"
+        android:paddingStart="20dp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Back Button and Title Bar -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/audioTracks_BackContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageButton
+                    android:id="@+id/audioTracks_BackButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp"
+                    android:src="@drawable/baseline_arrow_back_24"
+                    android:background="@drawable/ripple_player_dark"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:text="Audio Tracks"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@id/audioTracks_BackButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- RecyclerView for Audio Tracks List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerAudioTracksList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="1dp"
+                android:layout_marginEnd="1dp"
+                app:layout_constraintTop_toBottomOf="@id/audioTracks_BackContainer"/>
+
+            <!-- Additional Buttons or Components Below RecyclerView -->
+            <Button
+                android:id="@+id/buttonApply"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Apply Changes"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/recyclerAudioTracksList"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <Button
+                android:id="@+id/buttonCancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/buttonApply"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/subTracksContainer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/gradient_sidebar"
+        android:paddingStart="20dp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Back Button and Title Bar -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/subTracks_BackContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageButton
+                    android:id="@+id/subTracks_BackButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp"
+                    android:src="@drawable/baseline_arrow_back_24"
+                    android:background="@drawable/ripple_player_dark"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:text="Subtitles"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@id/subTracks_BackButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- RecyclerView for Audio Tracks List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerSubTracksList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="1dp"
+                android:layout_marginEnd="1dp"
+                app:layout_constraintTop_toBottomOf="@id/subTracks_BackContainer"/>
+
+            <!-- Additional Buttons or Components Below RecyclerView -->
+            <Button
+                android:id="@+id/subButtonApply"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Apply Changes"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/recyclerSubTracksList"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <Button
+                android:id="@+id/subButtonCancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/subButtonApply"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
 
 
     <!--    <ImageView-->

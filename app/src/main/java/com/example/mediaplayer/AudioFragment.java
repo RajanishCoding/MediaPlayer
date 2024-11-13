@@ -252,7 +252,7 @@ public class AudioFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Media media = new Media(displayName, filePath, formattedSize, null);
+                Media media = new Media(displayName, filePath, formattedSize, null, false);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {

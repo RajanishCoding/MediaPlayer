@@ -16,7 +16,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -47,7 +49,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
         Media media = mediaList.get(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
-        holder.duration.setText(media.getSize());
+        holder.duration.setText(String.valueOf(media.isVideo()));
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
 
@@ -89,6 +91,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
         Log.d("Media Added", "Added");
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
                 Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
@@ -96,6 +99,8 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
                 Intent intent = new Intent(context, PlayerActivity.class);
                 intent.putExtra("Name", media.getName());
                 intent.putExtra("Path", media.getPath());
+                intent.putExtra("isVideo", media.isVideo());
+                Log.d("isVideoFile", "onClick: " + media.isVideo());
                 context.startActivity(intent);
             }
         });

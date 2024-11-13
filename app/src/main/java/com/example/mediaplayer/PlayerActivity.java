@@ -40,20 +40,30 @@ import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media3.common.C;
+import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.common.TrackSelectionParameters;
+import androidx.media3.common.Tracks;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
-import androidx.media3.exoplayer.video.VideoRendererEventListener;
+import androidx.media3.exoplayer.source.TrackGroupArray;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 
+@UnstableApi
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
     private static ExoPlayer player;  // Make the player instance static
@@ -70,6 +80,8 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton backButton;
     private ImageButton rotateButton;
     private ImageButton decoderButton;
+    private ImageButton audioTrackButton;
+    private ImageButton subTrackButton;
 
     private SurfaceView surfaceView;
     private PlayerView playerView;
@@ -151,7 +163,8 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isSeekbarMoving;
 
-    private enum GestureDirection { NONE, HORIZONTAL, VERTICAL }
+    private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
+
     private GestureDirection gestureDirection = GestureDirection.NONE;
 
     private boolean isPlaying;
@@ -159,6 +172,20 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isFirstTimeBuffering = false;
     private boolean isFirstTimePlaying = false;
+
+    private View audioTracksContainer;
+    private ImageButton audioTracks_BackButton;
+    private RecyclerView audioTracksRecyclerView;
+    private DefaultTrackSelector audioTrackSelector;
+    private AudioTracksAdapter audioTracksAdapter;
+    private List<AudioTracks> audioTracksList;
+
+    private View subTracksContainer;
+    private ImageButton subTracks_BackButton;
+    private RecyclerView subTracksRecyclerView;
+    private DefaultTrackSelector subTrackSelector;
+    private SubTracksAdapter subTracksAdapter;
+    private List<SubTracks> subTracksList;
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -202,24 +229,20 @@ public class PlayerActivity extends AppCompatActivity {
                 if (statusBarSize_Left > 0) {
                     params_toolbar.leftMargin = statusBarSize_Left;
                     params_bottom.leftMargin = statusBarSize_Left;
-                }
-                else if (statusBarSize_Right > 0) {
+                } else if (statusBarSize_Right > 0) {
                     params_toolbar.rightMargin = statusBarSize_Right;
                     params_bottom.rightMargin = statusBarSize_Right;
-                }
-                else if (statusBarSize_Top > 0) {
+                } else if (statusBarSize_Top > 0) {
                     params_toolbar.topMargin = statusBarSize_Top;
                 }
 
                 if (navBarSize_Left > 0) {
                     params_toolbar.leftMargin = navBarSize_Left;
                     params_bottom.leftMargin = navBarSize_Left;
-                }
-                else if (navBarSize_Right > 0) {
+                } else if (navBarSize_Right > 0) {
                     params_toolbar.rightMargin = navBarSize_Right;
                     params_bottom.rightMargin = navBarSize_Right;
-                }
-                else if (navBarSize_Bottom > 0) {
+                } else if (navBarSize_Bottom > 0) {
                     params_bottom.bottomMargin = navBarSize_Bottom;
                 }
 
@@ -257,6 +280,8 @@ public class PlayerActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button);
         rotateButton = findViewById(R.id.rotate);
         decoderButton = findViewById(R.id.decoder_button);
+        audioTrackButton = findViewById(R.id.audio_tracks_button);
+        subTrackButton = findViewById(R.id.sub_tracks_button);
 
         playerView = findViewById(R.id.surface_view);
 
@@ -283,6 +308,16 @@ public class PlayerActivity extends AppCompatActivity {
         forwardText = findViewById(R.id.forward_text);
         rewindText = findViewById(R.id.rewind_text);
 
+        audioTracks_BackButton = findViewById(R.id.audioTracks_BackButton);
+        audioTracksContainer = findViewById(R.id.audioTracksContainer);
+        audioTracksRecyclerView = findViewById(R.id.recyclerAudioTracksList);
+        audioTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        subTracks_BackButton = findViewById(R.id.subTracks_BackButton);
+        subTracksContainer = findViewById(R.id.subTracksContainer);
+        subTracksRecyclerView = findViewById(R.id.recyclerSubTracksList);
+        subTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
@@ -291,10 +326,17 @@ public class PlayerActivity extends AppCompatActivity {
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
         Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
 
+        audioTracksList = new ArrayList<>();
+        subTracksList = new ArrayList<>();
+
+//        Log.d("count3", "hel: "+ audioTracksAdapter.getItemCount());
+
 
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
+        isVideoFile = intent.getBooleanExtra("isVideo", false);
+        Log.d("isVideoFile", "onCreate: " + isVideoFile);
 
         Intent serviceIntent = new Intent(this, PlayerService.class);
         serviceIntent.putExtra("name", media_name);
@@ -325,7 +367,7 @@ public class PlayerActivity extends AppCompatActivity {
             public void onStartTrackingTouch(SeekBar seekBar) {
                 isSeekbarMoving = true;
 
-                if(isControlsShowing) {
+                if (isControlsShowing) {
                     if (controlsRunnable != null) {
                         handler.removeCallbacks(controlsRunnable);
                     }
@@ -350,15 +392,13 @@ public class PlayerActivity extends AppCompatActivity {
 
                 if (isTime1ButtonClicked) {
                     time1.setText("-" + MillisToTime(player.getDuration() - progress));
-                }
-                else {
+                } else {
                     time1.setText(MillisToTime(progress));
                 }
 
                 if (isTime2ButtonClicked) {
                     time2.setText("-" + MillisToTime(player.getDuration() - progress));
-                }
-                else {
+                } else {
                     time2.setText(MillisToTime(player.getDuration()));
                 }
             }
@@ -381,7 +421,8 @@ public class PlayerActivity extends AppCompatActivity {
                 seekLayout.startAnimation(fadeOut);
                 fadeOut.setAnimationListener(new Animation.AnimationListener() {
                     @Override
-                    public void onAnimationStart(Animation animation) {}
+                    public void onAnimationStart(Animation animation) {
+                    }
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
@@ -390,7 +431,8 @@ public class PlayerActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onAnimationRepeat(Animation animation) {}
+                    public void onAnimationRepeat(Animation animation) {
+                    }
                 });
 
                 f = false;
@@ -406,11 +448,10 @@ public class PlayerActivity extends AppCompatActivity {
                         seekbar.setProgress((int) player.getCurrentPosition());
                     }
 
-                    if (player.isPlaying()){
+                    if (player.isPlaying()) {
                         isPlaying = true;
                         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                    }
-                    else {
+                    } else {
                         isPlaying = false;
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                     }
@@ -432,8 +473,7 @@ public class PlayerActivity extends AppCompatActivity {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 onLandscape();
                 Log.d(TAG, "onRotate: " + "Landscape");
-            }
-            else {
+            } else {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                 onPortrait();
                 Log.d(TAG, "onRotate: " + "Portrait");
@@ -450,8 +490,7 @@ public class PlayerActivity extends AppCompatActivity {
                     fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
                     playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
                     isFitScreen = true;
-                }
-                else {
+                } else {
                     fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
                     playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
                     isFitScreen = false;
@@ -463,8 +502,7 @@ public class PlayerActivity extends AppCompatActivity {
             if (!isTime1ButtonClicked) {
                 time1.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
                 isTime1ButtonClicked = true;
-            }
-            else {
+            } else {
                 time1.setText(MillisToTime(player.getCurrentPosition()));
                 isTime1ButtonClicked = false;
             }
@@ -475,19 +513,57 @@ public class PlayerActivity extends AppCompatActivity {
             if (!isTime2ButtonClicked) {
                 time2.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
                 isTime2ButtonClicked = true;
-            }
-            else {
+            } else {
                 time2.setText(MillisToTime(player.getDuration()));
                 isTime2ButtonClicked = false;
             }
             Log.d(TAG, "onClickTime2: " + isTime2ButtonClicked);
         });
 
+        audioTrackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAudioTracks();
+            }
+        });
+
+        audioTracks_BackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideAudioTracks();
+            }
+        });
+
+        subTrackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSubTracks();
+            }
+        });
+
+        subTracks_BackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideSubTracks();
+            }
+        });
+
 
         playerView.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
+            if (!isAudioTracksShowing || !isSubTracksShowing)
+                gestureDetector.onTouchEvent(event);
 
             if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (isAudioTracksShowing) {
+                    hideAudioTracks();
+                    isAudioTracksShowing = false;
+                }
+
+                if (isSubTracksShowing) {
+                    hideSubTracks();
+                    isSubTracksShowing = false;
+                }
+
                 if (isLongPressed) {
                     isLongPressed = false;
                     player.setPlaybackSpeed(1);
@@ -511,8 +587,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (isSeeking) {
                     if (isControlsShowing) {
                         controlsToast();
-                    }
-                    else {
+                    } else {
                         hideBottomControls();
                     }
 
@@ -525,7 +600,8 @@ public class PlayerActivity extends AppCompatActivity {
                     seekLayout.startAnimation(fadeOut);
                     fadeOut.setAnimationListener(new Animation.AnimationListener() {
                         @Override
-                        public void onAnimationStart(Animation animation) {}
+                        public void onAnimationStart(Animation animation) {
+                        }
 
                         @Override
                         public void onAnimationEnd(Animation animation) {
@@ -533,13 +609,19 @@ public class PlayerActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onAnimationRepeat(Animation animation) {}
+                        public void onAnimationRepeat(Animation animation) {
+                        }
                     });
                 }
 
                 if (isScrolling) {
-                    isScrolling = false; isSeeking = false; isVolumeChanging = false; isBrightnessChanging = false;
+                    isScrolling = false;
+                    isSeeking = false;
+                    isVolumeChanging = false;
+                    isBrightnessChanging = false;
                     gestureDirection = GestureDirection.NONE;
+                    editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
+                    editor.apply();
                     Log.d("Scrolling", "onScroll: " + gestureDirection.name());
                 }
 
@@ -559,13 +641,11 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 // Handle single tap
-                if (!surface_click_frag && !isInAnimation && !isOutAnimation){
+                if (!surface_click_frag && !isInAnimation && !isOutAnimation) {
                     handler.removeCallbacks(controlsRunnable);
                     Fullscreen();
                     hideControls();
-                }
-
-                else if (!isInAnimation && !isOutAnimation && !isSeeking) {
+                } else if (!isInAnimation && !isOutAnimation && !isSeeking) {
                     notFullscreen();
                     showControls();
                 }
@@ -580,8 +660,7 @@ public class PlayerActivity extends AppCompatActivity {
                         player.seekTo(player.getCurrentPosition() - doubleTapSeekTime);
                         showRewindLayout(rewindLayout, rewindText);
                         Log.d(TAG, "onDoubleTap: " + Q3_Width + " " + e.getX() + " " + screenWidth);
-                    }
-                    else if (e.getX() <= 2 * Q3_Width) {
+                    } else if (e.getX() <= 2 * Q3_Width) {
                         if (player != null) {
                             if (!player.isPlaying()) {
                                 player.play();
@@ -596,8 +675,7 @@ public class PlayerActivity extends AppCompatActivity {
                             }
                             Log.d(TAG, "onDoubleTap: " + 2 * Q3_Width + " " + e.getX() + " " + screenWidth);
                         }
-                    }
-                    else {
+                    } else {
                         player.seekTo(player.getCurrentPosition() + doubleTapSeekTime);
                         showForwardLayout(forwardLayout, forwardText);
                         Log.d(TAG, "onDoubleTap: " + 3 * Q3_Width + " " + e.getX() + " " + screenWidth);
@@ -609,14 +687,13 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onLongPress(MotionEvent e) {
-                if(isPlaying && !isScrolling) {
+                if (isPlaying && !isScrolling) {
                     isLongPressed = true;
                     hideLayouts(volumeLayout, brightnessLayout);
 
                     if (e.getX() < halfWidth) {
                         ;
-                    }
-                    else {
+                    } else {
                         speedLayout.setVisibility(View.VISIBLE);
                         speedLayout.startAnimation(fadeIn);
 
@@ -632,12 +709,11 @@ public class PlayerActivity extends AppCompatActivity {
 
                 if (gestureDirection == GestureDirection.NONE && !isLongPressed) {
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
-                        if(isControlsShowing) {
+                        if (isControlsShowing) {
                             if (controlsRunnable != null) {
                                 handler.removeCallbacks(controlsRunnable);
                             }
-                        }
-                        else {
+                        } else {
                             showBottomControls();
                         }
 
@@ -651,8 +727,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                         // Lock as horizontal gesture (seeking)
                         gestureDirection = GestureDirection.HORIZONTAL;
-                    }
-                    else {
+                    } else {
                         // Lock as vertical gesture (volume/brightness adjustment)
                         gestureDirection = GestureDirection.VERTICAL;
                     }
@@ -665,15 +740,12 @@ public class PlayerActivity extends AppCompatActivity {
                     if (Math.abs(totalScrollX) > 20) {
                         if (totalScrollX > 0) {
                             performSeekByTouch(-1000, false);
-                        }
-                        else {
+                        } else {
                             performSeekByTouch(1000, false);
                         }
                         totalScrollX = 0;
                     }
-                }
-
-                else if (gestureDirection == GestureDirection.VERTICAL) {
+                } else if (gestureDirection == GestureDirection.VERTICAL) {
                     if (e1.getX() < halfWidth) {
                         isVolumeChanging = true;
                         totalScrollY1 += distanceY;
@@ -682,17 +754,14 @@ public class PlayerActivity extends AppCompatActivity {
                             if (totalScrollY1 > 0) {
                                 // Scrolled on left, increase volume
                                 adjustBrightness(0.034f);
-                            }
-                            else {
+                            } else {
                                 // Scrolled on right, decrease volume
                                 adjustBrightness(-0.034f);
                             }
 
                             totalScrollY1 = 0;
                         }
-                    }
-
-                    else {
+                    } else {
                         isBrightnessChanging = true;
                         totalScrollY2 += distanceY;
 
@@ -704,8 +773,7 @@ public class PlayerActivity extends AppCompatActivity {
                             if (totalScrollY2 > 0) {
                                 // Scrolled on left, increase volume
                                 adjustVolume(incrementValue);
-                            }
-                            else {
+                            } else {
                                 // Scrolled on right, decrease volume
                                 adjustVolume(-incrementValue);
                             }
@@ -736,25 +804,22 @@ public class PlayerActivity extends AppCompatActivity {
 
             if (mimeType != null && mimeType.startsWith("video")) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false; // In case of an error, consider it not a video
-        }
-        finally {
+        } finally {
             try {
                 retriever.release();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.e(TAG, "isVideo: " + e);
             }
         }
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
@@ -780,24 +845,9 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView.setPlayer(player);
 
-        new Thread(() -> {
-            isVideoFile = isVideo(media_path);
-
-            runOnUiThread(() -> {
-                if (isVideoFile) {
-                    isBackgroundPlay = false;
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    onLandscape();
-                }
-                else {
-                    isBackgroundPlay = true;
-                }
-//                        saveData("isBackgroundPlay", null, isBackgroundPlay);
-                Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
-                intent.putExtra("bgPlay", isBackgroundPlay);
-                LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
-            });
-        }).start();
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        layoutParams.screenBrightness = sharedPreferences.getFloat("Brightness", 0f);
+        getWindow().setAttributes(layoutParams);
 
         player.addListener(new Player.Listener() {
             @Override
@@ -806,6 +856,31 @@ public class PlayerActivity extends AppCompatActivity {
                     case Player.STATE_READY:
                         Log.d("playback", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
                         if (!isFirstTimePlaying) {
+                            Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
+                            if (isVideoFile) {
+                                isBackgroundPlay = false;
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                                onLandscape();
+                            } else {
+                                isBackgroundPlay = true;
+                            }
+
+                            // saveData("isBackgroundPlay", null, isBackgroundPlay);
+                            Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
+                            intent.putExtra("bgPlay", isBackgroundPlay);
+                            LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
+
+                            audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+                            audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
+                            audioTracksRecyclerView.setAdapter(audioTracksAdapter);
+
+                            subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+                            subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
+                            subTracksRecyclerView.setAdapter(subTracksAdapter);
+
+                            loadAudioTracks();
+                            loadSubTracks();
+
                             isBufferingFinished = true;
                             buffer_view.setVisibility(View.GONE);
                             seekbar.setMax((int) player.getDuration());
@@ -824,6 +899,7 @@ public class PlayerActivity extends AppCompatActivity {
                         break;
 
                     case Player.STATE_BUFFERING:
+                        Log.d("brightness", "initializePlayer: " + sharedPreferences.getFloat("Brightness", 0f));
                         break;
 
                     case Player.STATE_IDLE:
@@ -838,14 +914,157 @@ public class PlayerActivity extends AppCompatActivity {
             public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
                 if (decoderName.contains("hardware")) {
                     decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
-                }
-                else {
+                } else {
                     decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
                 }
                 Log.d("DecoderInfo", "Decoder Name: " + decoderName);
             }
         });
     }
+
+    @OptIn(markerClass = UnstableApi.class)
+    private void loadAudioTracks() {
+        // Get current tracks and check for selection
+        Tracks currentTracks = player.getCurrentTracks();
+
+        new Thread(() -> {
+            // Fetch the track info
+            DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
+
+            if (mappedTrackInfo == null) {
+                Log.e("AudioTrack", "No track info available.");
+                return;
+            }
+
+            for (int rendererIndex=0; rendererIndex<mappedTrackInfo.getRendererCount(); rendererIndex++) {
+                int trackType = mappedTrackInfo.getRendererType(rendererIndex);
+
+                if (trackType == C.TRACK_TYPE_VIDEO || trackType == C.TRACK_TYPE_AUDIO) {
+                    TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(trackType);
+
+                    // Collect available audio track names
+                    List<String> audioTrackNames = new ArrayList<>();
+                    for (int i = 0; i < trackGroups.length; i++) {
+                        TrackGroup trackGroup = trackGroups.get(i);
+                        for (int j = 0; j < trackGroup.length; j++) {
+                            Format format = trackGroup.getFormat(j);
+                            String trackName = format.language != null ? format.language : "Unknown";
+                            audioTrackNames.add(trackName);
+
+                            if (format.sampleMimeType != null) {
+                                if (format.sampleMimeType.startsWith("audio/")) {
+                                    // Check if this track is selected when played
+                                    boolean isSelected = false;
+                                    for (Tracks.Group group : currentTracks.getGroups()) {
+                                        if (group.getMediaTrackGroup() == trackGroup && group.getTrackFormat(j).sampleMimeType != null) {
+                                            if (group.getTrackFormat(j).sampleMimeType.startsWith("audio/")) {
+                                                isSelected = group.isTrackSelected(j);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    Log.d("AudioTracks", "loadAudioTracks: " + isSelected);
+
+                                    audioTracksList.add(new AudioTracks(trackGroup, j, format.label, getTrackLanguage(format.language), format.channelCount, isSelected));
+                                    Log.d("audioTracks", "showAudioTracks: " + format.id + "   " + format.language + "   " + format.channelCount + "   " + format.label + "   " + format.bitrate);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            runOnUiThread(() -> {
+                audioTracksAdapter.notifyDataSetChanged();
+            });
+        }).start();
+    }
+
+    @OptIn(markerClass = UnstableApi.class)
+    private void loadSubTracks() {
+        // Get current tracks and check for selection
+        Tracks currentTracks = player.getCurrentTracks();
+
+        new Thread(() -> {
+            // Fetch the track info
+            DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
+
+            if (mappedTrackInfo == null) {
+                Log.e("SubTrack", "No track info available.");
+                return;
+            }
+
+            for (int rendererIndex=0; rendererIndex<mappedTrackInfo.getRendererCount(); rendererIndex++) {
+                int trackType = mappedTrackInfo.getRendererType(rendererIndex);
+
+                if (trackType == C.TRACK_TYPE_VIDEO || trackType == C.TRACK_TYPE_TEXT) {
+                    TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(trackType);
+
+                    // Collect available audio track names
+                    for (int i = 0; i < trackGroups.length; i++) {
+                        TrackGroup trackGroup = trackGroups.get(i);
+                        for (int j = 0; j < trackGroup.length; j++) {
+                            Format format = trackGroup.getFormat(j);
+
+                            if (format.sampleMimeType != null) {
+                                if (format.sampleMimeType.startsWith("application/")) {
+                                    // Check if this track is selected
+                                    boolean isSelected = false;
+                                    for (Tracks.Group group : currentTracks.getGroups()) {
+                                        if (group.getMediaTrackGroup() == trackGroup && group.getTrackFormat(j).sampleMimeType != null) {
+                                            if (group.getTrackFormat(j).sampleMimeType.startsWith("application/")) {
+                                                isSelected = group.isTrackSelected(j);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    Log.d("SubTracks", "loadSubTracks: " + isSelected);
+
+                                    subTracksList.add(new SubTracks(trackGroup, j, format.label, getTrackLanguage(format.language), isSelected));
+                                    Log.d("subTracks", "showAudioTracks: " + format.id + "   " + format.language + "   " + format.channelCount + "   " + format.label + "   " + format.bitrate);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            runOnUiThread(() -> {
+                subTracksAdapter.notifyDataSetChanged();
+            });
+        }).start();
+    }
+
+    private String getTrackLanguage(String language) {
+        Locale locale = new Locale(language);
+        return locale.getDisplayLanguage(Locale.getDefault());  // Returns in device's language
+    }
+
+//    private boolean getCurrentPlayingAudioTrack() {
+//        Tracks currentTracks = player.getCurrentTracks();
+//
+//        for (Tracks.Group group : currentTracks.getGroups()) {
+//            if (group.getType() == C.TRACK_TYPE_AUDIO) { // Ensure it's an audio track group
+//
+//                for (int i = 0; i < group.length; i++) { // Iterate through all tracks in this group
+//                    if (group.isTrackSelected(i)) { // Check if this specific track is selected
+//                        Format format = group.getTrackFormat(i);
+//
+//                        Log.d("SelectedAudioTrack", "Track ID: " + format.id +
+//                                ", Language: " + (format.language != null ? format.language : "Unknown") +
+//                                ", Channels: " + format.channelCount +
+//                                ", Label: " + format.label +
+//                                ", Bitrate: " + format.bitrate);
+//
+//                        // Perform any action with the selected track info
+//                    }
+//                }
+//            }
+//        }
+//    }
+
 
     public boolean getIsBackgroundPlay() {
         return isBackgroundPlay;
@@ -855,8 +1074,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void saveData(String key, String sValue, Boolean bValue) {
         if (sValue != null) {
             editor.putString(key, sValue);
-        }
-        else {
+        } else {
             editor.putBoolean(key, bValue);
         }
         editor.apply();
@@ -872,15 +1090,15 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (player.isPlaying()) {
             playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-        }
-        else {
+        } else {
             playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
         }
     }
 
 
     private void showControls() {
-        isControlsHidden = false; isControlsShowing = true;
+        isControlsHidden = false;
+        isControlsShowing = true;
 
         Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
         Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
@@ -911,7 +1129,8 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void hideControls() {
-        isControlsShowing = false; isControlsHidden = true;
+        isControlsShowing = false;
+        isControlsHidden = true;
 
         Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
         Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
@@ -951,7 +1170,8 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onAnimationEnd(Animation animation){}
+            public void onAnimationEnd(Animation animation) {
+            }
 
             @Override
             public void onAnimationRepeat(Animation animation) {
@@ -966,7 +1186,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation) {}
+            public void onAnimationStart(Animation animation) {
+            }
 
             @Override
             public void onAnimationEnd(Animation animation) {
@@ -977,6 +1198,92 @@ public class PlayerActivity extends AppCompatActivity {
             public void onAnimationRepeat(Animation animation) {
 
             }
+        });
+    }
+
+
+    private boolean isAudioTracksShowing;
+    private boolean isSubTracksShowing;
+
+    private void showAudioTracks() {
+        Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
+        Fullscreen(); hideControls();
+        handler.removeCallbacks(controlsRunnable);
+        audioTracksContainer.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                audioTracksContainer.setVisibility(View.VISIBLE);
+                isAudioTracksShowing = true;
+            }
+    
+            @Override
+            public void onAnimationEnd (Animation animation){
+            }
+    
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+    });
+    }
+
+    private void hideAudioTracks() {
+        Animation slideOutRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_right);
+        audioTracksContainer.startAnimation(slideOutRight);
+
+        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){}
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+                isAudioTracksShowing = false;
+                audioTracksContainer.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
+
+    private void showSubTracks() {
+        Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
+        Fullscreen(); hideControls();
+        handler.removeCallbacks(controlsRunnable);
+        subTracksContainer.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                subTracksContainer.setVisibility(View.VISIBLE);
+                isSubTracksShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
+
+    private void hideSubTracks() {
+        Animation slideOutRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_right);
+        subTracksContainer.startAnimation(slideOutRight);
+
+        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){}
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+                isSubTracksShowing = false;
+                subTracksContainer.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
         });
     }
 
@@ -1000,7 +1307,7 @@ public class PlayerActivity extends AppCompatActivity {
         View back = findViewById(R.id.back_button);
         View tool_title = findViewById(R.id.toolbar_title);
         View audio = findViewById(R.id.audio_tracks_button);
-        View subtitle = findViewById(R.id.subtitles_button);
+        View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
         View more = findViewById(R.id.more_button);
         View text1 = findViewById(R.id.time1);
@@ -1075,7 +1382,7 @@ public class PlayerActivity extends AppCompatActivity {
         View back = findViewById(R.id.back_button);
         View tool_title = findViewById(R.id.toolbar_title);
         View audio = findViewById(R.id.audio_tracks_button);
-        View subtitle = findViewById(R.id.subtitles_button);
+        View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
         View more = findViewById(R.id.more_button);
         View text1 = findViewById(R.id.time1);

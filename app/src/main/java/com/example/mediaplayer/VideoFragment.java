@@ -258,7 +258,7 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Media media = new Media(displayName, filePath, formattedSize, null);
+                Media media = new Media(displayName, filePath, formattedSize, null, true);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {

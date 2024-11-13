@@ -7,12 +7,14 @@ public class Media {
     private String path;
     private String size;
     private Bitmap thumbnailUrl;
+    private boolean isVideo;
 
-    public Media(String name, String path, String size, Bitmap thumbnailUrl) {
+    public Media(String name, String path, String size, Bitmap thumbnailUrl, boolean isVideo) {
         this.name = name;
         this.path = path;
         this.size = size;
         this.thumbnailUrl = thumbnailUrl;
+        this.isVideo = isVideo;
     }
 
     public String getName() {
@@ -25,6 +27,10 @@ public class Media {
 
     public String getSize() {
         return size;
+    }
+
+    public boolean isVideo() {
+        return isVideo;
     }
 
     public Bitmap getThumbnail() {
