@@ -47,6 +47,7 @@ import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
@@ -186,6 +187,9 @@ public class PlayerActivity extends AppCompatActivity {
     private DefaultTrackSelector subTrackSelector;
     private SubTracksAdapter subTracksAdapter;
     private List<SubTracks> subTracksList;
+
+    private float lastPlayedTime;
+    private float lastPlayedFile;
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -336,6 +340,13 @@ public class PlayerActivity extends AppCompatActivity {
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
+        lastPlayedTime = sharedPreferences.getFloat("lastTime : " + media_path, 0);
+
+        editor.putString("lastPlayedFileName", media_name);
+        editor.putString("lastPlayedFilePath", media_path);
+        editor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
+        editor.apply();
+
         Log.d("isVideoFile", "onCreate: " + isVideoFile);
 
         Intent serviceIntent = new Intent(this, PlayerService.class);
@@ -471,11 +482,9 @@ public class PlayerActivity extends AppCompatActivity {
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                onLandscape();
                 Log.d(TAG, "onRotate: " + "Landscape");
             } else {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                onPortrait();
                 Log.d(TAG, "onRotate: " + "Portrait");
             }
             isOrientation = true;
@@ -795,30 +804,6 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    public boolean isVideo(String filePath) {
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        try {
-            retriever.setDataSource(filePath);
-            String mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
-            Log.d(TAG, "MIME type: " + mimeType);
-
-            if (mimeType != null && mimeType.startsWith("video")) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false; // In case of an error, consider it not a video
-        } finally {
-            try {
-                retriever.release();
-            } catch (Exception e) {
-                Log.e(TAG, "isVideo: " + e);
-            }
-        }
-    }
-
     @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
@@ -851,17 +836,51 @@ public class PlayerActivity extends AppCompatActivity {
 
         player.addListener(new Player.Listener() {
             @Override
+            public void onVideoSizeChanged(VideoSize size) {
+                Player.Listener.super.onVideoSizeChanged(size);
+
+                int width = size.width;
+                int height = size.height;
+
+                if (player.getPlaybackState() == Player.STATE_READY && width != 0 || height != 0) {
+
+                    Log.d("VideoDimensions", "Width: " + width + ", Height: " + height);
+
+                    Log.d("isVideoFile", "listener1: " + isVideoFile);
+
+                    // Rotation logic based on dimensions
+                    if (isVideoFile) {
+                        if (height > width) {
+                            isVideoFile = false;
+                        } else {
+                            isVideoFile = true;
+                        }
+                    }
+
+                    Log.d("isVideoFile", "listener2: " + isVideoFile);
+
+                    // Removing the listener after first usage
+                    player.removeListener(this);
+                }
+            }
+        });
+
+        player.addListener(new Player.Listener() {
+            @Override
             public void onPlaybackStateChanged(int playbackState) {
                 switch (playbackState) {
                     case Player.STATE_READY:
                         Log.d("playback", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
                         if (!isFirstTimePlaying) {
                             Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
+
+                            player.seekTo((long) lastPlayedTime);
+
                             if (isVideoFile) {
                                 isBackgroundPlay = false;
                                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                                onLandscape();
-                            } else {
+                            }
+                            else {
                                 isBackgroundPlay = true;
                             }
 
@@ -892,6 +911,8 @@ public class PlayerActivity extends AppCompatActivity {
                         break;
 
                     case Player.STATE_ENDED:
+                        editor.putFloat("lastTime : " + media_path, 0);
+                        editor.apply();
                         player.pause();
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                         seekbar.setProgress(0);
@@ -1029,7 +1050,6 @@ public class PlayerActivity extends AppCompatActivity {
                     }
                 }
             }
-
 
             runOnUiThread(() -> {
                 subTracksAdapter.notifyDataSetChanged();
@@ -1546,6 +1566,9 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
+            editor.putFloat("lastTime : " + media_path, ((float) player.getCurrentPosition()));
+            editor.apply();
+
             if (player.isPlaying() && !isBackgroundPlay) {
                 player.pause();
                 isPlay = true;
@@ -1590,6 +1613,16 @@ public class PlayerActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         updateScreenDimension();
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Log.d("Orientation", "Changed to Landscape");
+            onLandscape();
+        }
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            Log.d("Orientation", "Changed to Portrait");
+            onPortrait();
+        }
+
         Log.d(TAG, "onConfigurationChanged: " + getResources().getDisplayMetrics().heightPixels + " " + getResources().getDisplayMetrics().widthPixels);
     }
 

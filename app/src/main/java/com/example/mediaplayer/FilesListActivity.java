@@ -19,11 +19,13 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -33,6 +35,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 //import androidx.media3.exoplayer.Player;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -75,6 +78,11 @@ public class FilesListActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
 
+    private ImageButton lastPlay_Button;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +98,11 @@ public class FilesListActivity extends AppCompatActivity {
 
         StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
         Rationale_AllowAccess_Button = findViewById(R.id.allowAccess);
+
+        lastPlay_Button = findViewById(R.id.Play_Last);
+
+        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
 
 //        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -124,6 +137,24 @@ public class FilesListActivity extends AppCompatActivity {
                 else {
                     loadFragment(new SettingsFragment(), false);
                     return true;
+                }
+            }
+        });
+
+        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                String name = sharedPreferences.getString("lastPlayedFileName", null);
+                String path = sharedPreferences.getString("lastPlayedFilePath", null);
+                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+
+                if (name != null) {
+                    Intent intent = new Intent(FilesListActivity.this, PlayerActivity.class);
+                    intent.putExtra("Name", name);
+                    intent.putExtra("Path", path);
+                    intent.putExtra("isVideo", isVideo);
+                    startActivity(intent);
                 }
             }
         });

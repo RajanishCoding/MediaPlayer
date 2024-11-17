@@ -76,6 +76,8 @@
     <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
     <color name="overlayButtonDark">#33FFFFFF</color> <!-- Dark theme -->
 
+    <color name="overlayItemDetailsDark">#383046</color> <!-- Dark theme -->
+
     <color name="overlayThumbnailLight">#C6D6E3</color>
     <color name="overlayThumbnailDark">#6B757F</color>
 

@@ -72,5 +72,8 @@ dependencies {
     implementation(libs.androidx.media.v170)
     implementation(libs.core.v1110)
 
+    implementation(libs.flexbox)
+
+
 
 }

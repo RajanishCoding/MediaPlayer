@@ -48,7 +48,7 @@ public class VideoFragment extends Fragment {
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
     private static ArrayList<String> AudioFilesPath;
-    private ArrayList<String> FilesDuration;
+    private ArrayList<String> FilesDateAdded;
 
     private String TAG = "VideoTag";
     private boolean isInsert;
@@ -89,7 +89,7 @@ public class VideoFragment extends Fragment {
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
         AudioFilesPath = new ArrayList<>();
-        FilesDuration = new ArrayList<>();
+        FilesDateAdded = new ArrayList<>();
 
 
         executorService = Executors.newSingleThreadExecutor();
@@ -199,7 +199,7 @@ public class VideoFragment extends Fragment {
                 MediaStore.Video.Media._ID,
                 MediaStore.Video.Media.DATA,
                 MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.SIZE
+                MediaStore.Video.Media.DATE_ADDED
         };
 
         String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
@@ -239,14 +239,13 @@ public class VideoFragment extends Fragment {
 
         int filePathInd = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
-        int sizeInd = cursor.getColumnIndex(MediaStore.Video.Media.SIZE);
+        int dateAddedInd = cursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED);
 
-        if (filePathInd != -1 && displayNameInd != -1 && sizeInd != -1) {
+        if (filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
             while (cursor.moveToNext()) {
                 String filePath = cursor.getString(filePathInd);
                 String displayName = cursor.getString(displayNameInd);
-                long size = cursor.getLong(sizeInd);
-                String formattedSize = getFormattedFileSize(size);
+                String date = cursor.getString(dateAddedInd);
 
                 // Add parent folder path to the set
                 String parentFolder = new File(filePath).getParent();
@@ -254,11 +253,11 @@ public class VideoFragment extends Fragment {
 
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
-                FilesDuration.add(formattedSize);
+                FilesDateAdded.add(date);
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Media media = new Media(displayName, filePath, formattedSize, null, true);
+                Media media = new Media(displayName, filePath, date, null, true);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {
@@ -268,8 +267,8 @@ public class VideoFragment extends Fragment {
 //                    }
 //                }
 
-                Log.d(TAG, displayName);
-                Log.d(TAG, formattedSize);
+                Log.d("cursor", displayName);
+                Log.d("cursor", date);
             }
         }
         return mediaList;
