@@ -10,6 +10,46 @@
     style="@style/FilesListBG" >
 
 
+<!--    <androidx.drawerlayout.widget.DrawerLayout-->
+<!--        xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--        android:id="@+id/drawer_layout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent">-->
+
+<!--        &lt;!&ndash; Main Content &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:orientation="vertical">-->
+
+<!--            &lt;!&ndash; Toolbar with 3-dot menu &ndash;&gt;-->
+<!--            <androidx.appcompat.widget.Toolbar-->
+<!--                android:id="@+id/toolbar"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="?attr/actionBarSize"-->
+<!--                android:background="?attr/colorPrimary"-->
+<!--                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
+<!--                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />-->
+
+<!--            &lt;!&ndash; Main Content Layout &ndash;&gt;-->
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Hello, Welcome!" />-->
+<!--        </LinearLayout>-->
+
+<!--        &lt;!&ndash; Navigation Drawer (Sidebar) &ndash;&gt;-->
+<!--        <com.google.android.material.navigation.NavigationView-->
+<!--            android:id="@+id/navigation_view"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_gravity="start"-->
+<!--            app:menu="@menu/nav_menu" />-->
+<!--    </androidx.drawerlayout.widget.DrawerLayout>-->
+
+
+
+
     <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -38,13 +78,13 @@
                 android:layout_marginStart="20dp" />
 
             <ImageButton
-                android:id="@+id/decoder_button"
+                android:id="@+id/search_button"
                 style="@style/ToolbarIconsStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="15dp"
-                android:layout_toStartOf="@id/more_button"
+                android:layout_toStartOf="@id/moremenu_button"
                 android:background="@drawable/ripple_effect"
                 android:contentDescription="TODO"
                 android:padding="3dp"
@@ -53,7 +93,7 @@
                 tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
-                android:id="@+id/more_button"
+                android:id="@+id/moremenu_button"
                 style="@style/ToolbarIconsStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -182,6 +222,11 @@
         </LinearLayout>
 
     </LinearLayout>
+
+
+
+
+
 
 
     <!-- Floating Action Button -->

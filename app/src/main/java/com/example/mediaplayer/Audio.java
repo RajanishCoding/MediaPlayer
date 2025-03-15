@@ -1,23 +1,20 @@
 package com.example.mediaplayer;
 
 import android.graphics.Bitmap;
-import android.widget.TextView;
 
-public class Media {
+public class Audio {
     private String name;
     private String path;
     private String dateAdded;
 
     private String duration;
-    private String resolution;
-    private String frameRate;
     private String size;
 
     private String lastPlayedTime;
     private Bitmap thumbnailUrl;
     private boolean isVideo;
 
-    public Media(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
+    public Audio(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
         this.name = name;
         this.path = path;
         this.dateAdded = date;
@@ -28,14 +25,6 @@ public class Media {
 
     public void setDuration(String duration) {
         this.duration = duration;
-    }
-
-    public void setResolution(String resolution) {
-        this.resolution = resolution;
-    }
-
-    public void setFrameRate(String fps) {
-        this.frameRate = fps;
     }
 
     public void setSize(String size) {
@@ -59,13 +48,6 @@ public class Media {
         return duration;
     }
 
-    public String getResolution() {
-        return resolution;
-    }
-
-    public String getFrameRate() {
-        return frameRate;
-    }
 
     public String getSize() {
         return size;

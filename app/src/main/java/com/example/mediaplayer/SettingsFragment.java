@@ -2,35 +2,40 @@ package com.example.mediaplayer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
+import android.widget.Switch;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 
 
 public class SettingsFragment extends Fragment {
 
+    private View menu_Container;
+    private ImageButton menu_Button;
+    private ImageButton search_Button;
+    private Switch mode_Switch;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -48,14 +53,95 @@ public class SettingsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
+        search_Button = view.findViewById(R.id.search_button);
+        menu_Container = view.findViewById(R.id.MenuContainer);
+        menu_Button = view.findViewById(R.id.menu_button);
+        mode_Switch = view.findViewById(R.id.mode_switch);
 
+        setModeSwitch();
 
         return view;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
+        sharedPreferences = requireActivity().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
-    public void saveMediaListToPreferences(List<Media> mediaList) {
+        menu_Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("showMenuLayout", "showMenuLayout: YES");
+                showMenuLayout();
+            }
+        });
+
+        mode_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                setThemeMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                setThemeMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        });
+    }
+
+    private void setModeSwitch() {
+        sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", false));
+    }
+
+    private void setThemeMode(int mode) {
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        int savedMode = sharedPreferences.getInt("theme_mode", -1);
+
+        if (savedMode == mode) {
+            Log.d("theme_mode", "Theme mode is already set. No need to restart.");
+            return; // Avoid unnecessary restarts
+        }
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("theme_mode", mode);
+
+        editor.putBoolean("mode_switch", mode == 2);
+
+        editor.apply();
+
+        Log.d("theme_mode", "New theme mode set: " + mode);
+
+        FilesListActivity.isThemeChanged = true;
+
+        AppCompatDelegate.setDefaultNightMode(mode);
+
+        // Restart activity to apply theme
+//        startActivity(new Intent(this, FilesListActivity.class));
+//        finish();
+    }
+
+    private void showMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: YES");
+        Animation slideInRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_in_right);
+        menu_Container.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                menu_Container.setVisibility(View.VISIBLE);
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
+
+    public void saveMediaListToPreferences(List<Video> mediaList) {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         Gson gson = new Gson();
@@ -64,11 +150,11 @@ public class SettingsFragment extends Fragment {
         editor.apply();
     }
 
-    public List<Media> loadMediaListFromPreferences() {
+    public List<Video> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = prefs.getString("mediaList", null);
-        Type type = new TypeToken<ArrayList<Media>>() {}.getType();
+        Type type = new TypeToken<ArrayList<Video>>() {}.getType();
         return gson.fromJson(json, type);
     }
 

@@ -70,7 +70,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Media Info -->
+        <!-- Video Info -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/audioLinearLayout"
             android:layout_width="0dp"

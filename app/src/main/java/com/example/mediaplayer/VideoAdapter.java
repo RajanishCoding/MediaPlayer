@@ -7,8 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,12 +35,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHolder> {
-    private List<Media> mediaList;
+public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHolder> {
+    private List<Video> mediaList;
     private Context context;
 
 
-    public MediaAdapter(Context context, List<Media> mediaList) {
+    public VideoAdapter(Context context, List<Video> mediaList) {
         this.context = context;
         this.mediaList = mediaList;
     }
@@ -56,10 +54,11 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
 
     @Override
     public void onBindViewHolder(VideoViewHolder holder, int position) {
-        Media media = mediaList.get(position);
+        Video media = mediaList.get(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
+
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
 
@@ -169,8 +168,8 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
                 }
 
                 holder.itemView.post(() -> {
-                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration())));
-                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration())));
+                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
                     holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
                     holder.size.setText(media.getSize());
                 });
@@ -226,7 +225,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
             Log.e("Glide Error", "onBindViewHolder: " + e);
         }
 
-        Log.d("Media Added", "Added");
+        Log.d("Video Added", "Added");
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
@@ -317,12 +316,12 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
         return thumbnail;
     }
 
-    public void addMediaItem(Media media) {
+    public void addMediaItem(Video media) {
         mediaList.add(media);  // Add new item to the list
         notifyItemInserted(mediaList.size() - 1);  // Notify the adapter of the new item
     }
 
-    public void addMediaItems(List<Media> newMediaItems) {
+    public void addMediaItems(List<Video> newMediaItems) {
         int startPosition = mediaList.size();
         mediaList.addAll(newMediaItems);
         notifyItemRangeInserted(startPosition, newMediaItems.size());
@@ -341,7 +340,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.VideoViewHol
     }
 
 
-    private void saveMediaListToPreferences(List<Media> mediaList) {
+    private void saveMediaListToPreferences(List<Video> mediaList) {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = context.getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);

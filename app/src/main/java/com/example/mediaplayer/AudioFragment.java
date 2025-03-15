@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,6 +18,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.common.reflect.TypeToken;
@@ -32,30 +37,38 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.content.SharedPreferences;
 
 
 public class AudioFragment extends Fragment {
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
-    private MediaAdapter adapter;
-    private List<Media> mediaList;
+    private AudioAdapter adapter;
+    private List<Audio> mediaList;
 
     private TextView foundText;
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
     private static ArrayList<String> AudioFilesPath;
-    private ArrayList<String> FilesDuration;
+    private ArrayList<String> FilesDateAdded;
 
     private String TAG = "AudioTag";
     private boolean isInsert;
 
     private ExecutorService executorService;
 
-    private List<Media> storedMediaList;
+    private List<Audio> storedMediaList;
     private boolean isFilesStored;
 
+    private View menu_Container;
+    private ImageButton menu_Button;
+    private ImageButton search_Button;
+    private Switch mode_Switch;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     public AudioFragment() {
         // Required empty public constructor
@@ -83,7 +96,11 @@ public class AudioFragment extends Fragment {
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
         AudioFilesPath = new ArrayList<>();
-        FilesDuration = new ArrayList<>();
+        FilesDateAdded = new ArrayList<>();
+
+        menu_Container = view.findViewById(R.id.MenuContainer);
+        menu_Button = view.findViewById(R.id.menu_button);
+        search_Button = view.findViewById(R.id.search_button);
 
         executorService = Executors.newSingleThreadExecutor();
 
@@ -105,8 +122,41 @@ public class AudioFragment extends Fragment {
 
         Log.d(TAG, "onViewCreated: YES");
 
-        adapter = new MediaAdapter(requireContext(), mediaList);
+        adapter = new AudioAdapter(requireContext(), mediaList);
         recyclerView.setAdapter(adapter);
+
+        sharedPreferences = getActivity().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        menu_Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("showMenuLayout", "showMenuLayout: YES");
+                showMenuLayout();
+            }
+        });
+    }
+
+
+    private void showMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: YES");
+        Animation slideInRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_in_right);
+        menu_Container.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                menu_Container.setVisibility(View.VISIBLE);
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
     }
 
 
@@ -170,13 +220,13 @@ public class AudioFragment extends Fragment {
                     Log.d("Hello", "UIThread: " + mediaList);
 
 //                    if (!refresh) {
-//                        adapter = new MediaAdapter(requireContext(), mediaList);
+//                        adapter = new VideoAdapter(requireContext(), mediaList);
 //                        recyclerView.setAdapter(adapter);
 //                        Log.d(TAG, "Refresh: Yes");
 //                    }
 //                    else if (isInsert) {
 //                        saveMediaListToPreferences(mediaList);
-//                        adapter = new MediaAdapter(requireContext(), mediaList);
+//                        adapter = new VideoAdapter(requireContext(), mediaList);
 //                        recyclerView.setAdapter(adapter);
 //                        isInsert = false;
 //                        Log.d(TAG, "isInsert: " + isInsert);
@@ -186,14 +236,14 @@ public class AudioFragment extends Fragment {
         });
     }
 
-    private List<Media> queryMediaFiles(boolean refresh) {
-        List<Media> mediaList = new ArrayList<>();
+    private List<Audio> queryMediaFiles(boolean refresh) {
+        List<Audio> mediaList = new ArrayList<>();
         
         String[] audioProjection = new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.SIZE
+                MediaStore.Audio.Media.DATE_ADDED
         };
 
         String sortOrder = MediaStore.Audio.Media.DISPLAY_NAME + " ASC";
@@ -228,19 +278,23 @@ public class AudioFragment extends Fragment {
         return mediaList;
     }
 
-    private List<Media> processCursor(Cursor cursor, Set<String> parentFolders) {
-        List<Media> mediaList = new ArrayList<>();
+    private List<Audio> processCursor(Cursor cursor, Set<String> parentFolders) {
+        List<Audio> mediaList = new ArrayList<>();
 
         int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-        int sizeInd = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE);
+        int dateAddedInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED);
 
-        if (filePathInd != -1 && displayNameInd != -1 && sizeInd != -1) {
+        if (filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
+            Log.d(TAG, "processCursor1: " + cursor.getCount());
             while (cursor.moveToNext()) {
+                Log.d(TAG, "processCursor2: " + cursor.getCount());
+
+                Log.d(TAG, "Indices: " + filePathInd + ", " + displayNameInd + ", " + dateAddedInd);
+
                 String filePath = cursor.getString(filePathInd);
                 String displayName = cursor.getString(displayNameInd);
-                long size = cursor.getLong(sizeInd);
-                String formattedSize = getFormattedFileSize(size);
+                String date = cursor.getString(dateAddedInd);
 
                 // Add parent folder path to the set
                 String parentFolder = new File(filePath).getParent();
@@ -248,11 +302,11 @@ public class AudioFragment extends Fragment {
 
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
-                FilesDuration.add(formattedSize);
+                FilesDateAdded.add(date);
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Media media = new Media(displayName, filePath, formattedSize, null, false);
+                Audio media = new Audio(displayName, filePath, date, null, false);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {
@@ -262,8 +316,8 @@ public class AudioFragment extends Fragment {
 //                    }
 //                }
 
-                Log.d(TAG, displayName);
-                Log.d(TAG, formattedSize);
+                Log.d("wowo", displayName);
+                Log.d("wowo", date);
             }
         }
         return mediaList;
@@ -273,15 +327,15 @@ public class AudioFragment extends Fragment {
     private void Check_And_Update_Files() {
         new Thread(() -> {
             // For Deletion
-            List<Media> removingMediaList = new ArrayList<>();
-            List<Media> newMediaList = new ArrayList<>(queryMediaFiles(false));
+            List<Audio> removingMediaList = new ArrayList<>();
+            List<Audio> newMediaList = new ArrayList<>(queryMediaFiles(false));
             Set<String> newListNames = new HashSet<>();
 
-            for (Media m : newMediaList) {
+            for (Audio m : newMediaList) {
                 newListNames.add(m.getName());
             }
 
-            for (Media m : storedMediaList) {
+            for (Audio m : storedMediaList) {
                 if (!newListNames.contains(m.getName())) {
                     removingMediaList.add(m);
                 }
@@ -289,14 +343,14 @@ public class AudioFragment extends Fragment {
 
 
             // For Insertion
-            List<Media> addingMediaList = new ArrayList<>();
+            List<Audio> addingMediaList = new ArrayList<>();
             Set<String> storedListNames = new HashSet<>();
 
-            for (Media m : storedMediaList) {
+            for (Audio m : storedMediaList) {
                 storedListNames.add(m.getName());
             }
 
-            for (Media m : newMediaList) {
+            for (Audio m : newMediaList) {
                 if (!storedListNames.contains(m.getName())) {
                     addingMediaList.add(m);
                 }
@@ -323,7 +377,7 @@ public class AudioFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
 //                mediaList.removeAll(removingMediaList);
 
-                for (Media m : removingMediaList) {
+                for (Audio m : removingMediaList) {
                     int index = mediaList.indexOf(m);
                     if (index >= 0) {
                         mediaList.remove(index);
@@ -342,9 +396,9 @@ public class AudioFragment extends Fragment {
     }
 
 
-    public boolean isInsertFiles(List<Media> storedList, Media media) {
+    public boolean isInsertFiles(List<Audio> storedList, Audio media) {
         boolean f = false;
-        for (Media m: storedList) {
+        for (Audio m: storedList) {
             if (Objects.equals(m.getName(), media.getName())) {
                 f = true;
                 break;
@@ -359,7 +413,7 @@ public class AudioFragment extends Fragment {
     }
 
 
-    private void saveMediaListToPreferences(List<Media> mediaList) {
+    private void saveMediaListToPreferences(List<Audio> mediaList) {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
@@ -375,11 +429,11 @@ public class AudioFragment extends Fragment {
     }
 
 
-    public List<Media> loadMediaListFromPreferences() {
+    public List<Audio> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = prefs.getString("audioList", null);
-        Type type = new TypeToken<ArrayList<Media>>() {}.getType();
+        Type type = new TypeToken<ArrayList<Audio>>() {}.getType();
         return gson.fromJson(json, type);
     }
 

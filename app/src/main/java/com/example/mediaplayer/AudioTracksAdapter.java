@@ -70,6 +70,7 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
+
                 TrackSelectionOverride override = new TrackSelectionOverride(track.getTrackGroup(), track.getTrackIndex());
 
                 // Build new parameters with the override

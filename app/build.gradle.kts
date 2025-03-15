@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.mediaplayer"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -29,6 +29,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -36,6 +37,7 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
 }
 
 
@@ -53,6 +55,7 @@ dependencies {
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.preference)
+    implementation(libs.androidx.gridlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -64,7 +67,7 @@ dependencies {
 
     implementation(libs.gson)
 
-    implementation(libs.glide) // Ensure you use the latest version
+    implementation(libs.glide)
     annotationProcessor(libs.compiler)
 
     implementation(libs.androidx.swiperefreshlayout)
@@ -74,6 +77,8 @@ dependencies {
 
     implementation(libs.flexbox)
 
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+2")
 
 }

@@ -22,7 +22,7 @@
         android:focusableInTouchMode="false"
         android:clickable="false"/>
 
-    <!-- Media Info -->
+    <!-- Video Info -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/subLinearLayout"
         android:layout_width="0dp"

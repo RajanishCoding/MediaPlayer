@@ -35,6 +35,8 @@ import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.session.DefaultMediaNotificationProvider;
@@ -80,9 +82,14 @@ public class PlayerService extends MediaSessionService {
 
         updateMediaSessionMetadata();
 
+        DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+
         player = new ExoPlayer.Builder(this)
                 .setTrackSelector(new DefaultTrackSelector(this))
                 .build();
+  
+
         mediaSession = new MediaSession.Builder(this, player).build();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS_CHANGED"));
@@ -249,7 +256,7 @@ public class PlayerService extends MediaSessionService {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Media Playback";
+            CharSequence name = "Video Playback";
             String description = "Channel for media playback notifications";
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);

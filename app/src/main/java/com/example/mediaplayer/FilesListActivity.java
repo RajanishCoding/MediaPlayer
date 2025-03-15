@@ -7,19 +7,22 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Switch;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -28,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -36,25 +40,13 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 //import androidx.media3.exoplayer.Player;
 import androidx.media3.common.util.UnstableApi;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 
-import java.io.File;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 public class FilesListActivity extends AppCompatActivity {
 
@@ -63,7 +55,7 @@ public class FilesListActivity extends AppCompatActivity {
     private static ArrayList<String> AudioFilesPath;
     private ArrayList<String> FilesDuration;
 
-    private List<Media> mediaList;
+    private List<Video> mediaList;
 
     private ConstraintLayout StorageRationaleLayout;
     private Button Rationale_AllowAccess_Button;
@@ -82,6 +74,13 @@ public class FilesListActivity extends AppCompatActivity {
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
+
+    private View menu_Container;
+    private ImageButton menu_Button;
+    private ImageButton search_Button;
+    private Switch mode_Switch;
+
+    public static boolean isThemeChanged = false;
 
 
     @Override
@@ -104,6 +103,11 @@ public class FilesListActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
+        setThemeMode();
+
+//        menu_Container = findViewById(R.id.MenuContainer);
+        menu_Button = findViewById(R.id.moremenu_button);
+        search_Button = findViewById(R.id.search_button);
 
 //        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 //            @Override
@@ -122,6 +126,7 @@ public class FilesListActivity extends AppCompatActivity {
                     if (!isStorageAccessed) {
                         return false;
                     }
+
                     loadFragment(new VideoFragment(), false);
                     return true;
                 }
@@ -141,6 +146,25 @@ public class FilesListActivity extends AppCompatActivity {
             }
         });
 
+        if (isThemeChanged) {  // If recreated due to theme change
+            bottomNavigationView.post(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    bottomNavigationView.setSelectedItemId(R.id.nav_video);
+                    Log.d("ThemeChange", "onCreate: ");
+                }
+            });
+            Log.d("ThemeChange", "onCreate: Theme changed, selecting Video in NavBar " + isThemeChanged);
+            isThemeChanged = false; // Reset flag
+        }
+
+
+
+//        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+//            bottomNavigationView.setSelectedItemId(R.id.nav_video);
+//            Log.d("Theme NOT", "onCreate: ");
+//        }, 200);
+
+
         lastPlay_Button.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
             @Override
@@ -157,6 +181,49 @@ public class FilesListActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             }
+        });
+        Log.d("DEBUG", "menu_Button: " + (menu_Button != null ? "Exists" : "NULL"));
+
+        menu_Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("showMenuLayout", "showMenuLayout: YES");
+                showMenuLayout();
+            }
+        });
+    }
+
+    private void setThemeMode() {
+        SharedPreferences sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        int savedMode = sharedPreferences.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        int currentMode = AppCompatDelegate.getDefaultNightMode();
+
+        if (savedMode != currentMode) {  // Only set if its different
+            AppCompatDelegate.setDefaultNightMode(savedMode);
+            Log.d("niced", "onViewCreated: YES " + savedMode + currentMode);
+        }
+    }
+
+    private void showMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: YES");
+        Animation slideInRight = AnimationUtils.loadAnimation(FilesListActivity.this, R.anim.slide_in_right);
+        menu_Container.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                menu_Container.setVisibility(View.VISIBLE);
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
         });
     }
 
@@ -348,7 +415,6 @@ public class FilesListActivity extends AppCompatActivity {
                 fragmentTransaction.add(R.id.fragmentContainer, fragment);
             else
                 fragmentTransaction.replace(R.id.fragmentContainer, fragment);
-
         }
 
         fragmentTransaction.commit();

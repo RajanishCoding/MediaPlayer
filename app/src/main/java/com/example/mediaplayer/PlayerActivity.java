@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -43,9 +42,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
-import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
 import androidx.media3.common.util.UnstableApi;
@@ -57,6 +56,7 @@ import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -559,7 +559,7 @@ public class PlayerActivity extends AppCompatActivity {
 
 
         playerView.setOnTouchListener((v, event) -> {
-            if (!isAudioTracksShowing || !isSubTracksShowing)
+            if (!isAudioTracksShowing && !isSubTracksShowing)
                 gestureDetector.onTouchEvent(event);
 
             if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -624,13 +624,16 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 if (isScrolling) {
+                    if (isBrightnessChanging) {
+                        editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
+                        editor.apply();
+                    }
+
                     isScrolling = false;
                     isSeeking = false;
                     isVolumeChanging = false;
                     isBrightnessChanging = false;
                     gestureDirection = GestureDirection.NONE;
-                    editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
-                    editor.apply();
                     Log.d("Scrolling", "onScroll: " + gestureDirection.name());
                 }
 
@@ -867,6 +870,11 @@ public class PlayerActivity extends AppCompatActivity {
 
         player.addListener(new Player.Listener() {
             @Override
+            public void onPlayerError(PlaybackException error) {
+                Log.d("playbackError", "onPlayerError: " + error);
+            }
+
+            @Override
             public void onPlaybackStateChanged(int playbackState) {
                 switch (playbackState) {
                     case Player.STATE_READY:
@@ -1027,7 +1035,6 @@ public class PlayerActivity extends AppCompatActivity {
                         TrackGroup trackGroup = trackGroups.get(i);
                         for (int j = 0; j < trackGroup.length; j++) {
                             Format format = trackGroup.getFormat(j);
-
                             if (format.sampleMimeType != null) {
                                 if (format.sampleMimeType.startsWith("application/")) {
                                     // Check if this track is selected
@@ -1329,7 +1336,7 @@ public class PlayerActivity extends AppCompatActivity {
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.more_button);
+        View more = findViewById(R.id.menu_button);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);
@@ -1404,7 +1411,7 @@ public class PlayerActivity extends AppCompatActivity {
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.more_button);
+        View more = findViewById(R.id.menu_button);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);

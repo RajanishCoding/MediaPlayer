@@ -3,20 +3,30 @@ package com.example.mediaplayer;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.MediaItem;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.MediaStore;
+import android.support.v4.media.MediaBrowserCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.Switch;
 import android.widget.TextView;
 
 
@@ -26,6 +36,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -39,9 +50,9 @@ public class VideoFragment extends Fragment {
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
-    private MediaAdapter adapter;
+    private VideoAdapter adapter;
 
-    private List<Media> mediaList;
+    private List<Video> mediaList;
 
     private TextView foundText;
 
@@ -55,12 +66,28 @@ public class VideoFragment extends Fragment {
 
     private ExecutorService executorService;
 
-    private List<Media> storedMediaList;
+    private List<Video> storedMediaList;
     private boolean isFilesStored;
 
-    private MediaAdapter mediaAdapter;
+    private VideoAdapter mediaAdapter;
 
     private Thread thread;
+
+    private View menu_Container;
+    private ImageButton menu_Button;
+    private ImageButton search_Button;
+
+    private Switch mode_Switch;
+    private boolean switch_frag;
+    private boolean switch_isEnd = true;
+
+    private Button ByName_sort;
+    private Button BySize_sort;
+    private Button ByDate_sort;
+    private Button ByLength_sort;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
 
     public VideoFragment() {
@@ -91,6 +118,14 @@ public class VideoFragment extends Fragment {
         AudioFilesPath = new ArrayList<>();
         FilesDateAdded = new ArrayList<>();
 
+        menu_Container = view.findViewById(R.id.MenuContainer);
+        menu_Button = view.findViewById(R.id.menu_button);
+        search_Button = view.findViewById(R.id.search_button);
+
+        ByName_sort = view.findViewById(R.id.sort_byName);
+        ByDate_sort = view.findViewById(R.id.sort_byDate);
+        ByLength_sort = view.findViewById(R.id.sort_byLength);
+        BySize_sort = view.findViewById(R.id.sort_bySize);
 
         executorService = Executors.newSingleThreadExecutor();
 
@@ -110,11 +145,106 @@ public class VideoFragment extends Fragment {
             }
         });
 
-//        mediaList.add(new Media("Name", "Path", "Size", null));
-        adapter = new MediaAdapter(requireContext(), mediaList);
+//        mediaList.add(new Video("Name", "Path", "Size", null));
+        adapter = new VideoAdapter(requireContext(), mediaList);
         recyclerView.setAdapter(adapter);
+
+        menu_Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (switch_isEnd) {
+                    if (switch_frag) {
+                        switch_frag = false;
+                        hideMenuLayout();
+                    } else {
+                        switch_frag = true;
+                        showMenuLayout();
+                    }
+                }
+            }
+        });
+
+        ByName_sort.setOnClickListener(v -> {
+            setBackground(ByName_sort, true);
+            setBackground(ByDate_sort, false);
+            setBackground(ByLength_sort, false);
+            setBackground(BySize_sort, false);
+        });
+
+        ByDate_sort.setOnClickListener(v -> {
+            setBackground(ByName_sort, false);
+            setBackground(ByDate_sort, true);
+            setBackground(ByLength_sort, false);
+            setBackground(BySize_sort, false);
+        });
+
+        ByLength_sort.setOnClickListener(v -> {
+            setBackground(ByName_sort, false);
+            setBackground(ByDate_sort, false);
+            setBackground(ByLength_sort, true);
+            setBackground(BySize_sort, false);
+        });
+
+        BySize_sort.setOnClickListener(v -> {
+            setBackground(ByName_sort, false);
+            setBackground(ByDate_sort, false);
+            setBackground(ByLength_sort, false);
+            setBackground(BySize_sort, true);
+        });
     }
 
+    private void setBackground(Button button, boolean b) {
+        if (!b)
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
+        else
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
+    }
+
+    private void showMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: YES");
+        Animation slideInRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_in_right);
+        menu_Container.startAnimation(slideInRight);
+
+        slideInRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                menu_Container.setVisibility(View.VISIBLE);
+                switch_isEnd = false;
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+                switch_isEnd = true;
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
+
+    private void hideMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: NO");
+        Animation slideOutRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_out_right);
+        menu_Container.startAnimation(slideOutRight);
+
+        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                switch_isEnd = false;
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+                menu_Container.setVisibility(View.GONE);
+                switch_isEnd = true;
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
 
     @Override
     public void onStart() {
@@ -130,6 +260,11 @@ public class VideoFragment extends Fragment {
         super.onDestroy();
 
         executorService.shutdown();
+    }
+
+
+    private void sortMediaList() {
+        ;
     }
 
 
@@ -167,22 +302,24 @@ public class VideoFragment extends Fragment {
                         foundText.setVisibility(View.GONE);
                         mediaList.clear();
                         mediaList.addAll(storedMediaList);
+                        mediaList.sort((m1, m2) -> CharSequence.compare(m1.getDuration(), m2.getDuration()));
                         adapter.notifyDataSetChanged();
 
                         Check_And_Update_Files();
                     }
-
+                    mediaList.sort((m1, m2) -> CharSequence.compare(m1.getDuration(), m2.getDuration()));
+                    adapter.notifyDataSetChanged();
                     Log.d("Hello", "UIThread: " + storedMediaList);
                     Log.d("Hello", "UIThread: " + mediaList);
 
 //                    if (!refresh) {
-//                        adapter = new MediaAdapter(requireContext(), mediaList);
+//                        adapter = new VideoAdapter(requireContext(), mediaList);
 //                        recyclerView.setAdapter(adapter);
 //                        Log.d(TAG, "Refresh: Yes");
 //                    }
 //                    else if (isInsert) {
 //                        saveMediaListToPreferences(mediaList);
-//                        adapter = new MediaAdapter(requireContext(), mediaList);
+//                        adapter = new VideoAdapter(requireContext(), mediaList);
 //                        recyclerView.setAdapter(adapter);
 //                        isInsert = false;
 //                        Log.d(TAG, "isInsert: " + isInsert);
@@ -192,8 +329,8 @@ public class VideoFragment extends Fragment {
         });
     }
 
-    private List<Media> queryMediaFiles(boolean refresh) {
-        List<Media> mediaList = new ArrayList<>();
+    private List<Video> queryMediaFiles(boolean refresh) {
+        List<Video> mediaList = new ArrayList<>();
 
         String[] videoProjection = new String[]{
                 MediaStore.Video.Media._ID,
@@ -234,8 +371,8 @@ public class VideoFragment extends Fragment {
         return mediaList;
     }
 
-    private List<Media> processCursor(Cursor cursor, Set<String> parentFolders) {
-        List<Media> mediaList = new ArrayList<>();
+    private List<Video> processCursor(Cursor cursor, Set<String> parentFolders) {
+        List<Video> mediaList = new ArrayList<>();
 
         int filePathInd = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
@@ -257,7 +394,7 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Media media = new Media(displayName, filePath, date, null, true);
+                Video media = new Video(displayName, filePath, date, null, true);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {
@@ -267,8 +404,8 @@ public class VideoFragment extends Fragment {
 //                    }
 //                }
 
-                Log.d("cursor", displayName);
-                Log.d("cursor", date);
+                Log.d("wowo", displayName);
+                Log.d("wowo", date);
             }
         }
         return mediaList;
@@ -278,15 +415,15 @@ public class VideoFragment extends Fragment {
     private void Check_And_Update_Files() {
         new Thread(() -> {
             // For Deletion
-            List<Media> removingMediaList = new ArrayList<>();
-            List<Media> newMediaList = new ArrayList<>(queryMediaFiles(false));
+            List<Video> removingMediaList = new ArrayList<>();
+            List<Video> newMediaList = new ArrayList<>(queryMediaFiles(false));
             Set<String> newListNames = new HashSet<>();
 
-            for (Media m : newMediaList) {
+            for (Video m : newMediaList) {
                 newListNames.add(m.getName());
             }
 
-            for (Media m : storedMediaList) {
+            for (Video m : storedMediaList) {
                 if (!newListNames.contains(m.getName())) {
                     removingMediaList.add(m);
                 }
@@ -294,14 +431,14 @@ public class VideoFragment extends Fragment {
 
 
             // For Insertion
-            List<Media> addingMediaList = new ArrayList<>();
+            List<Video> addingMediaList = new ArrayList<>();
             Set<String> storedListNames = new HashSet<>();
 
-            for (Media m : storedMediaList) {
+            for (Video m : storedMediaList) {
                 storedListNames.add(m.getName());
             }
 
-            for (Media m : newMediaList) {
+            for (Video m : newMediaList) {
                 if (!storedListNames.contains(m.getName())) {
                     addingMediaList.add(m);
                 }
@@ -328,7 +465,7 @@ public class VideoFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
 //                mediaList.removeAll(removingMediaList);
 
-                for (Media m : removingMediaList) {
+                for (Video m : removingMediaList) {
                     int index = mediaList.indexOf(m);
                     if (index >= 0) {
                         mediaList.remove(index);
@@ -347,9 +484,9 @@ public class VideoFragment extends Fragment {
     }
 
 
-    public boolean isInsertFiles(List<Media> storedList, Media media) {
+    public boolean isInsertFiles(List<Video> storedList, Video media) {
         boolean f = false;
-        for (Media m: storedList) {
+        for (Video m: storedList) {
             if (Objects.equals(m.getName(), media.getName())) {
                 f = true;
                 break;
@@ -364,7 +501,7 @@ public class VideoFragment extends Fragment {
     }
 
 
-    private void saveMediaListToPreferences(List<Media> mediaList) {
+    private void saveMediaListToPreferences(List<Video> mediaList) {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
@@ -379,11 +516,11 @@ public class VideoFragment extends Fragment {
         }).start();
     }
 
-    private List<Media> loadMediaListFromPreferences() {
+    private List<Video> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = prefs.getString("videoList", null);
-        Type type = new TypeToken<ArrayList<Media>>() {}.getType();
+        Type type = new TypeToken<ArrayList<Video>>() {}.getType();
         return gson.fromJson(json, type);
     }
 
