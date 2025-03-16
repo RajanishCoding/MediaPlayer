@@ -3,21 +3,17 @@ package com.example.mediaplayer;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.media3.common.MediaItem;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.MediaStore;
-import android.support.v4.media.MediaBrowserCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,6 +32,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -85,9 +82,18 @@ public class VideoFragment extends Fragment {
     private Button BySize_sort;
     private Button ByDate_sort;
     private Button ByLength_sort;
+    private Button ByResol_sort;
+    private Button ByFps_sort;
 
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
+    private Button apply_Button;
+    private Button cancel_Button;
+
+    private String sortBy = "";
+
+    private String stored_sortBy;
+
+    private SharedPreferences settingsPrefs;
+    private SharedPreferences.Editor settingsEditor;
 
 
     public VideoFragment() {
@@ -126,8 +132,16 @@ public class VideoFragment extends Fragment {
         ByDate_sort = view.findViewById(R.id.sort_byDate);
         ByLength_sort = view.findViewById(R.id.sort_byLength);
         BySize_sort = view.findViewById(R.id.sort_bySize);
+        ByResol_sort = view.findViewById(R.id.sort_byResol);
+        ByFps_sort = view.findViewById(R.id.sort_byFps);
+
+        apply_Button = view.findViewById(R.id.buttonApply);
+        cancel_Button = view.findViewById(R.id.buttonCancel);
 
         executorService = Executors.newSingleThreadExecutor();
+
+        settingsPrefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        settingsEditor = settingsPrefs.edit();
 
         return view;
     }
@@ -149,48 +163,102 @@ public class VideoFragment extends Fragment {
         adapter = new VideoAdapter(requireContext(), mediaList);
         recyclerView.setAdapter(adapter);
 
-        menu_Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (switch_isEnd) {
-                    if (switch_frag) {
-                        switch_frag = false;
-                        hideMenuLayout();
-                    } else {
-                        switch_frag = true;
-                        showMenuLayout();
-                    }
+        menu_Button.setOnClickListener(v -> {
+            if (switch_isEnd) {
+                if (switch_frag) {
+                    hideMenuLayout();
+                } else {
+                    showMenuLayout();
                 }
             }
         });
 
-        ByName_sort.setOnClickListener(v -> {
-            setBackground(ByName_sort, true);
-            setBackground(ByDate_sort, false);
-            setBackground(ByLength_sort, false);
-            setBackground(BySize_sort, false);
+        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
+
+        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
+
+        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
+
+        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+
+        ByResol_sort.setOnClickListener(v -> setBackground_SortButtons("Resol"));
+
+        ByFps_sort.setOnClickListener(v -> setBackground_SortButtons("Fps"));
+
+        sortBy = settingsPrefs.getString("sortBy", "Name");
+        setBackground_SortButtons(sortBy);
+
+        apply_Button.setOnClickListener(v -> {
+            sortMediaList();
+            hideMenuLayout();
         });
 
-        ByDate_sort.setOnClickListener(v -> {
-            setBackground(ByName_sort, false);
-            setBackground(ByDate_sort, true);
-            setBackground(ByLength_sort, false);
-            setBackground(BySize_sort, false);
-        });
+        cancel_Button.setOnClickListener(v -> hideMenuLayout());
 
-        ByLength_sort.setOnClickListener(v -> {
-            setBackground(ByName_sort, false);
-            setBackground(ByDate_sort, false);
-            setBackground(ByLength_sort, true);
-            setBackground(BySize_sort, false);
-        });
 
-        BySize_sort.setOnClickListener(v -> {
-            setBackground(ByName_sort, false);
-            setBackground(ByDate_sort, false);
-            setBackground(ByLength_sort, false);
-            setBackground(BySize_sort, true);
-        });
+    }
+
+
+    private void sortMediaList() {
+        boolean isSorted = true;
+
+        switch (sortBy) {
+            case "Name":
+                mediaList.sort(Comparator.comparing(Video::getName));
+                break;
+
+            case "Size":
+                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getSize())));
+                break;
+
+            case "Length":
+                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getDuration())));
+                break;
+
+            case "Date":
+                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded())));
+                break;
+
+            case "Resol":
+                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getResolution())));
+                break;
+
+            case "Fps":
+                mediaList.sort(Comparator.comparingDouble(m -> Double.parseDouble(m.getFrameRate())));
+                break;
+
+            default:
+                isSorted = false;
+                break;
+        }
+
+        if (isSorted) {
+            adapter.notifyDataSetChanged();
+            settingsEditor.putString("sortBy", sortBy);
+            settingsEditor.apply();
+            saveMediaListToPreferences(mediaList);
+        }
+    }
+
+    private void setBackground_SortButtons(String sortBy_Button) {
+        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort, ByResol_sort, ByFps_sort);
+
+        // Set all buttons to false first
+        for (Button button : sortButtons) {
+            setBackground(button, false);
+        }
+
+        // Set the selected button to true
+        switch (sortBy_Button) {
+            case "Name":   setBackground(ByName_sort, true);  break;
+            case "Size":   setBackground(BySize_sort, true);  break;
+            case "Length": setBackground(ByLength_sort, true); break;
+            case "Date":   setBackground(ByDate_sort, true);  break;
+            case "Resol":  setBackground(ByResol_sort, true); break;
+            case "Fps":    setBackground(ByFps_sort, true);   break;
+        }
+
+        sortBy = sortBy_Button;
     }
 
     private void setBackground(Button button, boolean b) {
@@ -209,6 +277,7 @@ public class VideoFragment extends Fragment {
             @Override
             public void onAnimationStart (Animation animation){
                 menu_Container.setVisibility(View.VISIBLE);
+                switch_frag = true;
                 switch_isEnd = false;
 //                isMenuContainerShowing = true;
             }
@@ -232,6 +301,7 @@ public class VideoFragment extends Fragment {
             @Override
             public void onAnimationStart (Animation animation){
                 switch_isEnd = false;
+                switch_frag = false;
 //                isMenuContainerShowing = true;
             }
 
@@ -263,11 +333,6 @@ public class VideoFragment extends Fragment {
     }
 
 
-    private void sortMediaList() {
-        ;
-    }
-
-
     private void Load_Or_Query_MediaList() {
         executorService.submit(() -> {
             storedMediaList = loadMediaListFromPreferences();
@@ -294,21 +359,24 @@ public class VideoFragment extends Fragment {
                         else
                             foundText.setVisibility(View.GONE);
 
-                        adapter.notifyDataSetChanged();
-                        saveMediaListToPreferences(mediaList);
+                        sortMediaList();
+//                        adapter.notifyDataSetChanged();
+//                        saveMediaListToPreferences(mediaList);
                     }
 
                     else {
                         foundText.setVisibility(View.GONE);
                         mediaList.clear();
                         mediaList.addAll(storedMediaList);
-                        mediaList.sort((m1, m2) -> CharSequence.compare(m1.getDuration(), m2.getDuration()));
                         adapter.notifyDataSetChanged();
 
                         Check_And_Update_Files();
+
+
                     }
-                    mediaList.sort((m1, m2) -> CharSequence.compare(m1.getDuration(), m2.getDuration()));
-                    adapter.notifyDataSetChanged();
+
+
+
                     Log.d("Hello", "UIThread: " + storedMediaList);
                     Log.d("Hello", "UIThread: " + mediaList);
 
@@ -404,6 +472,8 @@ public class VideoFragment extends Fragment {
 //                    }
 //                }
 
+                Log.d(TAG, "processCursor: ");
+
                 Log.d("wowo", displayName);
                 Log.d("wowo", date);
             }
@@ -428,7 +498,6 @@ public class VideoFragment extends Fragment {
                     removingMediaList.add(m);
                 }
             }
-
 
             // For Insertion
             List<Video> addingMediaList = new ArrayList<>();
@@ -475,9 +544,10 @@ public class VideoFragment extends Fragment {
 
                 mediaList.addAll(addingMediaList);
 
+                sortMediaList();
 
-                adapter.notifyDataSetChanged();
-                saveMediaListToPreferences(mediaList);
+//                adapter.notifyDataSetChanged();
+//                saveMediaListToPreferences(mediaList);
             });
 
         }).start();

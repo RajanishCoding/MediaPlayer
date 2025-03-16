@@ -90,7 +90,7 @@ public class SettingsFragment extends Fragment {
     private void setModeSwitch() {
         sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
-        mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", false));
+        mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", true));
     }
 
     private void setThemeMode(int mode) {

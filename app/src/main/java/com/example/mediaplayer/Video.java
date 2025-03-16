@@ -1,6 +1,7 @@
 package com.example.mediaplayer;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 public class Video {
     private String name;
@@ -55,19 +56,20 @@ public class Video {
     }
 
     public String getDuration() {
-        return duration;
+        return duration != null ? duration : "0";
     }
 
     public String getResolution() {
-        return resolution;
+        return resolution ;//!= null ? resolution : "0";
     }
 
     public String getFrameRate() {
-        return frameRate;
+        Log.d("frameRate", "getFrameRate: " + frameRate);
+        return frameRate != null ? String.format("%.2f", Double.parseDouble(frameRate)): "0";
     }
 
     public String getSize() {
-        return size;
+        return size != null ? size : "0";
     }
 
 

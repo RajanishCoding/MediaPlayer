@@ -79,6 +79,19 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+//    implementation(libs.ffmpeg.kit.full)
+//    implementation (libs.mobile.ffmpeg.full)
+//    implementation(libs.ffmpeg.kit.full.v51lts)
+
+    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
+//    implementation("com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS")
+
+//    implementation("com.github.Arthenica:ffmpeg-kit:5.1.LTS")
+//    implementation("com.github.Arthenica:ffmpeg-kit-full:4.5.LTS")
+//    implementation("com.github.Arthenica:ffmpeg-kit-full-gpl:5.1.LTS")
+//    implementation("com.github.Arthenica:ffmpeg-kit-min-gpl:5.1.LTS")
+
+
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+2")
 
 }
