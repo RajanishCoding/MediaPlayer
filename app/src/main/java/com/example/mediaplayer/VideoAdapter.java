@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.session.IMediaController;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -127,22 +128,60 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 //            }).start();
 
             // MediaMetadataRetriever Thread
+//            new Thread(() -> {
+//                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+//
+//                File file = new File(media.getPath());
+//
+//                try {
+//                    retriever.setDataSource(media.getPath());
+//
+//                    long sizeInBytes = file.length();
+////                  String size = getFormattedFileSize(sizeInBytes);
+//
+//                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
+//                    String width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+//                    String height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+//                    String fps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE); // in float
+//
+//                    // Setting all Values
+//                    media.setSize(String.valueOf(sizeInBytes));
+//                    media.setDuration(duration);
+//                    media.setResolution(height);
+//                    media.setFrameRate(fps);
+//
+//                    Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
+//
+//                    if (position == mediaList.size() - 1) {
+//                        saveMediaListToPreferences(mediaList);
+//                    }
+//                }
+//
+//                catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                finally {
+//                    try {
+//                        retriever.release();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                holder.itemView.post(() -> {
+//                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+//                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+//                    holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
+//                    holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
+//                });
+//            }).start();
 
-            new Thread(() -> {
+//            new Thread(() -> {
+
                 new FFmpegMetadataRetriever(media.getPath(), retriever -> {
-
-                    File file = new File(media.getPath());
-
                     try {
-    //                    retriever.setDataSource(media.getPath());
-
-                        long sizeInBytes = file.length();
+                        String sizeInBytes = String.valueOf(retriever.getFileSize());
     //                    String size = getFormattedFileSize(sizeInBytes);
-
-    //                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
-    //                    String width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-    //                    String height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
-    //                    String fps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE); // in float
 
                         String duration = String.valueOf(retriever.getDuration());
                         String width = String.valueOf(retriever.getResolution());
@@ -150,7 +189,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                         String fps = String.valueOf(retriever.getFps());
 
                         // Setting all Values
-                        media.setSize(String.valueOf(sizeInBytes));
+                        media.setSize(sizeInBytes);
                         media.setDuration(duration);
                         media.setResolution(height);
                         media.setFrameRate(fps);
@@ -165,23 +204,17 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                     catch (Exception e) {
                         e.printStackTrace();
                     }
-    //                finally {
-    //                    try {
-    //                        retriever.release();
-    //                    } catch (IOException e) {
-    //                        e.printStackTrace();
-    //                    }
-    //                }
 
                     holder.itemView.post(() -> {
-                        holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                        holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                        holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                        holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
                         holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
                         holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
                     });
                 });
-            }).start();
+
         }
+
         else {
             Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
 
@@ -190,8 +223,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 //            holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
 
             // MediaMetadataRetriever Thread
-            holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration())));
-            holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration())));
+            holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
+            holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
 
             holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
             holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
@@ -419,7 +452,18 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
 
-    public String MillisToTime(long seconds) {
+    public String MillisToTime(long millis) {
+        long hours = (millis / (1000 * 60 * 60)) % 24;
+        long minutes = (millis / (1000 * 60)) % 60;
+        long seconds = (millis / 1000) % 60;
+
+        if (hours >= 1) {
+            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
+        }
+        return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
+
+    public String SecsToTime(long seconds) {
         long hours = (seconds / 3600);
         long minutes = (seconds % 3600) / 60;
         long second = seconds % 60;

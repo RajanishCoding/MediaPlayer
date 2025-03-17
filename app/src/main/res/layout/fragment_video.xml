@@ -72,8 +72,6 @@
 
 
 
-
-
     <TextView
         android:id="@+id/found_text_video"
         android:layout_width="match_parent"
@@ -111,44 +109,55 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/gradient_sidebar_light"
-        android:visibility="gone"
+        android:visibility=""
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent">
 
+<!--        android:layout_marginHorizontal="30dp"-->
+<!--        android:layout_marginVertical="100dp"-->
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/sortTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="10px"
-                android:text="Sort"
-                android:textAlignment="center"
-                android:textColor="@color/white"
-                android:textSize="50px"
-                app:layout_constraintTop_toTopOf="parent" />
-
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/sortContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/sortTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10px"
+                    android:text="Sort"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="italic"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/sortLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/sortTitle">
 
 
                 <TableLayout
+                    android:id="@+id/sortTable"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-
                     android:padding="8dp"
-                    android:stretchColumns="*">
+                    android:stretchColumns="*"
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <TableRow
-                        android:paddingVertical="8dp"
+                        android:paddingVertical="4dp"
                         android:layout_width="wrap_content"
                         >
 
@@ -176,7 +185,10 @@
                             android:text="Size" />
                     </TableRow>
 
-                    <TableRow>
+                    <TableRow
+                        android:paddingVertical="4dp"
+                        android:layout_width="match_parent"
+                        >
 
                         <androidx.appcompat.widget.AppCompatButton
                             android:id="@+id/sort_byLength"
@@ -204,28 +216,173 @@
 
                 </TableLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/sortTable">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/sort_Asc"
+                        style="@style/ButtonStyleToggle"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginRight="8dp"
+                        android:drawableStart="@drawable/baseline_fast_rewind_24"
+                        android:paddingHorizontal="40dp"
+                        android:drawablePadding="0dp"
+                        android:text="Ascending"/>
+
+
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/sort_Desc"
+                        style="@style/ButtonStyleToggle"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:drawableStart="@drawable/baseline_fast_forward_24"
+                        android:paddingHorizontal="40dp"
+                        android:drawablePadding="0dp"
+                        android:text="Descending" />
+                </LinearLayout>
+
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <Button
-                android:id="@+id/buttonApply"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Apply Changes"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/sortContainer" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <Button
-                android:id="@+id/buttonCancel"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/detailsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Cancel"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/buttonApply" />
+                android:layout_marginTop="40dp"
+                app:layout_constraintTop_toBottomOf="@id/sortContainer">
+
+                <TextView
+                    android:id="@+id/detailsTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+
+                    android:text="Details"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="italic"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/detailsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toBottomOf="@id/detailsTitle">
+
+
+                    <TableLayout
+                        android:id="@+id/detailsTable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp"
+                        android:stretchColumns="*"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TableRow
+                            android:paddingVertical="4dp"
+                            android:layout_width="wrap_content"
+                            >
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Dur"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Name" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Date"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Date Added" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Size"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:text="Size" />
+                        </TableRow>
+
+                        <TableRow
+                            android:paddingVertical="4dp"
+                            android:layout_width="match_parent"
+                            >
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Length"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Length" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Resol"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Resolution" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Fps"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="70dp"
+                                android:layout_height="40dp"
+                                android:text="FPS" />
+                        </TableRow>
+
+                    </TableLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="40dp"
+                android:padding="8dp"
+                app:layout_constraintTop_toBottomOf="@id/detailsContainer">
+
+                <Button
+                    android:id="@+id/buttonCancel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginRight="8dp"
+                    android:text="Cancel"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/detailsContainer" />
+
+                <Button
+                    android:id="@+id/buttonApply"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Apply"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/buttonApply" />
+
+            </LinearLayout>
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

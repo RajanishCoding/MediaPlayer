@@ -52,14 +52,15 @@ public class FFmpegMetadataRetriever {
                         }
                     }
 
+                    Log.d("Metafdata", "Duration: " + duration);
+                    Log.d("Metafdata", "File Size: " + fileSize + " bytes");
+
                     if (videoStream != null) {
                         width = videoStream.optInt("width", 0);
                         height = videoStream.optInt("height", 0);
                         frameRate = evalFrameRate(videoStream.getString("r_frame_rate"));
 
                         // Log metadata (similar to MediaMetadataRetriever)
-                        Log.d("Metafdata", "Duration: " + duration);
-                        Log.d("Metafdata", "File Size: " + fileSize + " bytes");
                         Log.d("Metafdata", "Bitrate: " + bitrate + " bps");
                         Log.d("Metafdata", "Resolution: " + width + "x" + height);
                         Log.d("Metafdata", "Frame Rate: " + frameRate + " fps");

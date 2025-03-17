@@ -128,23 +128,60 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
             // MediaMetadataRetriever Thread
 
-            new Thread(() -> {
-                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                File file = new File(media.getPath());
+//          MediaMetadataRetriever Thread
+//            new Thread(() -> {
+//                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+//                File file = new File(media.getPath());
+//
+//                try {
+//                    retriever.setDataSource(media.getPath());
+//
+//                    long sizeInBytes = file.length();
+//                    String size = getFormattedFileSize(sizeInBytes);
+//
+//                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
+//
+//                    // Setting all Values
+//                    media.setSize(size);
+//                    media.setDuration(duration);
+//
+//                    Log.d("MediaExtractor", "File Size: " + size + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
+//
+//                    if (position == mediaList.size() - 1) {
+//                        saveMediaListToPreferences(mediaList);
+//                    }
+//                }
+//
+//                catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                finally {
+//                    try {
+//                        retriever.release();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                holder.itemView.post(() -> {
+//                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+//                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+//                    holder.size.setText(media.getSize());
+//                });
+//            }).start();
 
+            new FFmpegMetadataRetriever(media.getPath(), retriever -> {
                 try {
-                    retriever.setDataSource(media.getPath());
+                    String sizeInBytes = String.valueOf(retriever.getFileSize());
+//                    String size = getFormattedFileSize(sizeInBytes);
 
-                    long sizeInBytes = file.length();
-                    String size = getFormattedFileSize(sizeInBytes);
-
-                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
+                    String duration = String.valueOf(retriever.getDuration()); // in s
 
                     // Setting all Values
-                    media.setSize(size);
+                    media.setSize(sizeInBytes);
                     media.setDuration(duration);
 
-                    Log.d("MediaExtractor", "File Size: " + size + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
+                    Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
 
                     if (position == mediaList.size() - 1) {
                         saveMediaListToPreferences(mediaList);
@@ -154,20 +191,14 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
                 catch (Exception e) {
                     e.printStackTrace();
                 }
-                finally {
-                    try {
-                        retriever.release();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
 
                 holder.itemView.post(() -> {
-                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                    holder.size.setText(media.getSize());
+                    holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                    holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                    holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
                 });
-            }).start();
+            });
+
         }
         else {
             Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
@@ -177,10 +208,10 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 //            holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
 
             // MediaMetadataRetriever Thread
-            holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration())));
-            holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration())));
+            holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
+            holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
 
-            holder.size.setText(media.getSize());
+            holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
         }
 
         try {
@@ -414,6 +445,17 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
             return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
         }
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
+    }
+
+    public String SecsToTime(long seconds) {
+        long hours = (seconds / 3600);
+        long minutes = (seconds % 3600) / 60;
+        long second = seconds % 60;
+
+        if (hours >= 1) {
+            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, second);
+        }
+        return String.format(Locale.ROOT, "%02d:%02d", minutes, second);
     }
 
     public int DpToPixel(float dp) {
