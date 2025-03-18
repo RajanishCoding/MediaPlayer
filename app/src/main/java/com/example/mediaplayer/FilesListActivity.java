@@ -99,7 +99,7 @@ public class FilesListActivity extends AppCompatActivity {
         StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
         Rationale_AllowAccess_Button = findViewById(R.id.allowAccess);
 
-        lastPlay_Button = findViewById(R.id.Play_Last);
+//        lastPlay_Button = findViewById(R.id.Play_Last);
 
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
@@ -183,6 +183,7 @@ public class FilesListActivity extends AppCompatActivity {
                 }
             }
         });
+
         Log.d("DEBUG", "menu_Button: " + (menu_Button != null ? "Exists" : "NULL"));
 
         menu_Button.setOnClickListener(new View.OnClickListener() {

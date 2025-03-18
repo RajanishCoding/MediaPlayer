@@ -225,45 +225,6 @@
 
 
 
-
-
-
-
-    <!-- Floating Action Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/Play_Last"
-        style="@style/ButtonStyleVariant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="35dp"
-        android:layout_marginBottom="20dp"
-        android:contentDescription="Play_Last"
-        app:layout_constraintBottom_toTopOf="@+id/PickFile"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:fabCustomSize="60dp"
-        app:maxImageSize="35dp"
-        app:srcCompat="@drawable/media3_icon_play"
-        app:tint="#FFFFFF"
-        app:borderWidth="0dp" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/PickFile"
-        style="@style/ButtonStyleVariant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="35dp"
-        android:layout_marginBottom="80dp"
-        android:contentDescription="Select_Media"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:fabCustomSize="60dp"
-        app:maxImageSize="30dp"
-        app:srcCompat="@drawable/outline_drive_file_move_24"
-        app:tint="#FFFFFF"
-        app:borderWidth="0dp" />
-
-
-
     <!-- Storage Access Layout -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/StorageAccessLayout"

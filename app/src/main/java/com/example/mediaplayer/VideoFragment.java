@@ -1,16 +1,21 @@
 package com.example.mediaplayer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.util.UnstableApi;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.MediaStore;
@@ -94,28 +99,31 @@ public class VideoFragment extends Fragment {
     private Button resol_Details;
     private Button size_Details;
 
+    private Button layout_List;
+    private Button layout_Grid;
+
     private boolean isPath_Visible;
     private boolean isDate_Visible;
     private boolean isResol_Visible;
     private boolean isSize_Visible;
 
-    private Map<String, Boolean> details_Buttons;
-
     private Button apply_Button;
     private Button cancel_Button;
 
     private String sortBy = "";
-
-    private String stored_sortBy;
     private boolean isAscending;
+    private boolean isList;
+
+    private ImageButton lastPlay_Button;
 
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsEditor;
 
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
-    public VideoFragment() {
-        // Required empty public constructor
-    }
+
+    public VideoFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,9 +140,9 @@ public class VideoFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewVideo);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        mediaList = new ArrayList<>();
-
         foundText = view.findViewById(R.id.found_text_video);
+
+        mediaList = new ArrayList<>();
 
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
@@ -144,6 +152,8 @@ public class VideoFragment extends Fragment {
         menu_Container = view.findViewById(R.id.MenuContainer);
         menu_Button = view.findViewById(R.id.menu_button);
         search_Button = view.findViewById(R.id.search_button);
+
+        lastPlay_Button = view.findViewById(R.id.Play_Last);
 
         ByName_sort = view.findViewById(R.id.sort_byName);
         ByDate_sort = view.findViewById(R.id.sort_byDate);
@@ -160,19 +170,19 @@ public class VideoFragment extends Fragment {
         resol_Details = view.findViewById(R.id.details_Resol);
         size_Details = view.findViewById(R.id.details_Size);
 
-        details_Buttons = new HashMap<>();
-        details_Buttons.put("path", false);
-        details_Buttons.put("resol", false);
-        details_Buttons.put("size", true);
-        details_Buttons.put("date", true);
+        layout_List = view.findViewById(R.id.layout_list);
+        layout_Grid = view.findViewById(R.id.layout_grid);
 
         apply_Button = view.findViewById(R.id.buttonApply);
         cancel_Button = view.findViewById(R.id.buttonCancel);
 
         executorService = Executors.newSingleThreadExecutor();
 
-        settingsPrefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        settingsPrefs = requireContext().getSharedPreferences("settings_video", Context.MODE_PRIVATE);
         settingsEditor = settingsPrefs.edit();
+
+        sharedPreferences = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
         return view;
     }
@@ -204,15 +214,25 @@ public class VideoFragment extends Fragment {
             }
         });
 
+
+//        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
-
+        isList = settingsPrefs.getBoolean("isList", true);
         loadDetailsButtonVisibility();
+
+//        Notify Adapter at Start
         setDetailsVisibility();
 
+//        Set BG at Start
+        setBackground_LayoutButtons(isList);
         setBackground_SortButtons(sortBy);
         setBackground_AscDesc_Buttons(isAscending);
         setBackground_DetailsButtons();
+
+
+        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
+        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
 
         ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
         ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
@@ -251,6 +271,24 @@ public class VideoFragment extends Fragment {
         });
 
         cancel_Button.setOnClickListener(v -> hideMenuLayout());
+
+        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                String name = sharedPreferences.getString("lastPlayedFileName", null);
+                String path = sharedPreferences.getString("lastPlayedFilePath", null);
+                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+
+                if (name != null) {
+                    Intent intent = new Intent(requireActivity(), PlayerActivity.class);
+                    intent.putExtra("Name", name);
+                    intent.putExtra("Path", path);
+                    intent.putExtra("isVideo", isVideo);
+                    startActivity(intent);
+                }
+            }
+        });
     }
 
     private void saveDetailsButtonVisibility() {
@@ -266,6 +304,7 @@ public class VideoFragment extends Fragment {
         isSize_Visible = settingsPrefs.getBoolean("size", true);
         isResol_Visible = settingsPrefs.getBoolean("resol", false);
     }
+
 
     private void sortMediaList(boolean isAsc) {
         boolean isSorted = true;
@@ -323,6 +362,21 @@ public class VideoFragment extends Fragment {
         saveDetailsButtonVisibility();
     }
 
+
+    private void setBackground(Button button, boolean b) {
+        if (!b)
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
+        else
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
+    }
+
+    private void setBackground_LayoutButtons(boolean isList) {
+        setBackground(layout_List, false);
+        setBackground(layout_Grid, false);
+        setBackground(isList ? layout_List : layout_Grid, true);
+        this.isList = isList;
+    }
+
     private void setBackground_SortButtons(String sortBy_Button) {
         List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort, ByResol_sort, ByFps_sort);
 
@@ -358,12 +412,6 @@ public class VideoFragment extends Fragment {
         setBackground(date_Details, isDate_Visible);
     }
 
-    private void setBackground(Button button, boolean b) {
-        if (!b)
-            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
-        else
-            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
-    }
 
     private void showMenuLayout() {
         Log.d("showMenuLayout", "showMenuLayout: YES");
@@ -419,6 +467,7 @@ public class VideoFragment extends Fragment {
             public void onAnimationRepeat (Animation animation){}
         });
     }
+
 
     @Override
     public void onStart() {

@@ -1,14 +1,18 @@
 package com.example.mediaplayer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -20,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -30,6 +35,8 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -65,14 +72,45 @@ public class AudioFragment extends Fragment {
     private View menu_Container;
     private ImageButton menu_Button;
     private ImageButton search_Button;
+
     private Switch mode_Switch;
+    private boolean switch_frag;
+    private boolean switch_isEnd = true;
+
+    private Button ByName_sort;
+    private Button BySize_sort;
+    private Button ByDate_sort;
+    private Button ByLength_sort;
+    private Button Asc_sort;
+    private Button Desc_sort;
+
+    private Button path_Details;
+    private Button date_Details;
+    private Button size_Details;
+
+    private Button layout_List;
+    private Button layout_Grid;
+
+    private boolean isPath_Visible;
+    private boolean isDate_Visible;
+    private boolean isSize_Visible;
+
+    private Button apply_Button;
+    private Button cancel_Button;
+
+    private String sortBy = "";
+    private boolean isAscending;
+    private boolean isList;
+
+    private ImageButton lastPlay_Button;
+
+    private SharedPreferences settingsPrefs;
+    private SharedPreferences.Editor settingsEditor;
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
-    public AudioFragment() {
-        // Required empty public constructor
-    }
+    public AudioFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -98,11 +136,37 @@ public class AudioFragment extends Fragment {
         AudioFilesPath = new ArrayList<>();
         FilesDateAdded = new ArrayList<>();
 
-        menu_Container = view.findViewById(R.id.MenuContainer);
+        menu_Container = view.findViewById(R.id.MenuContainer_Audio);
         menu_Button = view.findViewById(R.id.menu_button);
         search_Button = view.findViewById(R.id.search_button);
 
+        lastPlay_Button = view.findViewById(R.id.Play_Last);
+
+        ByName_sort = view.findViewById(R.id.sort_byName);
+        ByDate_sort = view.findViewById(R.id.sort_byDate);
+        ByLength_sort = view.findViewById(R.id.sort_byLength);
+        BySize_sort = view.findViewById(R.id.sort_bySize);
+
+        Asc_sort = view.findViewById(R.id.sort_Asc);
+        Desc_sort = view.findViewById(R.id.sort_Desc);
+
+        path_Details = view.findViewById(R.id.details_Path);
+        date_Details = view.findViewById(R.id.details_Date);
+        size_Details = view.findViewById(R.id.details_Size);
+
+        layout_List = view.findViewById(R.id.layout_list);
+        layout_Grid = view.findViewById(R.id.layout_grid);
+
+        apply_Button = view.findViewById(R.id.buttonApply);
+        cancel_Button = view.findViewById(R.id.buttonCancel);
+
         executorService = Executors.newSingleThreadExecutor();
+
+        settingsPrefs = requireContext().getSharedPreferences("settings_audio", Context.MODE_PRIVATE);
+        settingsEditor = settingsPrefs.edit();
+
+        sharedPreferences = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
         return view;
     }
@@ -120,21 +184,197 @@ public class AudioFragment extends Fragment {
             }
         });
 
-        Log.d(TAG, "onViewCreated: YES");
-
         adapter = new AudioAdapter(requireContext(), mediaList);
         recyclerView.setAdapter(adapter);
 
-        sharedPreferences = getActivity().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
-        menu_Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("showMenuLayout", "showMenuLayout: YES");
-                showMenuLayout();
+        menu_Button.setOnClickListener(v -> {
+            if (switch_isEnd) {
+                if (switch_frag) {
+                    hideMenuLayout();
+                } else {
+                    showMenuLayout();
+                }
             }
         });
+
+
+//        Load at Start
+        sortBy = settingsPrefs.getString("sortBy", "Name");
+        isAscending = settingsPrefs.getBoolean("isAscending", true);
+        isList = settingsPrefs.getBoolean("isList", true);
+        loadDetailsButtonVisibility();
+
+//        Notify Adapter at Start
+        setDetailsVisibility();
+
+//        Set BG at Start
+        setBackground_LayoutButtons(isList);
+        setBackground_SortButtons(sortBy);
+        setBackground_AscDesc_Buttons(isAscending);
+        setBackground_DetailsButtons();
+
+
+        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
+        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+
+        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
+        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
+        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
+        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+
+        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
+        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+
+        path_Details.setOnClickListener(v -> {
+            isPath_Visible = !isPath_Visible;
+            setBackground(path_Details, isPath_Visible);
+        });
+
+        date_Details.setOnClickListener(v -> {
+            isDate_Visible = !isDate_Visible;
+            setBackground(date_Details, isDate_Visible);
+        });
+
+        size_Details.setOnClickListener(v -> {
+            isSize_Visible = !isSize_Visible;
+            setBackground(size_Details, isSize_Visible);
+        });
+
+        apply_Button.setOnClickListener(v -> {
+            setDetailsVisibility();
+            sortMediaList(isAscending);
+            hideMenuLayout();
+        });
+
+        cancel_Button.setOnClickListener(v -> hideMenuLayout());
+
+        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                String name = sharedPreferences.getString("lastPlayedFileName", null);
+                String path = sharedPreferences.getString("lastPlayedFilePath", null);
+                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+
+                if (name != null) {
+                    Intent intent = new Intent(requireActivity(), PlayerActivity.class);
+                    intent.putExtra("Name", name);
+                    intent.putExtra("Path", path);
+                    intent.putExtra("isVideo", isVideo);
+                    startActivity(intent);
+                }
+            }
+        });
+
+    }
+
+
+    private void saveDetailsButtonVisibility() {
+        settingsEditor.putBoolean("path", isPath_Visible);
+        settingsEditor.putBoolean("date", isDate_Visible);
+        settingsEditor.putBoolean("size", isSize_Visible);
+    }
+
+    private void loadDetailsButtonVisibility() {
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
+        isDate_Visible = settingsPrefs.getBoolean("date", true);
+        isSize_Visible = settingsPrefs.getBoolean("size", true);
+    }
+
+
+    private void sortMediaList(boolean isAsc) {
+        boolean isSorted = true;
+
+        Comparator<Audio> comparator = null;
+
+        switch (sortBy) {
+            case "Name":
+                comparator = Comparator.comparing(Audio::getName, String.CASE_INSENSITIVE_ORDER);
+                break;
+
+            case "Size":
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getSize()));
+                break;
+
+            case "Length":
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDuration()));
+                break;
+
+            case "Date":
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded()));
+                break;
+
+            default:
+                isSorted = false;
+                break;
+        }
+
+        if (comparator != null) {
+            if (!isAsc) {
+                comparator = comparator.reversed(); // Reverse order for descending
+            }
+            mediaList.sort(comparator);
+        }
+
+        if (isSorted) {
+            adapter.notifyDataSetChanged();
+            settingsEditor.putString("sortBy", sortBy);
+            settingsEditor.putBoolean("isAscending", isAsc);
+            settingsEditor.apply();
+            saveMediaListToPreferences(mediaList);
+        }
+    }
+
+    private void setDetailsVisibility() {
+        adapter.setDetailsVisibility(isPath_Visible, isSize_Visible, isDate_Visible);
+        saveDetailsButtonVisibility();
+    }
+
+
+    private void setBackground(Button button, boolean b) {
+        if (!b)
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
+        else
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
+    }
+
+    private void setBackground_LayoutButtons(boolean isList) {
+        setBackground(layout_List, false);
+        setBackground(layout_Grid, false);
+        setBackground(isList ? layout_List : layout_Grid, true);
+        this.isList = isList;
+    }
+
+    private void setBackground_SortButtons(String sortBy_Button) {
+        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort);
+
+        // Set all buttons to false first
+        for (Button button : sortButtons) {
+            setBackground(button, false);
+        }
+
+        // Set the selected button to true
+        switch (sortBy_Button) {
+            case "Name":   setBackground(ByName_sort, true);  break;
+            case "Size":   setBackground(BySize_sort, true);  break;
+            case "Length": setBackground(ByLength_sort, true); break;
+            case "Date":   setBackground(ByDate_sort, true);  break;
+        }
+
+        sortBy = sortBy_Button;
+    }
+
+    private void setBackground_AscDesc_Buttons(boolean isAscending) {
+        setBackground(Asc_sort, false);
+        setBackground(Desc_sort, false);
+        setBackground(isAscending ? Asc_sort : Desc_sort, true);
+        this.isAscending = isAscending;
+    }
+
+    private void setBackground_DetailsButtons() {
+        setBackground(path_Details, isPath_Visible);
+        setBackground(size_Details, isSize_Visible);
+        setBackground(date_Details, isDate_Visible);
     }
 
 
@@ -147,11 +387,45 @@ public class AudioFragment extends Fragment {
             @Override
             public void onAnimationStart (Animation animation){
                 menu_Container.setVisibility(View.VISIBLE);
+                switch_frag = true;
+                switch_isEnd = false;
 //                isMenuContainerShowing = true;
             }
 
             @Override
             public void onAnimationEnd (Animation animation){
+                switch_isEnd = true;
+            }
+
+            @Override
+            public void onAnimationRepeat (Animation animation){}
+        });
+    }
+
+    private void hideMenuLayout() {
+        Log.d("showMenuLayout", "showMenuLayout: NO");
+        Animation slideOutRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_out_right);
+        menu_Container.startAnimation(slideOutRight);
+
+        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
+            @Override
+            public void onAnimationStart (Animation animation){
+                switch_isEnd = false;
+                switch_frag = false;
+//                isMenuContainerShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd (Animation animation){
+                menu_Container.setVisibility(View.GONE);
+                switch_isEnd = true;
+
+                loadDetailsButtonVisibility();
+                sortBy = settingsPrefs.getString("sortBy", "Name");
+                isAscending = settingsPrefs.getBoolean("isAscending", true);
+                setBackground_SortButtons(sortBy);
+                setBackground_AscDesc_Buttons(isAscending);
+                setBackground_DetailsButtons();
             }
 
             @Override

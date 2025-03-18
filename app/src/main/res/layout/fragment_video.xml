@@ -109,7 +109,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/gradient_sidebar_light"
-        android:visibility="visible"
+        android:visibility="gone"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -123,17 +123,69 @@
             android:layout_height="wrap_content">
 
             <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/layoutTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View Layout"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="italic"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="15dp"
+                android:padding="8dp"
+                app:layout_constraintTop_toBottomOf="@id/layoutTitle">
+
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/layout_list"
+                    style="@style/ButtonStyleToggle"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:drawableTop="@drawable/rounded_lists_24"
+                    android:drawablePadding="6dp"
+                    android:paddingVertical="6dp"
+                    android:text="List Layout" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/layout_grid"
+                    style="@style/ButtonStyleToggle"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:drawableTop="@drawable/rounded_grid_view_24"
+                    android:paddingVertical="6dp"
+                    android:drawablePadding="6dp"
+                    android:text="Grid Layout" />
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/sortContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                app:layout_constraintTop_toTopOf="parent">
+                android:layout_marginTop="30dp"
+                app:layout_constraintTop_toBottomOf="@id/layoutContainer">
 
                 <TextView
                     android:id="@+id/sortTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10px"
                     android:text="Sort"
                     android:textAlignment="center"
                     android:textColor="@color/white"
@@ -142,115 +194,110 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/sortLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/sortTitle">
-
-
-                <TableLayout
-                    android:id="@+id/sortTable"
+                    android:id="@+id/sortLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:stretchColumns="*"
-                    app:layout_constraintTop_toTopOf="parent">
+                    android:layout_marginTop="5dp"
+                    app:layout_constraintTop_toBottomOf="@id/sortTitle">
 
-                    <TableRow
-                        android:paddingVertical="4dp"
-                        android:layout_width="wrap_content"
-                        >
-
-                        <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_byName"
-                            style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
-                            android:layout_height="40dp"
-                            android:layout_marginRight="5dp"
-                            android:text="Name" />
-
-                        <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_byDate"
-                            style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
-                            android:layout_height="40dp"
-                            android:layout_marginRight="5dp"
-                            android:text="Date Added" />
-
-                        <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_bySize"
-                            style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
-                            android:layout_height="40dp"
-                            android:text="Size" />
-                    </TableRow>
-
-                    <TableRow
-                        android:paddingVertical="4dp"
+                    <TableLayout
+                        android:id="@+id/sortTable"
                         android:layout_width="match_parent"
-                        >
+                        android:layout_height="wrap_content"
+                        android:padding="8dp"
+                        android:stretchColumns="*"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TableRow
+                            android:paddingVertical="4dp"
+                            android:layout_width="wrap_content">
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_byName"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Name" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_byDate"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Date Added" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_bySize"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:text="Size" />
+                        </TableRow>
+
+                        <TableRow
+                            android:paddingVertical="4dp"
+                            android:layout_width="match_parent">
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_byLength"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Duration" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_byResol"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Resolution" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/sort_byFps"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:text="FPS" />
+                        </TableRow>
+
+                    </TableLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="8dp"
+                        app:layout_constraintTop_toBottomOf="@id/sortTable">
 
                         <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_byLength"
+                            android:id="@+id/sort_Asc"
                             style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
                             android:layout_height="40dp"
-                            android:layout_marginRight="5dp"
-                            android:text="Length" />
+                            android:layout_marginRight="8dp"
+                            android:drawableStart="@drawable/rounded_arrow_downward_alt_24"
+                            android:paddingHorizontal="30dp"
+                            android:drawablePadding="0dp"
+                            android:text="Ascending"/>
 
                         <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_byResol"
+                            android:id="@+id/sort_Desc"
                             style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
                             android:layout_height="40dp"
-                            android:layout_marginRight="5dp"
-                            android:text="Resolution" />
+                            android:drawableStart="@drawable/rounded_arrow_upward_alt_24"
+                            android:paddingHorizontal="30dp"
+                            android:drawablePadding="0dp"
+                            android:text="Descending" />
+                    </LinearLayout>
 
-                        <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/sort_byFps"
-                            style="@style/ButtonStyleToggle"
-                            android:layout_width="70dp"
-                            android:layout_height="40dp"
-                            android:text="FPS" />
-                    </TableRow>
-
-                </TableLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="8dp"
-                    app:layout_constraintTop_toBottomOf="@id/sortTable">
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/sort_Asc"
-                        style="@style/ButtonStyleToggle"
-                        android:layout_weight="1"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginRight="8dp"
-                        android:drawableStart="@drawable/baseline_fast_rewind_24"
-                        android:paddingHorizontal="20dp"
-                        android:drawablePadding="0dp"
-                        android:text="Ascending"/>
-
-
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/sort_Desc"
-                        style="@style/ButtonStyleToggle"
-                        android:layout_weight="1"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:drawableStart="@drawable/baseline_fast_forward_24"
-                        android:paddingHorizontal="20dp"
-                        android:drawablePadding="0dp"
-                        android:text="Descending" />
-                </LinearLayout>
-
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -258,14 +305,13 @@
                 android:id="@+id/detailsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="30dp"
                 app:layout_constraintTop_toBottomOf="@id/sortContainer">
 
                 <TextView
                     android:id="@+id/detailsTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-
                     android:text="Details"
                     android:textAlignment="center"
                     android:textColor="@color/white"
@@ -274,10 +320,11 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/detailsLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintTop_toBottomOf="@id/detailsTitle">
+                        android:id="@+id/detailsLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        app:layout_constraintTop_toBottomOf="@id/detailsTitle">
 
 
                     <TableLayout
@@ -295,7 +342,7 @@
                             <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Path"
                                 style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
                                 android:text="Path" />
@@ -303,7 +350,7 @@
                             <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Date"
                                 style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="40dp"
                                 android:text="Date Added" />
 
@@ -314,19 +361,19 @@
                             android:layout_width="match_parent">
 
                             <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Resol"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:text="Resolution" />
-
-                            <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Size"
                                 style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
                                 android:text="Size" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Resol"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:text="Resolution" />
 
                         </TableRow>
 
@@ -336,13 +383,42 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/moreContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:layout_constraintTop_toBottomOf="@id/detailsContainer">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="5dp"
+                    android:padding="8dp"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+                        android:id="@+id/more_dur"
+                        style="@style/ButtonStyleToggle"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:paddingStart="15dp"
+                        android:textAlignment="textStart"
+                        android:text="Display Duration over Thumbnail" />
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="30dp"
                 android:padding="8dp"
-                app:layout_constraintTop_toBottomOf="@id/detailsContainer">
+                app:layout_constraintTop_toBottomOf="@id/moreContainer">
 
                 <Button
                     android:id="@+id/buttonCancel"
@@ -367,8 +443,40 @@
 
             </LinearLayout>
 
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating Action Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/Play_Last"
+        style="@style/ButtonStyleVariant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="35dp"
+        android:layout_marginBottom="20dp"
+        android:contentDescription="Play_Last"
+        app:layout_constraintBottom_toTopOf="@+id/PickFile"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:fabCustomSize="60dp"
+        app:maxImageSize="35dp"
+        app:srcCompat="@drawable/media3_icon_play"
+        app:tint="#FFFFFF"
+        app:borderWidth="0dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/PickFile"
+        style="@style/ButtonStyleVariant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="35dp"
+        android:layout_marginBottom="80dp"
+        android:contentDescription="Select_Media"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:fabCustomSize="60dp"
+        app:maxImageSize="30dp"
+        app:srcCompat="@drawable/outline_drive_file_move_24"
+        app:tint="#FFFFFF"
+        app:borderWidth="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

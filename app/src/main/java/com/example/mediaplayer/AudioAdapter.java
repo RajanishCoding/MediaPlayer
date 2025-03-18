@@ -39,10 +39,35 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
     private List<Audio> mediaList;
     private Context context;
 
+    private boolean duration;
+    private boolean duration_t1;
+
+    private boolean path;
+    private boolean size = true;
+    private boolean date = true;
+
 
     public AudioAdapter(Context context, List<Audio> mediaList) {
         this.context = context;
         this.mediaList = mediaList;
+    }
+
+    public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate) {
+        path = isPath;
+        size = isSize;
+        date = isDate;
+        notifyDataSetChanged();
+    }
+
+    private void setVisibilities(AudioAdapter.AudioViewHolder holder) {
+        if (path) holder.path.setVisibility(View.VISIBLE);
+        else holder.path.setVisibility(View.GONE);
+
+        if (size) holder.size.setVisibility(View.VISIBLE);
+        else holder.size.setVisibility(View.GONE);
+
+        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
+        else holder.dateAdded.setVisibility(View.GONE);
     }
 
     @Override
@@ -61,6 +86,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
+
+        setVisibilities(holder);
 
         if (media.getDuration() == null || media.getSize() == null) {
             // MediaExtractor Thread
