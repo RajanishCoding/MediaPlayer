@@ -20,7 +20,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.session.IMediaController;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -28,22 +27,51 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.gson.Gson;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHolder> {
     private List<Video> mediaList;
     private Context context;
 
+    private boolean duration;
+    private boolean duration_t1;
+
+    private boolean path;
+    private boolean resol;
+    private boolean size = true;
+    private boolean date = true;
+
 
     public VideoAdapter(Context context, List<Video> mediaList) {
         this.context = context;
         this.mediaList = mediaList;
+    }
+
+    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isSize, boolean isDate) {
+        path = isPath;
+        resol = isResol;
+        size = isSize;
+        date = isDate;
+        notifyDataSetChanged();
+    }
+
+    private void setVisibilities(VideoViewHolder holder) {
+        if (path) holder.path.setVisibility(View.VISIBLE);
+        else holder.path.setVisibility(View.GONE);
+
+        if (resol) holder.resolutionFrame.setVisibility(View.VISIBLE);
+        else holder.resolutionFrame.setVisibility(View.GONE);
+
+        if (size) holder.size.setVisibility(View.VISIBLE);
+        else holder.size.setVisibility(View.GONE);
+
+        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
+        else holder.dateAdded.setVisibility(View.GONE);
     }
 
     @Override
@@ -62,6 +90,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
+
+        setVisibilities(holder);
 
         if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
             // MediaExtractor Thread

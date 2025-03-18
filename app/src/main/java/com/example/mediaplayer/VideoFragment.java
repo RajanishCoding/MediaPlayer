@@ -34,9 +34,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -84,6 +86,20 @@ public class VideoFragment extends Fragment {
     private Button ByLength_sort;
     private Button ByResol_sort;
     private Button ByFps_sort;
+    private Button Asc_sort;
+    private Button Desc_sort;
+
+    private Button path_Details;
+    private Button date_Details;
+    private Button resol_Details;
+    private Button size_Details;
+
+    private boolean isPath_Visible;
+    private boolean isDate_Visible;
+    private boolean isResol_Visible;
+    private boolean isSize_Visible;
+
+    private Map<String, Boolean> details_Buttons;
 
     private Button apply_Button;
     private Button cancel_Button;
@@ -91,6 +107,7 @@ public class VideoFragment extends Fragment {
     private String sortBy = "";
 
     private String stored_sortBy;
+    private boolean isAscending;
 
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsEditor;
@@ -135,6 +152,20 @@ public class VideoFragment extends Fragment {
         ByResol_sort = view.findViewById(R.id.sort_byResol);
         ByFps_sort = view.findViewById(R.id.sort_byFps);
 
+        Asc_sort = view.findViewById(R.id.sort_Asc);
+        Desc_sort = view.findViewById(R.id.sort_Desc);
+
+        path_Details = view.findViewById(R.id.details_Path);
+        date_Details = view.findViewById(R.id.details_Date);
+        resol_Details = view.findViewById(R.id.details_Resol);
+        size_Details = view.findViewById(R.id.details_Size);
+
+        details_Buttons = new HashMap<>();
+        details_Buttons.put("path", false);
+        details_Buttons.put("resol", false);
+        details_Buttons.put("size", true);
+        details_Buttons.put("date", true);
+
         apply_Button = view.findViewById(R.id.buttonApply);
         cancel_Button = view.findViewById(R.id.buttonCancel);
 
@@ -173,58 +204,97 @@ public class VideoFragment extends Fragment {
             }
         });
 
+        sortBy = settingsPrefs.getString("sortBy", "Name");
+        isAscending = settingsPrefs.getBoolean("isAscending", true);
+
+        loadDetailsButtonVisibility();
+        setDetailsVisibility();
+
+        setBackground_SortButtons(sortBy);
+        setBackground_AscDesc_Buttons(isAscending);
+        setBackground_DetailsButtons();
+
         ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
-
         ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
-
         ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
-
         BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
-
         ByResol_sort.setOnClickListener(v -> setBackground_SortButtons("Resol"));
-
         ByFps_sort.setOnClickListener(v -> setBackground_SortButtons("Fps"));
 
-        sortBy = settingsPrefs.getString("sortBy", "Name");
-        setBackground_SortButtons(sortBy);
+        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
+        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+
+        path_Details.setOnClickListener(v -> {
+            isPath_Visible = !isPath_Visible;
+            setBackground(path_Details, isPath_Visible);
+        });
+
+        resol_Details.setOnClickListener(v -> {
+            isResol_Visible = !isResol_Visible;
+            setBackground(resol_Details, isResol_Visible);
+        });
+
+        date_Details.setOnClickListener(v -> {
+            isDate_Visible = !isDate_Visible;
+            setBackground(date_Details, isDate_Visible);
+        });
+
+        size_Details.setOnClickListener(v -> {
+            isSize_Visible = !isSize_Visible;
+            setBackground(size_Details, isSize_Visible);
+        });
 
         apply_Button.setOnClickListener(v -> {
-            sortMediaList();
+            setDetailsVisibility();
+            sortMediaList(isAscending);
             hideMenuLayout();
         });
 
         cancel_Button.setOnClickListener(v -> hideMenuLayout());
-
-
     }
 
+    private void saveDetailsButtonVisibility() {
+        settingsEditor.putBoolean("path", isPath_Visible);
+        settingsEditor.putBoolean("date", isDate_Visible);
+        settingsEditor.putBoolean("size", isSize_Visible);
+        settingsEditor.putBoolean("resol", isResol_Visible);
+    }
 
-    private void sortMediaList() {
+    private void loadDetailsButtonVisibility() {
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
+        isDate_Visible = settingsPrefs.getBoolean("date", true);
+        isSize_Visible = settingsPrefs.getBoolean("size", true);
+        isResol_Visible = settingsPrefs.getBoolean("resol", false);
+    }
+
+    private void sortMediaList(boolean isAsc) {
         boolean isSorted = true;
+
+        Comparator<Video> comparator = null;
 
         switch (sortBy) {
             case "Name":
-                mediaList.sort(Comparator.comparing(Video::getName));
+                comparator = Comparator.comparing(Video::getName, String.CASE_INSENSITIVE_ORDER);
                 break;
 
             case "Size":
-                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getSize())));
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getSize()));
                 break;
 
             case "Length":
-                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getDuration())));
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDuration()));
                 break;
 
             case "Date":
-                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded())));
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded()));
                 break;
 
             case "Resol":
-                mediaList.sort(Comparator.comparingLong(m -> Long.parseLong(m.getResolution())));
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getResolution()));
                 break;
 
             case "Fps":
-                mediaList.sort(Comparator.comparingDouble(m -> Double.parseDouble(m.getFrameRate())));
+                comparator = Comparator.comparingDouble(m -> Double.parseDouble(m.getFrameRate()));
                 break;
 
             default:
@@ -232,12 +302,25 @@ public class VideoFragment extends Fragment {
                 break;
         }
 
+        if (comparator != null) {
+            if (!isAsc) {
+                comparator = comparator.reversed(); // Reverse order for descending
+            }
+            mediaList.sort(comparator);
+        }
+
         if (isSorted) {
             adapter.notifyDataSetChanged();
             settingsEditor.putString("sortBy", sortBy);
+            settingsEditor.putBoolean("isAscending", isAsc);
             settingsEditor.apply();
             saveMediaListToPreferences(mediaList);
         }
+    }
+
+    private void setDetailsVisibility() {
+        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isSize_Visible, isDate_Visible);
+        saveDetailsButtonVisibility();
     }
 
     private void setBackground_SortButtons(String sortBy_Button) {
@@ -259,6 +342,20 @@ public class VideoFragment extends Fragment {
         }
 
         sortBy = sortBy_Button;
+    }
+
+    private void setBackground_AscDesc_Buttons(boolean isAscending) {
+        setBackground(Asc_sort, false);
+        setBackground(Desc_sort, false);
+        setBackground(isAscending ? Asc_sort : Desc_sort, true);
+        this.isAscending = isAscending;
+    }
+
+    private void setBackground_DetailsButtons() {
+        setBackground(path_Details, isPath_Visible);
+        setBackground(resol_Details, isResol_Visible);
+        setBackground(size_Details, isSize_Visible);
+        setBackground(date_Details, isDate_Visible);
     }
 
     private void setBackground(Button button, boolean b) {
@@ -309,6 +406,13 @@ public class VideoFragment extends Fragment {
             public void onAnimationEnd (Animation animation){
                 menu_Container.setVisibility(View.GONE);
                 switch_isEnd = true;
+
+                loadDetailsButtonVisibility();
+                sortBy = settingsPrefs.getString("sortBy", "Name");
+                isAscending = settingsPrefs.getBoolean("isAscending", true);
+                setBackground_SortButtons(sortBy);
+                setBackground_AscDesc_Buttons(isAscending);
+                setBackground_DetailsButtons();
             }
 
             @Override
@@ -359,7 +463,7 @@ public class VideoFragment extends Fragment {
                         else
                             foundText.setVisibility(View.GONE);
 
-                        sortMediaList();
+                        sortMediaList(isAscending);
 //                        adapter.notifyDataSetChanged();
 //                        saveMediaListToPreferences(mediaList);
                     }
@@ -544,7 +648,7 @@ public class VideoFragment extends Fragment {
 
                 mediaList.addAll(addingMediaList);
 
-                sortMediaList();
+                sortMediaList(isAscending);
 
 //                adapter.notifyDataSetChanged();
 //                saveMediaListToPreferences(mediaList);

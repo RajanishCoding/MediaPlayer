@@ -109,7 +109,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/gradient_sidebar_light"
-        android:visibility=""
+        android:visibility="visible"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -231,7 +231,7 @@
                         android:layout_height="40dp"
                         android:layout_marginRight="8dp"
                         android:drawableStart="@drawable/baseline_fast_rewind_24"
-                        android:paddingHorizontal="40dp"
+                        android:paddingHorizontal="20dp"
                         android:drawablePadding="0dp"
                         android:text="Ascending"/>
 
@@ -244,7 +244,7 @@
                         android:layout_width="0dp"
                         android:layout_height="40dp"
                         android:drawableStart="@drawable/baseline_fast_forward_24"
-                        android:paddingHorizontal="40dp"
+                        android:paddingHorizontal="20dp"
                         android:drawablePadding="0dp"
                         android:text="Descending" />
                 </LinearLayout>
@@ -290,45 +290,28 @@
 
                         <TableRow
                             android:paddingVertical="4dp"
-                            android:layout_width="wrap_content"
-                            >
+                            android:layout_width="wrap_content">
 
                             <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Dur"
+                                android:id="@+id/details_Path"
                                 style="@style/ButtonStyleToggle"
                                 android:layout_width="70dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
-                                android:text="Name" />
+                                android:text="Path" />
 
                             <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Date"
                                 style="@style/ButtonStyleToggle"
                                 android:layout_width="70dp"
                                 android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
                                 android:text="Date Added" />
 
-                            <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Size"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
-                                android:layout_height="40dp"
-                                android:text="Size" />
                         </TableRow>
 
                         <TableRow
                             android:paddingVertical="4dp"
-                            android:layout_width="match_parent"
-                            >
-
-                            <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Length"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="70dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:text="Length" />
+                            android:layout_width="match_parent">
 
                             <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Resol"
@@ -339,11 +322,12 @@
                                 android:text="Resolution" />
 
                             <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Fps"
+                                android:id="@+id/details_Size"
                                 style="@style/ButtonStyleToggle"
                                 android:layout_width="70dp"
                                 android:layout_height="40dp"
-                                android:text="FPS" />
+                                android:text="Size" />
+
                         </TableRow>
 
                     </TableLayout>
