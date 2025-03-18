@@ -166,23 +166,23 @@ public class FilesListActivity extends AppCompatActivity {
 //        }, 200);
 
 
-        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
-            @OptIn(markerClass = UnstableApi.class)
-            @Override
-            public void onClick(View v) {
-                String name = sharedPreferences.getString("lastPlayedFileName", null);
-                String path = sharedPreferences.getString("lastPlayedFilePath", null);
-                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
-
-                if (name != null) {
-                    Intent intent = new Intent(FilesListActivity.this, PlayerActivity.class);
-                    intent.putExtra("Name", name);
-                    intent.putExtra("Path", path);
-                    intent.putExtra("isVideo", isVideo);
-                    startActivity(intent);
-                }
-            }
-        });
+//        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
+//            @OptIn(markerClass = UnstableApi.class)
+//            @Override
+//            public void onClick(View v) {
+//                String name = sharedPreferences.getString("lastPlayedFileName", null);
+//                String path = sharedPreferences.getString("lastPlayedFilePath", null);
+//                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+//
+//                if (name != null) {
+//                    Intent intent = new Intent(FilesListActivity.this, PlayerActivity.class);
+//                    intent.putExtra("Name", name);
+//                    intent.putExtra("Path", path);
+//                    intent.putExtra("isVideo", isVideo);
+//                    startActivity(intent);
+//                }
+//            }
+//        });
 
         Log.d("DEBUG", "menu_Button: " + (menu_Button != null ? "Exists" : "NULL"));
 
