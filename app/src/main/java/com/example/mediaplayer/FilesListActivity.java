@@ -185,7 +185,6 @@ public class FilesListActivity extends AppCompatActivity {
 //        });
 
         Log.d("DEBUG", "menu_Button: " + (menu_Button != null ? "Exists" : "NULL"));
-
         menu_Button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

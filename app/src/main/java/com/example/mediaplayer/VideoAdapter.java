@@ -38,8 +38,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private List<Video> mediaList;
     private Context context;
 
-    private boolean duration;
-    private boolean duration_t1;
+    private boolean dur;
+    private boolean dur_onThumbnail;
 
     private boolean path;
     private boolean resol;
@@ -52,11 +52,13 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         this.mediaList = mediaList;
     }
 
-    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isSize, boolean isDate) {
+    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
         path = isPath;
         resol = isResol;
         size = isSize;
         date = isDate;
+        dur = isDur;
+        dur_onThumbnail = isDur_onThumb;
         notifyDataSetChanged();
     }
 
@@ -72,6 +74,9 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         if (date) holder.dateAdded.setVisibility(View.VISIBLE);
         else holder.dateAdded.setVisibility(View.GONE);
+
+        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
+        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
     }
 
     @Override

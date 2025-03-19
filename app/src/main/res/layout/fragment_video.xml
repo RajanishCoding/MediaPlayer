@@ -71,7 +71,6 @@
     </androidx.appcompat.widget.Toolbar>
 
 
-
     <TextView
         android:id="@+id/found_text_video"
         android:layout_width="match_parent"
@@ -112,6 +111,7 @@
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true"
+        android:elevation="5dp"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent">
 
@@ -261,7 +261,7 @@
                                 style="@style/ButtonStyleToggle"
                                 android:layout_width="match_parent"
                                 android:layout_height="40dp"
-                                android:text="FPS" />
+                                android:text="Frame Rate" />
                         </TableRow>
 
                     </TableLayout>
@@ -339,6 +339,36 @@
                             android:paddingVertical="4dp"
                             android:layout_width="wrap_content">
 
+
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Date"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Date Added" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Dur"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:text="Duration" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Size"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:text="Size" />
+                        </TableRow>
+
+                        <TableRow
+                            android:paddingVertical="4dp"
+                            android:layout_width="match_parent">
+
                             <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Path"
                                 style="@style/ButtonStyleToggle"
@@ -348,32 +378,19 @@
                                 android:text="Path" />
 
                             <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Date"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
-                                android:layout_height="40dp"
-                                android:text="Date Added" />
-
-                        </TableRow>
-
-                        <TableRow
-                            android:paddingVertical="4dp"
-                            android:layout_width="match_parent">
-
-                            <androidx.appcompat.widget.AppCompatButton
-                                android:id="@+id/details_Size"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:text="Size" />
-
-                            <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/details_Resol"
                                 style="@style/ButtonStyleToggle"
                                 android:layout_width="match_parent"
                                 android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
                                 android:text="Resolution" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/details_Fps"
+                                style="@style/ButtonStyleToggle"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:text="Frame Rate" />
 
                         </TableRow>
 
@@ -422,6 +439,7 @@
 
                 <Button
                     android:id="@+id/buttonCancel"
+                    style="@style/ButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -433,6 +451,7 @@
 
                 <Button
                     android:id="@+id/buttonApply"
+                    style="@style/ButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

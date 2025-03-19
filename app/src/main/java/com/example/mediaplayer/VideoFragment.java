@@ -12,10 +12,8 @@ import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.util.UnstableApi;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.MediaStore;
@@ -26,6 +24,8 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -39,11 +39,9 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -98,6 +96,9 @@ public class VideoFragment extends Fragment {
     private Button date_Details;
     private Button resol_Details;
     private Button size_Details;
+    private Button dur_Details;
+
+    private CheckBox durThumbnail_Details;
 
     private Button layout_List;
     private Button layout_Grid;
@@ -106,6 +107,7 @@ public class VideoFragment extends Fragment {
     private boolean isDate_Visible;
     private boolean isResol_Visible;
     private boolean isSize_Visible;
+    private boolean isDur_Visible;
 
     private Button apply_Button;
     private Button cancel_Button;
@@ -113,6 +115,7 @@ public class VideoFragment extends Fragment {
     private String sortBy = "";
     private boolean isAscending;
     private boolean isList;
+    private boolean isDur_OnThumbnail;
 
     private ImageButton lastPlay_Button;
 
@@ -169,6 +172,9 @@ public class VideoFragment extends Fragment {
         date_Details = view.findViewById(R.id.details_Date);
         resol_Details = view.findViewById(R.id.details_Resol);
         size_Details = view.findViewById(R.id.details_Size);
+        dur_Details = view.findViewById(R.id.details_Dur);
+
+        durThumbnail_Details = view.findViewById(R.id.more_dur);
 
         layout_List = view.findViewById(R.id.layout_list);
         layout_Grid = view.findViewById(R.id.layout_grid);
@@ -264,10 +270,20 @@ public class VideoFragment extends Fragment {
             setBackground(size_Details, isSize_Visible);
         });
 
+        dur_Details.setOnClickListener(v -> {
+            isDur_Visible = !isDur_Visible;
+            setBackground(dur_Details, isDur_Visible);
+        });
+
+        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isDur_OnThumbnail = isChecked;
+        });
+
         apply_Button.setOnClickListener(v -> {
             setDetailsVisibility();
             sortMediaList(isAscending);
             hideMenuLayout();
+            Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
         });
 
         cancel_Button.setOnClickListener(v -> hideMenuLayout());
@@ -296,13 +312,18 @@ public class VideoFragment extends Fragment {
         settingsEditor.putBoolean("date", isDate_Visible);
         settingsEditor.putBoolean("size", isSize_Visible);
         settingsEditor.putBoolean("resol", isResol_Visible);
+        settingsEditor.putBoolean("dur", isDur_Visible);
+        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
+        settingsEditor.apply();
     }
 
     private void loadDetailsButtonVisibility() {
-        isPath_Visible = settingsPrefs.getBoolean("path", false);
         isDate_Visible = settingsPrefs.getBoolean("date", true);
         isSize_Visible = settingsPrefs.getBoolean("size", true);
+        isDur_Visible = settingsPrefs.getBoolean("dur", true);
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
         isResol_Visible = settingsPrefs.getBoolean("resol", false);
+        isDur_OnThumbnail = settingsPrefs.getBoolean("isDur_Thumbnail", true);
     }
 
 
@@ -358,7 +379,7 @@ public class VideoFragment extends Fragment {
     }
 
     private void setDetailsVisibility() {
-        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isSize_Visible, isDate_Visible);
+        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
 
@@ -410,6 +431,8 @@ public class VideoFragment extends Fragment {
         setBackground(resol_Details, isResol_Visible);
         setBackground(size_Details, isSize_Visible);
         setBackground(date_Details, isDate_Visible);
+        setBackground(dur_Details, isDur_Visible);
+        durThumbnail_Details.setChecked(isDur_OnThumbnail);
     }
 
 
@@ -455,9 +478,9 @@ public class VideoFragment extends Fragment {
                 menu_Container.setVisibility(View.GONE);
                 switch_isEnd = true;
 
-                loadDetailsButtonVisibility();
                 sortBy = settingsPrefs.getString("sortBy", "Name");
                 isAscending = settingsPrefs.getBoolean("isAscending", true);
+                loadDetailsButtonVisibility();
                 setBackground_SortButtons(sortBy);
                 setBackground_AscDesc_Buttons(isAscending);
                 setBackground_DetailsButtons();
