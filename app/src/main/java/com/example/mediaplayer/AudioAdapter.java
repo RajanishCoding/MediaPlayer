@@ -39,8 +39,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
     private List<Audio> mediaList;
     private Context context;
 
-    private boolean duration;
-    private boolean duration_t1;
+    private boolean dur;
+    private boolean dur_onThumbnail;
 
     private boolean path;
     private boolean size = true;
@@ -52,14 +52,18 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
         this.mediaList = mediaList;
     }
 
-    public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate) {
+    public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
         path = isPath;
         size = isSize;
         date = isDate;
+        dur = isDur;
+        dur_onThumbnail = isDur_onThumb;
         notifyDataSetChanged();
     }
 
     private void setVisibilities(AudioAdapter.AudioViewHolder holder) {
+        holder.resolutionFrame.setVisibility(View.GONE);
+
         if (path) holder.path.setVisibility(View.VISIBLE);
         else holder.path.setVisibility(View.GONE);
 
@@ -68,6 +72,9 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
         if (date) holder.dateAdded.setVisibility(View.VISIBLE);
         else holder.dateAdded.setVisibility(View.GONE);
+
+        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
+        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
     }
 
     @Override

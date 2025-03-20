@@ -95,9 +95,9 @@ public class VideoFragment extends Fragment {
     private Button path_Details;
     private Button date_Details;
     private Button resol_Details;
+    private Button fps_Details;
     private Button size_Details;
     private Button dur_Details;
-
     private CheckBox durThumbnail_Details;
 
     private Button layout_List;
@@ -106,6 +106,7 @@ public class VideoFragment extends Fragment {
     private boolean isPath_Visible;
     private boolean isDate_Visible;
     private boolean isResol_Visible;
+    private boolean isFps_Visible;
     private boolean isSize_Visible;
     private boolean isDur_Visible;
 
@@ -171,9 +172,9 @@ public class VideoFragment extends Fragment {
         path_Details = view.findViewById(R.id.details_Path);
         date_Details = view.findViewById(R.id.details_Date);
         resol_Details = view.findViewById(R.id.details_Resol);
+        fps_Details = view.findViewById(R.id.details_Fps);
         size_Details = view.findViewById(R.id.details_Size);
         dur_Details = view.findViewById(R.id.details_Dur);
-
         durThumbnail_Details = view.findViewById(R.id.more_dur);
 
         layout_List = view.findViewById(R.id.layout_list);
@@ -260,6 +261,11 @@ public class VideoFragment extends Fragment {
             setBackground(resol_Details, isResol_Visible);
         });
 
+        fps_Details.setOnClickListener(v -> {
+            isFps_Visible = !isFps_Visible;
+            setBackground(fps_Details, isFps_Visible);
+        });
+
         date_Details.setOnClickListener(v -> {
             isDate_Visible = !isDate_Visible;
             setBackground(date_Details, isDate_Visible);
@@ -305,25 +311,6 @@ public class VideoFragment extends Fragment {
                 }
             }
         });
-    }
-
-    private void saveDetailsButtonVisibility() {
-        settingsEditor.putBoolean("path", isPath_Visible);
-        settingsEditor.putBoolean("date", isDate_Visible);
-        settingsEditor.putBoolean("size", isSize_Visible);
-        settingsEditor.putBoolean("resol", isResol_Visible);
-        settingsEditor.putBoolean("dur", isDur_Visible);
-        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
-        settingsEditor.apply();
-    }
-
-    private void loadDetailsButtonVisibility() {
-        isDate_Visible = settingsPrefs.getBoolean("date", true);
-        isSize_Visible = settingsPrefs.getBoolean("size", true);
-        isDur_Visible = settingsPrefs.getBoolean("dur", true);
-        isPath_Visible = settingsPrefs.getBoolean("path", false);
-        isResol_Visible = settingsPrefs.getBoolean("resol", false);
-        isDur_OnThumbnail = settingsPrefs.getBoolean("isDur_Thumbnail", true);
     }
 
 
@@ -379,7 +366,7 @@ public class VideoFragment extends Fragment {
     }
 
     private void setDetailsVisibility() {
-        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
+        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isFps_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
 
@@ -429,11 +416,34 @@ public class VideoFragment extends Fragment {
     private void setBackground_DetailsButtons() {
         setBackground(path_Details, isPath_Visible);
         setBackground(resol_Details, isResol_Visible);
+        setBackground(fps_Details, isFps_Visible);
         setBackground(size_Details, isSize_Visible);
         setBackground(date_Details, isDate_Visible);
         setBackground(dur_Details, isDur_Visible);
         durThumbnail_Details.setChecked(isDur_OnThumbnail);
     }
+
+    private void loadDetailsButtonVisibility() {
+        isDate_Visible = settingsPrefs.getBoolean("date", true);
+        isSize_Visible = settingsPrefs.getBoolean("size", true);
+        isDur_Visible = settingsPrefs.getBoolean("dur", true);
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
+        isResol_Visible = settingsPrefs.getBoolean("resol", false);
+        isFps_Visible = settingsPrefs.getBoolean("fps", false);
+        isDur_OnThumbnail = settingsPrefs.getBoolean("isDur_Thumbnail", true);
+    }
+
+    private void saveDetailsButtonVisibility() {
+        settingsEditor.putBoolean("path", isPath_Visible);
+        settingsEditor.putBoolean("date", isDate_Visible);
+        settingsEditor.putBoolean("size", isSize_Visible);
+        settingsEditor.putBoolean("resol", isResol_Visible);
+        settingsEditor.putBoolean("fps", isFps_Visible);
+        settingsEditor.putBoolean("dur", isDur_Visible);
+        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
+        settingsEditor.apply();
+    }
+
 
 
     private void showMenuLayout() {

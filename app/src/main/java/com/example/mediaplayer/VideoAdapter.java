@@ -43,6 +43,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
     private boolean path;
     private boolean resol;
+    private boolean fps;
     private boolean size = true;
     private boolean date = true;
 
@@ -52,9 +53,10 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         this.mediaList = mediaList;
     }
 
-    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
+    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
         path = isPath;
         resol = isResol;
+        fps = isFps;
         size = isSize;
         date = isDate;
         dur = isDur;
@@ -66,14 +68,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         if (path) holder.path.setVisibility(View.VISIBLE);
         else holder.path.setVisibility(View.GONE);
 
-        if (resol) holder.resolutionFrame.setVisibility(View.VISIBLE);
-        else holder.resolutionFrame.setVisibility(View.GONE);
-
         if (size) holder.size.setVisibility(View.VISIBLE);
         else holder.size.setVisibility(View.GONE);
 
         if (date) holder.dateAdded.setVisibility(View.VISIBLE);
         else holder.dateAdded.setVisibility(View.GONE);
+
+        if (resol || fps) holder.resolutionFrame.setVisibility(View.VISIBLE);
+        else holder.resolutionFrame.setVisibility(View.GONE);
 
         holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
         holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
@@ -92,7 +94,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
-
 
 
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
@@ -245,7 +246,16 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                     holder.itemView.post(() -> {
                         holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
                         holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                        holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
+
+                        if (resol || fps) {
+                            holder.resolutionFrame.setText(
+                                    resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
+                                            resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
+                        }
+                        else {
+                            holder.resolutionFrame.setVisibility(View.GONE);
+                        }
+
                         holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
                     });
                 });
@@ -263,7 +273,15 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
             holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
 
-            holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
+            if (resol || fps) {
+                holder.resolutionFrame.setText(
+                        resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
+                                resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
+            }
+            else {
+                holder.resolutionFrame.setVisibility(View.GONE);
+            }
+
             holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
         }
 

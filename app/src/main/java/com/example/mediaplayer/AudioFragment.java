@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -87,6 +88,8 @@ public class AudioFragment extends Fragment {
     private Button path_Details;
     private Button date_Details;
     private Button size_Details;
+    private Button dur_Details;
+    private CheckBox durThumbnail_Details;
 
     private Button layout_List;
     private Button layout_Grid;
@@ -94,6 +97,7 @@ public class AudioFragment extends Fragment {
     private boolean isPath_Visible;
     private boolean isDate_Visible;
     private boolean isSize_Visible;
+    private boolean isDur_Visible;
 
     private Button apply_Button;
     private Button cancel_Button;
@@ -101,6 +105,7 @@ public class AudioFragment extends Fragment {
     private String sortBy = "";
     private boolean isAscending;
     private boolean isList;
+    private boolean isDur_OnThumbnail;
 
     private ImageButton lastPlay_Button;
 
@@ -153,6 +158,8 @@ public class AudioFragment extends Fragment {
         path_Details = view.findViewById(R.id.details_Path);
         date_Details = view.findViewById(R.id.details_Date);
         size_Details = view.findViewById(R.id.details_Size);
+        dur_Details = view.findViewById(R.id.details_Dur);
+        durThumbnail_Details = view.findViewById(R.id.more_dur);
 
         layout_List = view.findViewById(R.id.layout_list);
         layout_Grid = view.findViewById(R.id.layout_grid);
@@ -240,6 +247,15 @@ public class AudioFragment extends Fragment {
             setBackground(size_Details, isSize_Visible);
         });
 
+        dur_Details.setOnClickListener(v -> {
+            isDur_Visible = !isDur_Visible;
+            setBackground(dur_Details, isDur_Visible);
+        });
+
+        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isDur_OnThumbnail = isChecked;
+        });
+
         apply_Button.setOnClickListener(v -> {
             setDetailsVisibility();
             sortMediaList(isAscending);
@@ -266,19 +282,6 @@ public class AudioFragment extends Fragment {
             }
         });
 
-    }
-
-
-    private void saveDetailsButtonVisibility() {
-        settingsEditor.putBoolean("path", isPath_Visible);
-        settingsEditor.putBoolean("date", isDate_Visible);
-        settingsEditor.putBoolean("size", isSize_Visible);
-    }
-
-    private void loadDetailsButtonVisibility() {
-        isPath_Visible = settingsPrefs.getBoolean("path", false);
-        isDate_Visible = settingsPrefs.getBoolean("date", true);
-        isSize_Visible = settingsPrefs.getBoolean("size", true);
     }
 
 
@@ -326,7 +329,7 @@ public class AudioFragment extends Fragment {
     }
 
     private void setDetailsVisibility() {
-        adapter.setDetailsVisibility(isPath_Visible, isSize_Visible, isDate_Visible);
+        adapter.setDetailsVisibility(isPath_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
 
@@ -375,6 +378,25 @@ public class AudioFragment extends Fragment {
         setBackground(path_Details, isPath_Visible);
         setBackground(size_Details, isSize_Visible);
         setBackground(date_Details, isDate_Visible);
+        setBackground(dur_Details, isDur_Visible);
+        durThumbnail_Details.setChecked(isDur_OnThumbnail);
+    }
+
+    private void loadDetailsButtonVisibility() {
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
+        isDate_Visible = settingsPrefs.getBoolean("date", true);
+        isSize_Visible = settingsPrefs.getBoolean("size", true);
+        isDur_Visible = settingsPrefs.getBoolean("dur", true);
+        isDur_OnThumbnail = settingsPrefs.getBoolean("isDur_Thumbnail", true);
+    }
+
+    private void saveDetailsButtonVisibility() {
+        settingsEditor.putBoolean("path", isPath_Visible);
+        settingsEditor.putBoolean("date", isDate_Visible);
+        settingsEditor.putBoolean("size", isSize_Visible);
+        settingsEditor.putBoolean("dur", isDur_Visible);
+        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
+        settingsEditor.apply();
     }
 
 
