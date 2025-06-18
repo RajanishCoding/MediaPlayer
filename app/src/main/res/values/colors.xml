@@ -74,10 +74,14 @@
     <color name="text_view_text_variant">#646464</color>
     <color name="text_view_text_variant_dark">#BDBDBD</color>
 
+    <!-- Item Details - TextView Color -->
+    <color name="item_details_text_color">#E5E5E5</color>
+
     <!-- Overlay Colors -->
     <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
     <color name="overlayButtonDark">#33FFFFFF</color> <!-- Dark theme -->
 
+    <color name="overlayItemDetailsLight">#5B5861</color> <!-- Dark theme -->
     <color name="overlayItemDetailsDark">#383046</color> <!-- Dark theme -->
 
     <color name="overlayThumbnailLight">#C6D6E3</color>

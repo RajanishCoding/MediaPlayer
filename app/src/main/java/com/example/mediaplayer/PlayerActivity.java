@@ -7,7 +7,10 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -122,6 +125,10 @@ public class PlayerActivity extends AppCompatActivity {
     private SharedPreferences.Editor editor;
     private GestureDetector gestureDetector;
     private AudioManager audioManager;
+    private AudioAttributes audioAttributes;
+    private AudioFocusRequest focusRequest;
+    private boolean wasPlaying_Focus;
+    private boolean hasAudioFocus;
 
     private int screenWidth;
     private int halfWidth;
@@ -326,6 +333,7 @@ public class PlayerActivity extends AppCompatActivity {
         editor = sharedPreferences.edit();
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        
 
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
         Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
@@ -361,11 +369,13 @@ public class PlayerActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (player != null) {
                     if (!player.isPlaying()) {
-                        player.play();
+                        playMedia();
+//                        player.play();
                         playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
                         Log.d(TAG, "onPLAY: YES");
                     } else {
                         player.pause();
+                        removeControlsRunnable();
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                         Log.d(TAG, "onPLAY: NO");
                     }
@@ -379,9 +389,7 @@ public class PlayerActivity extends AppCompatActivity {
                 isSeekbarMoving = true;
 
                 if (isControlsShowing) {
-                    if (controlsRunnable != null) {
-                        handler.removeCallbacks(controlsRunnable);
-                    }
+                    removeControlsRunnable();
                 }
 
                 seekTimeText.setVisibility(View.GONE);
@@ -424,7 +432,7 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 if (wasPlaying) {
-                    player.play();
+                    playMedia();
                     wasPlaying = false;
                 }
 
@@ -467,7 +475,7 @@ public class PlayerActivity extends AppCompatActivity {
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                     }
                 }
-                handler.postDelayed(this, 50);
+                handler.postDelayed(this, 500);
             }
         };
         handler.postDelayed(updateSeekBar, 100);
@@ -601,7 +609,7 @@ public class PlayerActivity extends AppCompatActivity {
                     }
 
                     if (wasPlaying) {
-                        player.play();
+                        playMedia();
                         wasPlaying = false;
                     }
 
@@ -627,6 +635,7 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isBrightnessChanging) {
                         editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
                         editor.apply();
+                        Log.d("inittt", "onCreate: " + sharedPreferences.getFloat("Brightness", 0f));
                     }
 
                     isScrolling = false;
@@ -654,7 +663,7 @@ public class PlayerActivity extends AppCompatActivity {
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 // Handle single tap
                 if (!surface_click_frag && !isInAnimation && !isOutAnimation) {
-                    handler.removeCallbacks(controlsRunnable);
+                    removeControlsRunnable();
                     Fullscreen();
                     hideControls();
                 } else if (!isInAnimation && !isOutAnimation && !isSeeking) {
@@ -675,7 +684,7 @@ public class PlayerActivity extends AppCompatActivity {
                     } else if (e.getX() <= 2 * Q3_Width) {
                         if (player != null) {
                             if (!player.isPlaying()) {
-                                player.play();
+                                playMedia();
                                 isPlaying = true;
                                 playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
                                 Log.d(TAG, "onPLAY: YES");
@@ -722,9 +731,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (gestureDirection == GestureDirection.NONE && !isLongPressed) {
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
                         if (isControlsShowing) {
-                            if (controlsRunnable != null) {
-                                handler.removeCallbacks(controlsRunnable);
-                            }
+                            removeControlsRunnable();
                         } else {
                             showBottomControls();
                         }
@@ -757,9 +764,10 @@ public class PlayerActivity extends AppCompatActivity {
                         }
                         totalScrollX = 0;
                     }
-                } else if (gestureDirection == GestureDirection.VERTICAL) {
+                }
+                else if (gestureDirection == GestureDirection.VERTICAL) {
                     if (e1.getX() < halfWidth) {
-                        isVolumeChanging = true;
+                        isBrightnessChanging = true;
                         totalScrollY1 += distanceY;
 
                         if (Math.abs(totalScrollY1) > 50) {
@@ -774,7 +782,7 @@ public class PlayerActivity extends AppCompatActivity {
                             totalScrollY1 = 0;
                         }
                     } else {
-                        isBrightnessChanging = true;
+                        isVolumeChanging = true;
                         totalScrollY2 += distanceY;
 
                         if (Math.abs(totalScrollY2) > 50) {
@@ -815,9 +823,10 @@ public class PlayerActivity extends AppCompatActivity {
         ArrayList<String> songList = FilesListActivity.getSongList();
         Log.d(TAG, "initializePlayer: " + FilesListActivity.getSongList());
 
+
         player.setMediaItem(MediaItem.fromUri(media_path));
         player.prepare();
-        player.play();
+        playMedia();
 
         if (songList != null) {
             for (String path : songList) {
@@ -837,6 +846,8 @@ public class PlayerActivity extends AppCompatActivity {
         layoutParams.screenBrightness = sharedPreferences.getFloat("Brightness", 0f);
         getWindow().setAttributes(layoutParams);
 
+        Log.d("inittt", "init: " + sharedPreferences.getFloat("Brightness", 0f));
+        
         player.addListener(new Player.Listener() {
             @Override
             public void onVideoSizeChanged(VideoSize size) {
@@ -1065,8 +1076,12 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private String getTrackLanguage(String language) {
+        if (language == null || language.isEmpty()) {
+            return "Unknown"; // or "Undetermined"
+        }
+
         Locale locale = new Locale(language);
-        return locale.getDisplayLanguage(Locale.getDefault());  // Returns in device's language
+        return locale.getDisplayLanguage();
     }
 
 //    private boolean getCurrentPlayingAudioTrack() {
@@ -1227,6 +1242,12 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
     }
+    
+    private void removeControlsRunnable() {
+        if (controlsRunnable != null) {
+            handler.removeCallbacks(controlsRunnable);
+        }
+    }
 
 
     private boolean isAudioTracksShowing;
@@ -1235,7 +1256,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void showAudioTracks() {
         Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
         Fullscreen(); hideControls();
-        handler.removeCallbacks(controlsRunnable);
+        removeControlsRunnable();
         audioTracksContainer.startAnimation(slideInRight);
 
         slideInRight.setAnimationListener(new Animation.AnimationListener(){
@@ -1276,7 +1297,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void showSubTracks() {
         Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
         Fullscreen(); hideControls();
-        handler.removeCallbacks(controlsRunnable);
+        removeControlsRunnable();
         subTracksContainer.startAnimation(slideInRight);
 
         slideInRight.setAnimationListener(new Animation.AnimationListener(){
@@ -1317,16 +1338,14 @@ public class PlayerActivity extends AppCompatActivity {
 
     private Runnable controlsRunnable;
     private void controlsToast() {
-        if (controlsRunnable != null) {
-            handler.removeCallbacks(controlsRunnable);
-        }
+        removeControlsRunnable();
 
         controlsRunnable = () -> {
             Fullscreen();
             hideControls();
         };
 
-        handler.postDelayed(controlsRunnable, 2000);
+        handler.postDelayed(controlsRunnable, 5000);
     }
 
     private void onLandscape(){
@@ -1590,7 +1609,7 @@ public class PlayerActivity extends AppCompatActivity {
             Log.d(TAG, "onPause: ");
 
             if (isPlay && !isBackgroundPlay) {
-                player.play();
+                playMedia();
                 isPlay = false;
             }
         }
@@ -1709,6 +1728,60 @@ public class PlayerActivity extends AppCompatActivity {
     private int getCurrentBrightnessLevelText() {
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
         return (int) (layoutParams.screenBrightness * 30);
+    }
+
+
+    private void playMedia() {
+        requestAudioFocus();
+        player.play();
+        wasPlaying_Focus = false;
+    }
+
+    private void requestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !hasAudioFocus) {
+            audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(audioAttributes)
+                    .setAcceptsDelayedFocusGain(false)
+                    .setOnAudioFocusChangeListener(focusChange -> {
+                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                            // pause playback, if other app starts playing
+                            if (player.isPlaying()) {
+                                player.pause();
+                            }
+                            hasAudioFocus = false;
+                            wasPlaying_Focus = false;
+                        }
+                        else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                            if (player.isPlaying()){
+                                player.pause();
+                                wasPlaying_Focus = true;
+                            }
+
+                        }
+                        else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+//                            player.setVolume(1.0f);
+                            if (wasPlaying_Focus) {
+                                player.play();
+                                wasPlaying_Focus = false;
+                                hasAudioFocus = true;
+                            }
+                        }
+                    })
+                    .build();
+
+            int result = audioManager.requestAudioFocus(focusRequest);
+            if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.d("AudioFocus", "Focus not granted, do not start media");
+            }
+            else {
+                hasAudioFocus = true;
+            }
+        }
     }
 
 

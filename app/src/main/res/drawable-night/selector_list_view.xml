@@ -3,11 +3,13 @@
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
             <solid android:color="@color/overlayListDark" /> <!-- Semi-transparent black overlay -->
+            <corners android:radius="20dp" />
         </shape>
     </item>
     <item>
         <shape>
-            <solid android:color="@android:color/transparent" /> <!-- No overlay -->
+            <solid android:color="#AD191919" /> <!-- No overlay -->
+            <corners android:radius="20dp" />
 <!--            <solid android:color="@color/overlayListDark" /> &lt;!&ndash; Semi-transparent black overlay &ndash;&gt;-->
         </shape>
     </item>

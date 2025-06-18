@@ -29,7 +29,7 @@ public class FFmpegMetadataRetriever {
         // FFprobe command to get metadata in JSON format
         String cmd = "-v quiet -print_format json -show_format -show_streams \"" + filePath + "\"";
 
-        FFmpegKit.executeAsync(cmd, session -> {
+        FFprobeKit.executeAsync(cmd, session -> {
             if (ReturnCode.isSuccess(session.getReturnCode())) {
                 try {
 
