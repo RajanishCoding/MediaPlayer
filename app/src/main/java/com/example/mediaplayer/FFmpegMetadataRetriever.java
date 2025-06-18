@@ -5,10 +5,10 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.arthenica.ffmpegkit.FFmpegKit;
 import com.arthenica.ffmpegkit.FFprobeKit;
 import com.arthenica.ffmpegkit.ReturnCode;
 
-//import mediaarea.mediainfo.MediaInfo;
 
 public class FFmpegMetadataRetriever {
 
@@ -18,6 +18,8 @@ public class FFmpegMetadataRetriever {
     private int width;
     private int height;
     private double frameRate;
+//    private boolean hasDolbyAtmos;
+//    private boolean hasDolbyVision;
 
     public interface MetadataCallback {
         void onMetadataReady(FFmpegMetadataRetriever metadata);
@@ -27,10 +29,13 @@ public class FFmpegMetadataRetriever {
         // FFprobe command to get metadata in JSON format
         String cmd = "-v quiet -print_format json -show_format -show_streams \"" + filePath + "\"";
 
-        FFprobeKit.executeAsync(cmd, session -> {
+        FFmpegKit.executeAsync(cmd, session -> {
             if (ReturnCode.isSuccess(session.getReturnCode())) {
                 try {
+
                     String output = session.getOutput(); // ✅ FIX: Use session.getOutput() in v6.0.2
+                    Log.d("djkfhkd", output);
+
                     JSONObject json = new JSONObject(output);
 
                     // Get duration
@@ -47,9 +52,9 @@ public class FFmpegMetadataRetriever {
                     JSONArray streams = json.getJSONArray("streams");
                     JSONObject videoStream = null;
                     for (int i = 0; i < streams.length(); i++) {
-                        if (streams.getJSONObject(i).getString("codec_type").equals("video")) {
-                            videoStream = streams.getJSONObject(i);
-                            break;
+                        JSONObject stream = streams.getJSONObject(i);
+                        if (stream.getString("codec_type").equals("video")) {
+                            videoStream = stream;
                         }
                     }
 

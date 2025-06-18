@@ -98,18 +98,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="Latest in Commit">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/mediaarea/mediainfo/MediaInfo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/arm64-v8a/libmediainfo.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/arm64-v8a/libzen.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/armeabi-v7a/libmediainfo.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/armeabi-v7a/libzen.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/x86/libmediainfo.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/x86/libzen.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/x86_64/libmediainfo.so" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/libs/x86_64/libzen.so" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FFmpegMetadataRetriever.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FFmpegMetadataRetriever.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/mediaarea/mediainfo/MediaInfo.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/arm64-v8a/libmediainfo.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/arm64-v8a/libzen.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/armeabi-v7a/libmediainfo.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/armeabi-v7a/libzen.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/x86/libmediainfo.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/x86/libzen.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/x86_64/libmediainfo.so" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/libs/x86_64/libzen.so" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,7 +118,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=PhysicalDevice, isTemplate=false, identifier=serial=2fe6fcbb)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=LocalEmulator, isTemplate=false, identifier=path=C:\Users\rajan\.android\avd\Pixel_8_API_31_Android_12.avd)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -245,11 +244,11 @@
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java\mediaarea" />
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res" />
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
-      <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\layout" />
     </key>
     <key name="android.template.-780496765">
       <recent name="com.example.mediaplayer" />
@@ -689,7 +688,15 @@
       <option name="project" value="LOCAL" />
       <updated>1742444602690</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="Latest in Commit">
+      <option name="closed" value="true" />
+      <created>1747548172130</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1747548172130</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
