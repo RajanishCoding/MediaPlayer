@@ -232,7 +232,7 @@ public class PlayerService extends MediaSessionService {
         @Override
         public void run() {
             updateNotification();
-            handler.postDelayed(this, 100); // Update every second
+            handler.postDelayed(this, 1000); // Update every second
         }
     };
 

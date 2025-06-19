@@ -25,7 +25,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -60,7 +59,7 @@ public class VideoFragment extends Fragment {
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
-    private static ArrayList<String> AudioFilesPath;
+    private static ArrayList<String> VideoFilesPath;
     private ArrayList<String> FilesDateAdded;
 
     private String TAG = "VideoTag";
@@ -150,7 +149,7 @@ public class VideoFragment extends Fragment {
 
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
-        AudioFilesPath = new ArrayList<>();
+        VideoFilesPath = new ArrayList<>();
         FilesDateAdded = new ArrayList<>();
 
         menu_Container = view.findViewById(R.id.MenuContainer);
@@ -739,6 +738,13 @@ public class VideoFragment extends Fragment {
         }).start();
     }
 
+
+    public static ArrayList<String> getVideoList() {
+        if (FilesPath != null) {
+            return FilesPath;
+        }
+        return null;
+    }
 
     public boolean isInsertFiles(List<Video> storedList, Video media) {
         boolean f = false;

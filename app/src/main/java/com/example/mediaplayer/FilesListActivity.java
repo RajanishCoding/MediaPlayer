@@ -54,6 +54,7 @@ public class FilesListActivity extends AppCompatActivity {
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
     private static ArrayList<String> AudioFilesPath;
+    private static ArrayList<String> VideoFilesPath;
     private ArrayList<String> FilesDuration;
 
     private List<Video> mediaList;
@@ -94,6 +95,7 @@ public class FilesListActivity extends AppCompatActivity {
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
         AudioFilesPath = new ArrayList<>();
+        VideoFilesPath = new ArrayList<>();
         FilesDuration = new ArrayList<>();
 
         StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
@@ -466,6 +468,8 @@ public class FilesListActivity extends AppCompatActivity {
         }
         return null;
     }
+
+
 
 //    if (ContextCompat.checkSelfPermission(
 //            this, Manifest.permission.READ_MEDIA_AUDIO) ==

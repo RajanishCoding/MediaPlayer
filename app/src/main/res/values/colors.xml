@@ -71,24 +71,27 @@
     <color name="text_view_text_dark">#FFFFFF</color>
 
     <!-- Text View Variant Colors -->
-    <color name="text_view_text_variant">#646464</color>
+    <color name="text_view_text_variant">#565656</color>
     <color name="text_view_text_variant_dark">#BDBDBD</color>
 
-    <!-- Item Details - TextView Color -->
-    <color name="item_details_text_color">#E5E5E5</color>
+    <!-- Item Details - Text View Color -->
+    <color name="item_details_text_color_light">#FFFFFF</color>
+    <color name="item_details_text_color_dark">#C7C7C7</color>
 
     <!-- Overlay Colors -->
     <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
     <color name="overlayButtonDark">#33FFFFFF</color> <!-- Dark theme -->
 
-    <color name="overlayItemDetailsLight">#5B5861</color> <!-- Dark theme -->
-    <color name="overlayItemDetailsDark">#383046</color> <!-- Dark theme -->
+    <color name="overlayItemDetailsLight">#A29DAE</color> <!-- Light theme -->
+    <color name="overlayItemDetailsDark">#332E3C</color> <!-- Dark theme -->
 
     <color name="overlayThumbnailLight">#C6D6E3</color>
     <color name="overlayThumbnailDark">#6B757F</color>
 
-    <color name="overlayListLight">#59B1C9D5</color>
-    <color name="overlayListDark">#59636C7D</color>
+    <color name="overlayListLightSelector">#59697379</color>
+    <color name="overlayListDarkSelector">#597F8794</color>
+    <color name="overlayListLight">#1A373737</color>
+    <color name="overlayListDark">#1AC8C8C8</color>
 
     <color name="overlayToastDark">#80000000</color>
 

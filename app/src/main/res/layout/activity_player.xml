@@ -54,7 +54,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -266,7 +265,19 @@
 
     </LinearLayout>
 
-
+    <ImageButton
+        android:id="@+id/unlock"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/selector_player_button_lock"
+        android:contentDescription="UnLock Screen"
+        android:src="@drawable/baseline_lock_open_24"
+        android:tooltipText="UnLock Screen"
+        android:layout_marginStart="25dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"/>
 
 
     <!-- Custom Toolbar -->

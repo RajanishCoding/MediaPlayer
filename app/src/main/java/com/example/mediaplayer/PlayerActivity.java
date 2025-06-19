@@ -81,8 +81,12 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView ToolbarText;
 
     private ImageButton playButton;
+    private ImageButton prevButton;
+    private ImageButton nextButton;
     private ImageButton backButton;
     private ImageButton rotateButton;
+    private ImageButton lockButton;
+    private ImageButton unlockButton;
     private ImageButton decoderButton;
     private ImageButton audioTrackButton;
     private ImageButton subTrackButton;
@@ -98,7 +102,7 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton fitcropButton;
     private boolean isFitScreen = true;
 
-    private boolean f = false;
+    private boolean f;
     private boolean surface_click_frag = false;
 
     private String media_name;
@@ -170,6 +174,10 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isControlsShowingByAction;
 
     private boolean isSeekbarMoving;
+    private boolean isSeekbarUpdating;
+
+    private boolean isScreenLocked;
+    private boolean isLockScreenShowing;
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
@@ -282,6 +290,8 @@ public class PlayerActivity extends AppCompatActivity {
         updateScreenDimension();
 
         playButton = findViewById(R.id.play);
+        prevButton = findViewById(R.id.prev);
+        nextButton = findViewById(R.id.next);
 
         time1 = findViewById(R.id.time1);
         time2 = findViewById(R.id.time2);
@@ -290,6 +300,8 @@ public class PlayerActivity extends AppCompatActivity {
         ToolbarText = findViewById(R.id.toolbar_title);
         backButton = findViewById(R.id.back_button);
         rotateButton = findViewById(R.id.rotate);
+        lockButton = findViewById(R.id.lock);
+        unlockButton = findViewById(R.id.unlock);
         decoderButton = findViewById(R.id.decoder_button);
         audioTrackButton = findViewById(R.id.audio_tracks_button);
         subTrackButton = findViewById(R.id.sub_tracks_button);
@@ -383,6 +395,20 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+        prevButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                player.seekToPreviousMediaItem();
+            }
+        });
+
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                player.seekToNextMediaItem();
+            }
+        });
+
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -464,6 +490,7 @@ public class PlayerActivity extends AppCompatActivity {
             public void run() {
                 if (player != null) {
                     if (player.isPlaying() && !f) {
+//                        Log.d("playback544", "run: " + isTime1ButtonClicked + isTime2ButtonClicked);
                         seekbar.setProgress((int) player.getCurrentPosition());
                     }
 
@@ -475,10 +502,14 @@ public class PlayerActivity extends AppCompatActivity {
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                     }
                 }
-                handler.postDelayed(this, 500);
+                long dur = player != null ? player.getDuration() : 0;
+                if (dur < 60000)
+                    handler.postDelayed(this, 500);
+                else
+                    handler.postDelayed(this, 1000);
             }
         };
-        handler.postDelayed(updateSeekBar, 100);
+//        handler.post(updateSeekBar);
 
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -513,6 +544,21 @@ public class PlayerActivity extends AppCompatActivity {
                     isFitScreen = false;
                 }
             }
+        });
+
+        lockButton.setOnClickListener(v -> {
+            isScreenLocked = true;
+            Fullscreen();
+            hideControls();
+            removeControlsRunnable();
+            showLockButton();
+            lockScreenToast();
+        });
+
+        unlockButton.setOnClickListener(v -> {
+            isScreenLocked = false;
+            hideLockButton();
+            removeLockScreenRunnable();
         });
 
         time1.setOnClickListener(v -> {
@@ -567,86 +613,97 @@ public class PlayerActivity extends AppCompatActivity {
 
 
         playerView.setOnTouchListener((v, event) -> {
-            if (!isAudioTracksShowing && !isSubTracksShowing)
-                gestureDetector.onTouchEvent(event);
+            if (!isScreenLocked) {
+                if (!isAudioTracksShowing && !isSubTracksShowing)
+                    gestureDetector.onTouchEvent(event);
 
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                if (isAudioTracksShowing) {
-                    hideAudioTracks();
-                    isAudioTracksShowing = false;
-                }
-
-                if (isSubTracksShowing) {
-                    hideSubTracks();
-                    isSubTracksShowing = false;
-                }
-
-                if (isLongPressed) {
-                    isLongPressed = false;
-                    player.setPlaybackSpeed(1);
-                    speedLayout.startAnimation(fadeOut);
-                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            speedLayout.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-                        }
-                    });
-                }
-
-                if (isSeeking) {
-                    if (isControlsShowing) {
-                        controlsToast();
-                    } else {
-                        hideBottomControls();
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (isAudioTracksShowing) {
+                        hideAudioTracks();
+                        isAudioTracksShowing = false;
                     }
 
-                    if (wasPlaying) {
-                        playMedia();
-                        wasPlaying = false;
+                    if (isSubTracksShowing) {
+                        hideSubTracks();
+                        isSubTracksShowing = false;
                     }
 
-                    seekTime = 0;
-                    seekLayout.startAnimation(fadeOut);
-                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                        }
+                    if (isLongPressed) {
+                        isLongPressed = false;
+                        player.setPlaybackSpeed(1);
+                        speedLayout.startAnimation(fadeOut);
+                        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+                            }
 
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            seekLayout.setVisibility(View.GONE);
-                        }
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                speedLayout.setVisibility(View.GONE);
+                            }
 
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-                        }
-                    });
-                }
-
-                if (isScrolling) {
-                    if (isBrightnessChanging) {
-                        editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
-                        editor.apply();
-                        Log.d("inittt", "onCreate: " + sharedPreferences.getFloat("Brightness", 0f));
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+                            }
+                        });
                     }
 
-                    isScrolling = false;
-                    isSeeking = false;
-                    isVolumeChanging = false;
-                    isBrightnessChanging = false;
-                    gestureDirection = GestureDirection.NONE;
-                    Log.d("Scrolling", "onScroll: " + gestureDirection.name());
+                    if (isSeeking) {
+                        if (isControlsShowing) {
+                            controlsToast();
+                        } else {
+                            hideBottomControls();
+                        }
+
+                        if (wasPlaying) {
+                            playMedia();
+                            wasPlaying = false;
+                        }
+
+                        seekTime = 0;
+                        seekLayout.startAnimation(fadeOut);
+                        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                seekLayout.setVisibility(View.GONE);
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+                            }
+                        });
+                    }
+
+                    if (isScrolling) {
+                        if (isBrightnessChanging) {
+                            editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
+                            editor.apply();
+                            Log.d("inittt", "onCreate: " + sharedPreferences.getFloat("Brightness", 0f));
+                        }
+
+                        isScrolling = false;
+                        isSeeking = false;
+                        isVolumeChanging = false;
+                        isBrightnessChanging = false;
+                        gestureDirection = GestureDirection.NONE;
+                        Log.d("Scrolling", "onScroll: " + gestureDirection.name());
+                    }
+
+
                 }
+            }
 
-
+            else {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (!isLockScreenShowing) {
+                        showLockButton();
+                    }
+                    lockScreenToast();
+                }
             }
 
             v.performClick();
@@ -820,22 +877,29 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d("TAG", "initializePlayer: " + player);
         ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-        ArrayList<String> songList = FilesListActivity.getSongList();
-        Log.d(TAG, "initializePlayer: " + FilesListActivity.getSongList());
-
+        ArrayList<String> songList = AudioFragment.getSongList();
+        ArrayList<String> videoList = VideoFragment.getVideoList();
+//        Log.d(TAG, "initializePlayer: " + FilesListActivity.getSongList());
 
         player.setMediaItem(MediaItem.fromUri(media_path));
         player.prepare();
         playMedia();
 
-        if (songList != null) {
-            for (String path : songList) {
-                if (!Objects.equals(path, media_path)) {
-                    player.addMediaItem(MediaItem.fromUri(path));
-                }
-            }
-        }
-        Log.d(TAG, "initializePlayer: " + player.getMediaItemCount());
+//        if (songList != null && !isVideoFile) {
+//            for (String path : songList) {
+//                if (!Objects.equals(path, media_path)) {
+//                    player.addMediaItem(MediaItem.fromUri(path));
+//                }
+//            }
+//        }
+//
+//        if (videoList != null && isVideoFile) {
+//            for (String path : videoList) {
+////                if (!Objects.equals(path, media_path))
+//                    player.addMediaItem(MediaItem.fromUri(path));
+//            }
+//        }
+        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
 //        for (MediaItem mediaItem : player) {
 //            Log.d(TAG, "initializePlayer: " + player.getMediaItems(i).requestMetadata);
 //        }
@@ -877,19 +941,22 @@ public class PlayerActivity extends AppCompatActivity {
                     player.removeListener(this);
                 }
             }
+
+
         });
 
         player.addListener(new Player.Listener() {
             @Override
-            public void onPlayerError(PlaybackException error) {
-                Log.d("playbackError", "onPlayerError: " + error);
-            }
-
-            @Override
             public void onPlaybackStateChanged(int playbackState) {
                 switch (playbackState) {
                     case Player.STATE_READY:
-                        Log.d("playback", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
+                        if (!isSeekbarUpdating) {
+                            handler.post(updateSeekBar);
+                            isSeekbarUpdating = true;
+                            Log.d("playback544", "onPlaybackStateChanged: YYYY");
+                        }
+
+                        Log.d("playback544", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
                         if (!isFirstTimePlaying) {
                             Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
 
@@ -922,8 +989,9 @@ public class PlayerActivity extends AppCompatActivity {
                             isBufferingFinished = true;
                             buffer_view.setVisibility(View.GONE);
                             seekbar.setMax((int) player.getDuration());
-                            time1.setText(!isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
-                            time2.setText(!isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
+                            seekbar.setProgress((int) player.getCurrentPosition());
+                            time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
+                            time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
                             isFirstTimePlaying = true;
                             controlsToast();
                         }
@@ -946,6 +1014,11 @@ public class PlayerActivity extends AppCompatActivity {
                         Log.d(TAG, "onPlaybackStateChanged: IDLE");
                         break;
                 }
+            }
+
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                Log.d("playbackError", "onPlayerError: " + error);
             }
         });
 
@@ -1201,6 +1274,51 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
+    private void showLockButton() {
+        Animation fadeIn = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.fade_in);
+        unlockButton.startAnimation(fadeIn);
+        
+        fadeIn.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                unlockButton.setVisibility(View.VISIBLE);
+                isLockScreenShowing = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
+    private void hideLockButton() {
+        Animation fadeOut = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.fade_out);
+        unlockButton.startAnimation(fadeOut);
+
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                unlockButton.setVisibility(View.GONE);
+                isLockScreenShowing = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
     private void showBottomControls() {
         Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
         PlaybackControls_Container.startAnimation(slideInBottom);
@@ -1246,6 +1364,12 @@ public class PlayerActivity extends AppCompatActivity {
     private void removeControlsRunnable() {
         if (controlsRunnable != null) {
             handler.removeCallbacks(controlsRunnable);
+        }
+    }
+
+    private void removeLockScreenRunnable() {
+        if (lockScreenRunnable != null) {
+            handler.removeCallbacks(lockScreenRunnable);
         }
     }
 
@@ -1346,6 +1470,17 @@ public class PlayerActivity extends AppCompatActivity {
         };
 
         handler.postDelayed(controlsRunnable, 5000);
+    }
+
+    private Runnable lockScreenRunnable;
+    private void lockScreenToast() {
+        removeLockScreenRunnable();
+
+        lockScreenRunnable = () -> {
+            hideLockButton();
+        };
+
+        handler.postDelayed(lockScreenRunnable, 3000);
     }
 
     private void onLandscape(){

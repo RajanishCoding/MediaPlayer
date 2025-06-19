@@ -692,6 +692,13 @@ public class AudioFragment extends Fragment {
     }
 
 
+    public static ArrayList<String> getSongList() {
+        if (FilesPath != null) {
+            return FilesPath;
+        }
+        return null;
+    }
+
     public boolean isInsertFiles(List<Audio> storedList, Audio media) {
         boolean f = false;
         for (Audio m: storedList) {
