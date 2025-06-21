@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -536,6 +537,8 @@ public class VideoFragment extends Fragment {
                 isFilesStored = true;
             }
 
+            setVideoPlaylist();
+
             requireActivity().runOnUiThread(() -> {
                 if (isAdded()) {
                     if (!isFilesStored) {
@@ -729,6 +732,8 @@ public class VideoFragment extends Fragment {
 
                 mediaList.addAll(addingMediaList);
 
+                setVideoPlaylist();
+
                 sortMediaList(isAscending);
 
 //                adapter.notifyDataSetChanged();
@@ -738,12 +743,17 @@ public class VideoFragment extends Fragment {
         }).start();
     }
 
+    public void setVideoPlaylist() {
+        if (mediaList != null) {
+            List<MediaItem> mediaItemList = new ArrayList<>();
 
-    public static ArrayList<String> getVideoList() {
-        if (FilesPath != null) {
-            return FilesPath;
+            for (Video v : mediaList) {
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                mediaItemList.add(mediaItem.toExoPlayerMediaItem());
+            }
+            PlaylistManager manager = new PlaylistManager(mediaItemList);
+            MediaRepository.getInstance().setPlaylistManager(manager);
         }
-        return null;
     }
 
     public boolean isInsertFiles(List<Video> storedList, Video media) {

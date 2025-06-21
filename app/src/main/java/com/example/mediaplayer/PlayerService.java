@@ -169,7 +169,7 @@ public class PlayerService extends MediaSessionService {
     private void initializePlayer(String mediaPath) {
         isInitialized = true;
         Log.d(TAG, "initializePlayerS: YES");
-//        player.setMediaItem(MediaItem.fromUri(mediaPath));
+//        player.setMediaItem(MyMediaItem.fromUri(mediaPath));
 //        player.prepare();
 //        player.play();
         updateMediaSessionMetadata();
@@ -216,12 +216,12 @@ public class PlayerService extends MediaSessionService {
 //                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
 
                 .setStyle(new MediaStyleNotificationHelper.MediaStyle(mediaSession)
-                        .setShowActionsInCompactView(0, 1, 2))
+                        .setShowActionsInCompactView(0, 1, 2));
 
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_previous_24, "Previous", null).build())
-                .addAction(new NotificationCompat.Action.Builder(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, player.isPlaying() ? "Pause" : "Play", player.isPlaying() ? pausePendingIntent : playPendingIntent).build())
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_next_24, "Next", null).build())
-                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build());
+//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_previous_24, "Previous", null).build())
+//                .addAction(new NotificationCompat.Action.Builder(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, player.isPlaying() ? "Pause" : "Play", player.isPlaying() ? pausePendingIntent : playPendingIntent).build())
+//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_next_24, "Next", null).build())
+//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build());
 
 //        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
         return builder.build();
@@ -313,7 +313,7 @@ public class PlayerService extends MediaSessionService {
                 startForegroundNotification();
             }
             else {
-                stopForegroundNotification();
+                startForegroundNotification();
             }
         }
     };

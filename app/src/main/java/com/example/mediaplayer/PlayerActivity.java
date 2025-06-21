@@ -186,8 +186,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isPlaying;
     private boolean wasPlaying;
 
-    private boolean isFirstTimeBuffering = false;
-    private boolean isFirstTimePlaying = false;
+    private boolean isFirstTimePlaying;
 
     private View audioTracksContainer;
     private ImageButton audioTracks_BackButton;
@@ -202,6 +201,10 @@ public class PlayerActivity extends AppCompatActivity {
     private DefaultTrackSelector subTrackSelector;
     private SubTracksAdapter subTracksAdapter;
     private List<SubTracks> subTracksList;
+
+    private List<MediaItem> videoList;
+    private PlaylistManager manager;
+    private MediaItem mediaItem;
 
     private float lastPlayedTime;
     private float lastPlayedFile;
@@ -341,6 +344,8 @@ public class PlayerActivity extends AppCompatActivity {
         subTracksRecyclerView = findViewById(R.id.recyclerSubTracksList);
         subTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        videoList = new ArrayList<>();
+
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
@@ -360,7 +365,6 @@ public class PlayerActivity extends AppCompatActivity {
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
-        lastPlayedTime = sharedPreferences.getFloat("lastTime : " + media_path, 0);
 
         editor.putString("lastPlayedFileName", media_name);
         editor.putString("lastPlayedFilePath", media_path);
@@ -398,14 +402,16 @@ public class PlayerActivity extends AppCompatActivity {
         prevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                player.seekToPreviousMediaItem();
+                manager.previous();
+                initializePlayer(manager.getCurrentItem(), false);
             }
         });
 
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                player.seekToNextMediaItem();
+                manager.next();
+                initializePlayer(manager.getCurrentItem(), false);
             }
         });
 
@@ -503,10 +509,7 @@ public class PlayerActivity extends AppCompatActivity {
                     }
                 }
                 long dur = player != null ? player.getDuration() : 0;
-                if (dur < 60000)
-                    handler.postDelayed(this, 500);
-                else
-                    handler.postDelayed(this, 1000);
+                handler.postDelayed(this, dur < 60000 ? 500 : 1000);
             }
         };
 //        handler.post(updateSeekBar);
@@ -873,22 +876,25 @@ public class PlayerActivity extends AppCompatActivity {
 
 
     @OptIn(markerClass = UnstableApi.class)
-    private void initializePlayer() {
-        Log.d("TAG", "initializePlayer: " + player);
-        ToolbarText.setText(media_name);
-        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-        ArrayList<String> songList = AudioFragment.getSongList();
-        ArrayList<String> videoList = VideoFragment.getVideoList();
-//        Log.d(TAG, "initializePlayer: " + FilesListActivity.getSongList());
+    private void initializePlayer(MediaItem mediaItem, boolean isNamePresent) {
+        this.mediaItem = mediaItem;
 
-        player.setMediaItem(MediaItem.fromUri(media_path));
+        Log.d("TAG", "initializePlayer: " + player);
+
+        String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
+        ToolbarText.setText(name);
+        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+        buffer_view.setVisibility(View.VISIBLE);
+
+        isFirstTimePlaying = true;
+        player.setMediaItem(mediaItem);
         player.prepare();
         playMedia();
 
 //        if (songList != null && !isVideoFile) {
 //            for (String path : songList) {
 //                if (!Objects.equals(path, media_path)) {
-//                    player.addMediaItem(MediaItem.fromUri(path));
+//                    player.addMediaItem(MyMediaItem.fromUri(path));
 //                }
 //            }
 //        }
@@ -896,11 +902,11 @@ public class PlayerActivity extends AppCompatActivity {
 //        if (videoList != null && isVideoFile) {
 //            for (String path : videoList) {
 ////                if (!Objects.equals(path, media_path))
-//                    player.addMediaItem(MediaItem.fromUri(path));
+//                    player.addMediaItem(MyMediaItem.fromUri(path));
 //            }
 //        }
         Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
-//        for (MediaItem mediaItem : player) {
+//        for (MyMediaItem mediaItem : player) {
 //            Log.d(TAG, "initializePlayer: " + player.getMediaItems(i).requestMetadata);
 //        }
 
@@ -953,13 +959,13 @@ public class PlayerActivity extends AppCompatActivity {
                         if (!isSeekbarUpdating) {
                             handler.post(updateSeekBar);
                             isSeekbarUpdating = true;
-                            Log.d("playback544", "onPlaybackStateChanged: YYYY");
                         }
 
                         Log.d("playback544", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
-                        if (!isFirstTimePlaying) {
+                        if (isFirstTimePlaying) {
                             Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
 
+                            lastPlayedTime = sharedPreferences.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
                             player.seekTo((long) lastPlayedTime);
 
                             if (isVideoFile) {
@@ -975,10 +981,12 @@ public class PlayerActivity extends AppCompatActivity {
                             intent.putExtra("bgPlay", isBackgroundPlay);
                             LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
 
+                            audioTracksList.clear();
                             audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
                             audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
                             audioTracksRecyclerView.setAdapter(audioTracksAdapter);
 
+                            subTracksList.clear();
                             subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
                             subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
                             subTracksRecyclerView.setAdapter(subTracksAdapter);
@@ -986,19 +994,18 @@ public class PlayerActivity extends AppCompatActivity {
                             loadAudioTracks();
                             loadSubTracks();
 
-                            isBufferingFinished = true;
                             buffer_view.setVisibility(View.GONE);
                             seekbar.setMax((int) player.getDuration());
                             seekbar.setProgress((int) player.getCurrentPosition());
                             time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
                             time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
-                            isFirstTimePlaying = true;
+                            isFirstTimePlaying = false;
                             controlsToast();
                         }
                         break;
 
                     case Player.STATE_ENDED:
-                        editor.putFloat("lastTime : " + media_path, 0);
+                        editor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
                         editor.apply();
                         player.pause();
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
@@ -1727,7 +1734,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            editor.putFloat("lastTime : " + media_path, ((float) player.getCurrentPosition()));
+            editor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
             editor.apply();
 
             if (player.isPlaying() && !isBackgroundPlay) {
@@ -2139,8 +2146,10 @@ public class PlayerActivity extends AppCompatActivity {
             PlayerService playerService = binder.getService();
             player = PlayerService.getPlayer();
             Log.d("service", "onServiceConnected: YES: " + player);
+
             if (player != null) {
-                initializePlayer();
+                manager = MediaRepository.getInstance().getPlaylistManager();
+                initializePlayer(MediaItem.fromUri(media_path), true);
                 Log.d("service", "isPlayer: YES");
             }
             isBound = true;
