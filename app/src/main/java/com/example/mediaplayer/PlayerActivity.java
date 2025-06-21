@@ -1,5 +1,6 @@
 package com.example.mediaplayer;
 
+import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -64,7 +66,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 
 @UnstableApi
@@ -107,6 +108,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private String media_name;
     private String media_path;
+    private int currentIndex = 0;
 
     private boolean isBound = false;
 
@@ -115,6 +117,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isInAnimation;
     private boolean isOutAnimation;
+
+    private ScrollView scrollView;
+    private ImageButton expandB;
+    private boolean isExpanded = false;
+    private int collapsedSize, expandedSize;
 
     private View buffer_view;
 
@@ -208,6 +215,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private float lastPlayedTime;
     private float lastPlayedFile;
+
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -319,6 +327,9 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
 
+        scrollView = findViewById(R.id.scrollView);
+        expandB = findViewById(R.id.expandB);
+
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
         speedLayout = findViewById(R.id.speed_layout);
@@ -365,6 +376,7 @@ public class PlayerActivity extends AppCompatActivity {
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
+        currentIndex = intent.getIntExtra("currentIndex", 0);
 
         editor.putString("lastPlayedFileName", media_name);
         editor.putString("lastPlayedFilePath", media_path);
@@ -380,39 +392,53 @@ public class PlayerActivity extends AppCompatActivity {
         startService(serviceIntent);
 
 
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (player != null) {
-                    if (!player.isPlaying()) {
-                        playMedia();
+        playButton.setOnClickListener(v -> {
+            if (player != null) {
+                if (!player.isPlaying()) {
+                    playMedia();
 //                        player.play();
-                        playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                        Log.d(TAG, "onPLAY: YES");
-                    } else {
-                        player.pause();
-                        removeControlsRunnable();
-                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                        Log.d(TAG, "onPLAY: NO");
-                    }
+                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                    Log.d(TAG, "onPLAY: YES");
+                } else {
+                    player.pause();
+                    removeControlsRunnable();
+                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                    Log.d(TAG, "onPLAY: NO");
                 }
             }
         });
 
-        prevButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                manager.previous();
-                initializePlayer(manager.getCurrentItem(), false);
-            }
+        prevButton.setOnClickListener(v -> {
+            manager.previous();
+            initializePlayer(manager.getCurrentItem(), false);
         });
 
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                manager.next();
-                initializePlayer(manager.getCurrentItem(), false);
-            }
+        nextButton.setOnClickListener(v -> {
+            manager.next();
+            initializePlayer(manager.getCurrentItem(), false);
+        });
+
+        collapsedSize = DpToPixel(1, this);;
+        expandedSize = DpToPixel(200, this);
+
+        ViewGroup.LayoutParams param = scrollView.getLayoutParams();
+        param.height = 1;
+
+        expandB.setOnClickListener(v -> {
+            int from = scrollView.getLayoutParams().height;
+            int to = isExpanded ? collapsedSize : expandedSize;
+
+            ValueAnimator animator = ValueAnimator.ofInt(from, to);
+            animator.setDuration(300);
+            animator.addUpdateListener(animation -> {
+                int value = (int) animation.getAnimatedValue();
+                ViewGroup.LayoutParams params = scrollView.getLayoutParams();
+                params.height = value;
+                scrollView.setLayoutParams(params);
+            });
+
+            animator.start();
+            isExpanded = !isExpanded;
         });
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -911,6 +937,7 @@ public class PlayerActivity extends AppCompatActivity {
 //        }
 
         playerView.setPlayer(player);
+        playerView.setKeepScreenOn(true);
 
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
         layoutParams.screenBrightness = sharedPreferences.getFloat("Brightness", 0f);
@@ -2149,6 +2176,7 @@ public class PlayerActivity extends AppCompatActivity {
 
             if (player != null) {
                 manager = MediaRepository.getInstance().getPlaylistManager();
+                manager.setCurrentIndex(currentIndex);
                 initializePlayer(MediaItem.fromUri(media_path), true);
                 Log.d("service", "isPlayer: YES");
             }

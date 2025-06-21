@@ -332,6 +332,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                 intent.putExtra("Name", media.getName());
                 intent.putExtra("Path", media.getPath());
                 intent.putExtra("isVideo", media.isVideo());
+                intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
                 Log.d("isVideoFile", "onClick: " + media.isVideo());
                 context.startActivity(intent);
             }

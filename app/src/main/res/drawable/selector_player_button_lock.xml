@@ -7,7 +7,8 @@
     </item>
     <item>
         <shape>
-            <solid android:color="#65000000" /> <!-- No overlay -->
+            <solid android:color="@color/overlayToastDark" /> <!-- No overlay -->
+            <corners android:radius="10dp" />
         </shape>
     </item>
 </selector>
