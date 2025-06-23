@@ -9,9 +9,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -45,7 +45,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import android.content.SharedPreferences;
 
 
 public class AudioFragment extends Fragment {
@@ -110,10 +109,10 @@ public class AudioFragment extends Fragment {
     private ImageButton lastPlay_Button;
 
     private SharedPreferences settingsPrefs;
-    private SharedPreferences.Editor settingsEditor;
+    private SharedPreferences.Editor settingsPrefsEditor;
 
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
+    private SharedPreferences playerPrefs;
+    private SharedPreferences.Editor playerPrefsEditor;
 
     public AudioFragment() {}
 
@@ -169,11 +168,11 @@ public class AudioFragment extends Fragment {
 
         executorService = Executors.newSingleThreadExecutor();
 
-        settingsPrefs = requireContext().getSharedPreferences("settings_audio", Context.MODE_PRIVATE);
-        settingsEditor = settingsPrefs.edit();
+        settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
+        settingsPrefsEditor = settingsPrefs.edit();
 
-        sharedPreferences = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
+        playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefsEditor = playerPrefs.edit();
 
         return view;
     }
@@ -268,9 +267,9 @@ public class AudioFragment extends Fragment {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                String name = sharedPreferences.getString("lastPlayedFileName", null);
-                String path = sharedPreferences.getString("lastPlayedFilePath", null);
-                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+                String name = playerPrefs.getString("lastPlayedFileName", null);
+                String path = playerPrefs.getString("lastPlayedFilePath", null);
+                Boolean isVideo = playerPrefs.getBoolean("lastPlayedFile_isVideo", false);
 
                 if (name != null) {
                     Intent intent = new Intent(requireActivity(), PlayerActivity.class);
@@ -321,9 +320,9 @@ public class AudioFragment extends Fragment {
 
         if (isSorted) {
             adapter.notifyDataSetChanged();
-            settingsEditor.putString("sortBy", sortBy);
-            settingsEditor.putBoolean("isAscending", isAsc);
-            settingsEditor.apply();
+            settingsPrefsEditor.putString("sortBy", sortBy);
+            settingsPrefsEditor.putBoolean("isAscending", isAsc);
+            settingsPrefsEditor.apply();
             saveMediaListToPreferences(mediaList);
         }
     }
@@ -391,12 +390,12 @@ public class AudioFragment extends Fragment {
     }
 
     private void saveDetailsButtonVisibility() {
-        settingsEditor.putBoolean("path", isPath_Visible);
-        settingsEditor.putBoolean("date", isDate_Visible);
-        settingsEditor.putBoolean("size", isSize_Visible);
-        settingsEditor.putBoolean("dur", isDur_Visible);
-        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
-        settingsEditor.apply();
+        settingsPrefsEditor.putBoolean("path", isPath_Visible);
+        settingsPrefsEditor.putBoolean("date", isDate_Visible);
+        settingsPrefsEditor.putBoolean("size", isSize_Visible);
+        settingsPrefsEditor.putBoolean("dur", isDur_Visible);
+        settingsPrefsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
+        settingsPrefsEditor.apply();
     }
 
 
@@ -490,6 +489,8 @@ public class AudioFragment extends Fragment {
             else {
                 isFilesStored = true;
             }
+
+            setAudioPlaylist();
 
             requireActivity().runOnUiThread(() -> {
                 if (isAdded()) {
@@ -683,12 +684,27 @@ public class AudioFragment extends Fragment {
 
                 mediaList.addAll(addingMediaList);
 
+                setAudioPlaylist();
 
                 adapter.notifyDataSetChanged();
                 saveMediaListToPreferences(mediaList);
             });
 
         }).start();
+    }
+
+
+    public void setAudioPlaylist() {
+        if (mediaList != null) {
+            List<MediaItem> mediaItemList = new ArrayList<>();
+
+            for (Audio v : mediaList) {
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                mediaItemList.add(mediaItem.toExoPlayerMediaItem());
+            }
+            PlaylistManager manager = new PlaylistManager(mediaItemList);
+            MediaRepository.getInstance().setAudioPlaylistManager(manager);
+        }
     }
 
 

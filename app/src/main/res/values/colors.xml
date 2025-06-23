@@ -78,6 +78,9 @@
     <color name="item_details_text_color_light">#FFFFFF</color>
     <color name="item_details_text_color_dark">#C7C7C7</color>
 
+    <color name="sidebarLight">#80373737</color>
+    <color name="sidebarDark">#E61A1A1A</color>
+
     <!-- Overlay Colors -->
     <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
     <color name="overlayButtonDark">#33FFFFFF</color> <!-- Dark theme -->
@@ -90,6 +93,7 @@
 
     <color name="overlayListLightSelector">#59697379</color>
     <color name="overlayListDarkSelector">#597F8794</color>
+
     <color name="overlayListLight">#1A373737</color>
     <color name="overlayListDark">#1AC8C8C8</color>
 

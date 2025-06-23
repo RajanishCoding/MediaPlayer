@@ -121,10 +121,10 @@ public class VideoFragment extends Fragment {
     private ImageButton lastPlay_Button;
 
     private SharedPreferences settingsPrefs;
-    private SharedPreferences.Editor settingsEditor;
+    private SharedPreferences.Editor settingsPrefsEditor;
 
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
+    private SharedPreferences playerPrefs;
+    private SharedPreferences.Editor playerPrefsEditor;
 
 
     public VideoFragment() {}
@@ -185,11 +185,11 @@ public class VideoFragment extends Fragment {
 
         executorService = Executors.newSingleThreadExecutor();
 
-        settingsPrefs = requireContext().getSharedPreferences("settings_video", Context.MODE_PRIVATE);
-        settingsEditor = settingsPrefs.edit();
+        settingsPrefs = requireContext().getSharedPreferences("VideoSettings", Context.MODE_PRIVATE);
+        settingsPrefsEditor = settingsPrefs.edit();
 
-        sharedPreferences = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
+        playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefsEditor = playerPrefs.edit();
 
         return view;
     }
@@ -298,9 +298,9 @@ public class VideoFragment extends Fragment {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                String name = sharedPreferences.getString("lastPlayedFileName", null);
-                String path = sharedPreferences.getString("lastPlayedFilePath", null);
-                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
+                String name = playerPrefs.getString("lastPlayedFileName", null);
+                String path = playerPrefs.getString("lastPlayedFilePath", null);
+                Boolean isVideo = playerPrefs.getBoolean("lastPlayedFile_isVideo", false);
 
                 if (name != null) {
                     Intent intent = new Intent(requireActivity(), PlayerActivity.class);
@@ -358,9 +358,9 @@ public class VideoFragment extends Fragment {
 
         if (isSorted) {
             adapter.notifyDataSetChanged();
-            settingsEditor.putString("sortBy", sortBy);
-            settingsEditor.putBoolean("isAscending", isAsc);
-            settingsEditor.apply();
+            settingsPrefsEditor.putString("sortBy", sortBy);
+            settingsPrefsEditor.putBoolean("isAscending", isAsc);
+            settingsPrefsEditor.apply();
             saveMediaListToPreferences(mediaList);
         }
     }
@@ -434,14 +434,14 @@ public class VideoFragment extends Fragment {
     }
 
     private void saveDetailsButtonVisibility() {
-        settingsEditor.putBoolean("path", isPath_Visible);
-        settingsEditor.putBoolean("date", isDate_Visible);
-        settingsEditor.putBoolean("size", isSize_Visible);
-        settingsEditor.putBoolean("resol", isResol_Visible);
-        settingsEditor.putBoolean("fps", isFps_Visible);
-        settingsEditor.putBoolean("dur", isDur_Visible);
-        settingsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
-        settingsEditor.apply();
+        settingsPrefsEditor.putBoolean("path", isPath_Visible);
+        settingsPrefsEditor.putBoolean("date", isDate_Visible);
+        settingsPrefsEditor.putBoolean("size", isSize_Visible);
+        settingsPrefsEditor.putBoolean("resol", isResol_Visible);
+        settingsPrefsEditor.putBoolean("fps", isFps_Visible);
+        settingsPrefsEditor.putBoolean("dur", isDur_Visible);
+        settingsPrefsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
+        settingsPrefsEditor.apply();
     }
 
 
@@ -752,7 +752,7 @@ public class VideoFragment extends Fragment {
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             PlaylistManager manager = new PlaylistManager(mediaItemList);
-            MediaRepository.getInstance().setPlaylistManager(manager);
+            MediaRepository.getInstance().setVideoPlaylistManager(manager);
         }
     }
 

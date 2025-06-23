@@ -1,6 +1,5 @@
 package com.example.mediaplayer;
 
-import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -28,7 +27,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -76,8 +74,6 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView time1;
     private TextView time2;
     private SeekBar seekbar;
-    private Handler handler;
-    private Runnable updateSeekBar;
 
     private TextView ToolbarText;
 
@@ -91,6 +87,11 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton decoderButton;
     private ImageButton audioTrackButton;
     private ImageButton subTrackButton;
+
+    private Handler handler;
+    private Runnable updateSeekBar;
+    private Runnable controlsRunnable;
+    private Runnable lockScreenRunnable;
 
     private SurfaceView surfaceView;
     private PlayerView playerView;
@@ -118,10 +119,12 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isInAnimation;
     private boolean isOutAnimation;
 
-    private ScrollView scrollView;
+    private LinearLayout expandView;
     private ImageButton expandB;
+    private boolean isIcon1 = true;
     private boolean isExpanded = false;
     private int collapsedSize, expandedSize;
+    private int animDuration, animDelay;
 
     private View buffer_view;
 
@@ -132,8 +135,9 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isVideoFile;
     private boolean isBackgroundPlay;
 
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
+    private SharedPreferences playerPrefs;
+    private SharedPreferences.Editor playerPrefsEditor;
+
     private GestureDetector gestureDetector;
     private AudioManager audioManager;
     private AudioAttributes audioAttributes;
@@ -180,6 +184,8 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isControlsHidden;
     private boolean isControlsShowingByAction;
 
+    private boolean isExpandViewsShowing;
+
     private boolean isSeekbarMoving;
     private boolean isSeekbarUpdating;
 
@@ -215,7 +221,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     private float lastPlayedTime;
     private float lastPlayedFile;
-
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -327,8 +332,18 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
 
-        scrollView = findViewById(R.id.scrollView);
         expandB = findViewById(R.id.expandB);
+        expandView = findViewById(R.id.expandView);
+
+        audioTracks_BackButton = findViewById(R.id.audioTracks_BackButton);
+        audioTracksContainer = findViewById(R.id.audioTracksContainer);
+        audioTracksRecyclerView = findViewById(R.id.recyclerAudioTracksList);
+        audioTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        subTracks_BackButton = findViewById(R.id.subTracks_BackButton);
+        subTracksContainer = findViewById(R.id.subTracksContainer);
+        subTracksRecyclerView = findViewById(R.id.recyclerSubTracksList);
+        subTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
@@ -345,31 +360,24 @@ public class PlayerActivity extends AppCompatActivity {
         forwardText = findViewById(R.id.forward_text);
         rewindText = findViewById(R.id.rewind_text);
 
-        audioTracks_BackButton = findViewById(R.id.audioTracks_BackButton);
-        audioTracksContainer = findViewById(R.id.audioTracksContainer);
-        audioTracksRecyclerView = findViewById(R.id.recyclerAudioTracksList);
-        audioTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        subTracks_BackButton = findViewById(R.id.subTracks_BackButton);
-        subTracksContainer = findViewById(R.id.subTracksContainer);
-        subTracksRecyclerView = findViewById(R.id.recyclerSubTracksList);
-        subTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         videoList = new ArrayList<>();
-
-        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
-        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        
-
-        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
 
         audioTracksList = new ArrayList<>();
         subTracksList = new ArrayList<>();
 
-//        Log.d("count3", "hel: "+ audioTracksAdapter.getItemCount());
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        collapsedSize = DpToPixel(1, this);;
+        expandedSize = DpToPixel(200, this);
+        animDuration = 300;
+        animDelay = 100;
+
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
+
+
+        playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefsEditor = playerPrefs.edit();
 
 
         Intent intent = getIntent();
@@ -378,10 +386,10 @@ public class PlayerActivity extends AppCompatActivity {
         isVideoFile = intent.getBooleanExtra("isVideo", false);
         currentIndex = intent.getIntExtra("currentIndex", 0);
 
-        editor.putString("lastPlayedFileName", media_name);
-        editor.putString("lastPlayedFilePath", media_path);
-        editor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
-        editor.apply();
+        playerPrefsEditor.putString("lastPlayedFileName", media_name);
+        playerPrefsEditor.putString("lastPlayedFilePath", media_path);
+        playerPrefsEditor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
+        playerPrefsEditor.apply();
 
         Log.d("isVideoFile", "onCreate: " + isVideoFile);
 
@@ -391,55 +399,6 @@ public class PlayerActivity extends AppCompatActivity {
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
         startService(serviceIntent);
 
-
-        playButton.setOnClickListener(v -> {
-            if (player != null) {
-                if (!player.isPlaying()) {
-                    playMedia();
-//                        player.play();
-                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                    Log.d(TAG, "onPLAY: YES");
-                } else {
-                    player.pause();
-                    removeControlsRunnable();
-                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                    Log.d(TAG, "onPLAY: NO");
-                }
-            }
-        });
-
-        prevButton.setOnClickListener(v -> {
-            manager.previous();
-            initializePlayer(manager.getCurrentItem(), false);
-        });
-
-        nextButton.setOnClickListener(v -> {
-            manager.next();
-            initializePlayer(manager.getCurrentItem(), false);
-        });
-
-        collapsedSize = DpToPixel(1, this);;
-        expandedSize = DpToPixel(200, this);
-
-        ViewGroup.LayoutParams param = scrollView.getLayoutParams();
-        param.height = 1;
-
-        expandB.setOnClickListener(v -> {
-            int from = scrollView.getLayoutParams().height;
-            int to = isExpanded ? collapsedSize : expandedSize;
-
-            ValueAnimator animator = ValueAnimator.ofInt(from, to);
-            animator.setDuration(300);
-            animator.addUpdateListener(animation -> {
-                int value = (int) animation.getAnimatedValue();
-                ViewGroup.LayoutParams params = scrollView.getLayoutParams();
-                params.height = value;
-                scrollView.setLayoutParams(params);
-            });
-
-            animator.start();
-            isExpanded = !isExpanded;
-        });
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -517,35 +476,37 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         handler = new Handler();
-        updateSeekBar = new Runnable() {
-            @Override
-            public void run() {
-                if (player != null) {
-                    if (player.isPlaying() && !f) {
-//                        Log.d("playback544", "run: " + isTime1ButtonClicked + isTime2ButtonClicked);
-                        seekbar.setProgress((int) player.getCurrentPosition());
-                    }
+        seekbarUpdater();
 
-                    if (player.isPlaying()) {
-                        isPlaying = true;
-                        playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                    } else {
-                        isPlaying = false;
-                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                    }
+
+        playButton.setOnClickListener(v -> {
+            if (player != null) {
+                if (!player.isPlaying()) {
+                    playMedia();
+//                        player.play();
+                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                    Log.d(TAG, "onPLAY: YES");
+                } else {
+                    player.pause();
+                    removeControlsRunnable();
+                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                    Log.d(TAG, "onPLAY: NO");
                 }
-                long dur = player != null ? player.getDuration() : 0;
-                handler.postDelayed(this, dur < 60000 ? 500 : 1000);
-            }
-        };
-//        handler.post(updateSeekBar);
-
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
             }
         });
+
+        prevButton.setOnClickListener(v -> {
+            manager.previous();
+            initializePlayer(manager.getCurrentItem(), false);
+        });
+
+        nextButton.setOnClickListener(v -> {
+            manager.next();
+            initializePlayer(manager.getCurrentItem(), false);
+        });
+
+
+        backButton.setOnClickListener(v -> finish());
 
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -558,7 +519,6 @@ public class PlayerActivity extends AppCompatActivity {
             isOrientation = true;
         });
 
-        // Fit to Screen and Crop to Screen Button Setting
         fitcropButton.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
             @Override
@@ -577,7 +537,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         lockButton.setOnClickListener(v -> {
             isScreenLocked = true;
-            Fullscreen();
             hideControls();
             removeControlsRunnable();
             showLockButton();
@@ -589,6 +548,7 @@ public class PlayerActivity extends AppCompatActivity {
             hideLockButton();
             removeLockScreenRunnable();
         });
+
 
         time1.setOnClickListener(v -> {
             if (!isTime1ButtonClicked) {
@@ -611,6 +571,15 @@ public class PlayerActivity extends AppCompatActivity {
             }
             Log.d(TAG, "onClickTime2: " + isTime2ButtonClicked);
         });
+
+        expandB.setOnClickListener(v -> {
+            Log.d("dgiuhors", "onCreate: jbissg");
+            showExpandViewsLayout(expandView, 75, 300);
+            isExpandViewsShowing = true;
+            hideControls();
+            removeControlsRunnable();
+        });
+
 
         audioTrackButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -643,7 +612,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
-                if (!isAudioTracksShowing && !isSubTracksShowing)
+                if (!isAudioTracksShowing && !isSubTracksShowing && !isExpandViewsShowing)
                     gestureDetector.onTouchEvent(event);
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -655,6 +624,11 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isSubTracksShowing) {
                         hideSubTracks();
                         isSubTracksShowing = false;
+                    }
+
+                    if (isExpandViewsShowing) {
+                        hideExpandViewsLayout(expandView);
+                        isExpandViewsShowing = false;
                     }
 
                     if (isLongPressed) {
@@ -709,9 +683,9 @@ public class PlayerActivity extends AppCompatActivity {
 
                     if (isScrolling) {
                         if (isBrightnessChanging) {
-                            editor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
-                            editor.apply();
-                            Log.d("inittt", "onCreate: " + sharedPreferences.getFloat("Brightness", 0f));
+                            playerPrefsEditor.putFloat("Brightness", getWindow().getAttributes().screenBrightness);
+                            playerPrefsEditor.apply();
+                            Log.d("inittt", "onCreate: " + playerPrefs.getFloat("Brightness", 0f));
                         }
 
                         isScrolling = false;
@@ -750,10 +724,8 @@ public class PlayerActivity extends AppCompatActivity {
                 // Handle single tap
                 if (!surface_click_frag && !isInAnimation && !isOutAnimation) {
                     removeControlsRunnable();
-                    Fullscreen();
                     hideControls();
                 } else if (!isInAnimation && !isOutAnimation && !isSeeking) {
-                    notFullscreen();
                     showControls();
                 }
 
@@ -917,33 +889,16 @@ public class PlayerActivity extends AppCompatActivity {
         player.prepare();
         playMedia();
 
-//        if (songList != null && !isVideoFile) {
-//            for (String path : songList) {
-//                if (!Objects.equals(path, media_path)) {
-//                    player.addMediaItem(MyMediaItem.fromUri(path));
-//                }
-//            }
-//        }
-//
-//        if (videoList != null && isVideoFile) {
-//            for (String path : videoList) {
-////                if (!Objects.equals(path, media_path))
-//                    player.addMediaItem(MyMediaItem.fromUri(path));
-//            }
-//        }
         Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
-//        for (MyMediaItem mediaItem : player) {
-//            Log.d(TAG, "initializePlayer: " + player.getMediaItems(i).requestMetadata);
-//        }
 
         playerView.setPlayer(player);
         playerView.setKeepScreenOn(true);
 
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        layoutParams.screenBrightness = sharedPreferences.getFloat("Brightness", 0f);
+        layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
         getWindow().setAttributes(layoutParams);
 
-        Log.d("inittt", "init: " + sharedPreferences.getFloat("Brightness", 0f));
+        Log.d("inittt", "init: " + playerPrefs.getFloat("Brightness", 0f));
         
         player.addListener(new Player.Listener() {
             @Override
@@ -959,7 +914,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                     Log.d("isVideoFile", "listener1: " + isVideoFile);
 
-                    // Rotation logic based on dimensions
+                    // Rotating logic according to dimensions
                     if (isVideoFile) {
                         if (height > width) {
                             isVideoFile = false;
@@ -992,7 +947,7 @@ public class PlayerActivity extends AppCompatActivity {
                         if (isFirstTimePlaying) {
                             Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
 
-                            lastPlayedTime = sharedPreferences.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+                            lastPlayedTime = playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
                             player.seekTo((long) lastPlayedTime);
 
                             if (isVideoFile) {
@@ -1032,8 +987,8 @@ public class PlayerActivity extends AppCompatActivity {
                         break;
 
                     case Player.STATE_ENDED:
-                        editor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-                        editor.apply();
+                        playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+                        playerPrefsEditor.apply();
                         player.pause();
                         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                         seekbar.setProgress(0);
@@ -1041,7 +996,7 @@ public class PlayerActivity extends AppCompatActivity {
                         break;
 
                     case Player.STATE_BUFFERING:
-                        Log.d("brightness", "initializePlayer: " + sharedPreferences.getFloat("Brightness", 0f));
+                        Log.d("brightness", "initializePlayer: " + playerPrefs.getFloat("Brightness", 0f));
                         break;
 
                     case Player.STATE_IDLE:
@@ -1214,34 +1169,46 @@ public class PlayerActivity extends AppCompatActivity {
 //        }
 //    }
 
+    private void showExpandViewsLayout(LinearLayout linearLayout, long delayBetween, long duration) {
+        linearLayout.animate().cancel();
+        linearLayout.animate()
+                .translationX(0f)
+                .alpha(1f)
+                .setDuration(200)
+                .withStartAction(() -> {
+                    linearLayout.setAlpha(0f);
+                    linearLayout.setTranslationX(-linearLayout.getWidth());
+                    linearLayout.setVisibility(View.VISIBLE);
+                })
+                .start();
 
-    public boolean getIsBackgroundPlay() {
-        return isBackgroundPlay;
+        int count = linearLayout.getChildCount();
+        linearLayout.setVisibility(View.VISIBLE);
+
+        for (int i = 0; i < count; i++) {
+            final View view = linearLayout.getChildAt(i);
+            view.animate().cancel();
+            view.setAlpha(0f);
+            view.setVisibility(View.VISIBLE);
+
+            view.animate()
+                    .alpha(1f)
+                    .setDuration(duration)
+                    .setStartDelay(i * delayBetween)
+                    .start();
+        }
     }
 
-
-    private void saveData(String key, String sValue, Boolean bValue) {
-        if (sValue != null) {
-            editor.putString(key, sValue);
-        } else {
-            editor.putBoolean(key, bValue);
-        }
-        editor.apply();
-    }
-
-    private void updateUI() {
-        playerView.setPlayer(player);
-        ToolbarText.setText(media_name);
-        seekbar.setMax((int) player.getDuration());
-        seekbar.setProgress((int) player.getCurrentPosition());
-        time1.setText(MillisToTime(player.getCurrentPosition()));
-        time2.setText(MillisToTime(player.getDuration()));
-
-        if (player.isPlaying()) {
-            playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-        } else {
-            playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-        }
+    private void hideExpandViewsLayout(LinearLayout linearLayout) {
+        linearLayout.animate().cancel();
+        linearLayout.animate()
+                .translationX(linearLayout.getWidth())
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    linearLayout.setVisibility(View.GONE);
+                })
+                .start();
     }
 
 
@@ -1261,6 +1228,7 @@ public class PlayerActivity extends AppCompatActivity {
                 toolbar.setVisibility(View.VISIBLE);
                 PlaybackControls_Container.setVisibility(View.VISIBLE);
                 surface_click_frag = false;
+                notFullscreen();
                 Log.d("Bottom", "onAnimationStart: Yes");
             }
 
@@ -1284,12 +1252,14 @@ public class PlayerActivity extends AppCompatActivity {
         Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
         Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
         PlaybackControls_Container.startAnimation(slideOutBottom);
+
         toolbar.startAnimation(slideOutTop);
 
         slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
                 isOutAnimation = true;
+                Fullscreen();
             }
 
             @Override
@@ -1413,7 +1383,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showAudioTracks() {
         Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
-        Fullscreen(); hideControls();
+        hideControls();
         removeControlsRunnable();
         audioTracksContainer.startAnimation(slideInRight);
 
@@ -1454,7 +1424,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showSubTracks() {
         Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
-        Fullscreen(); hideControls();
+        hideControls();
         removeControlsRunnable();
         subTracksContainer.startAnimation(slideInRight);
 
@@ -1494,19 +1464,41 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    private Runnable controlsRunnable;
+
+    private void seekbarUpdater() {
+        updateSeekBar = new Runnable() {
+            @Override
+            public void run() {
+                if (player != null) {
+                    if (player.isPlaying() && !f) {
+//                        Log.d("playback544", "run: " + isTime1ButtonClicked + isTime2ButtonClicked);
+                        seekbar.setProgress((int) player.getCurrentPosition());
+                    }
+
+                    if (player.isPlaying()) {
+                        isPlaying = true;
+                        playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                    } else {
+                        isPlaying = false;
+                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                    }
+                }
+                long dur = player != null ? player.getDuration() : 0;
+                handler.postDelayed(this, dur < 60000 ? 500 : 1000);
+            }
+        };
+    }
+
     private void controlsToast() {
         removeControlsRunnable();
 
         controlsRunnable = () -> {
-            Fullscreen();
             hideControls();
         };
 
         handler.postDelayed(controlsRunnable, 5000);
     }
 
-    private Runnable lockScreenRunnable;
     private void lockScreenToast() {
         removeLockScreenRunnable();
 
@@ -1517,6 +1509,8 @@ public class PlayerActivity extends AppCompatActivity {
         handler.postDelayed(lockScreenRunnable, 3000);
     }
 
+
+
     private void onLandscape(){
         Log.d(TAG, "onLandscape: YES");
         View back = findViewById(R.id.back_button);
@@ -1524,7 +1518,7 @@ public class PlayerActivity extends AppCompatActivity {
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.menu_button);
+        View more = findViewById(R.id.expandB);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);
@@ -1599,7 +1593,7 @@ public class PlayerActivity extends AppCompatActivity {
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.menu_button);
+        View more = findViewById(R.id.expandB);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);
@@ -1761,8 +1755,8 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            editor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
-            editor.apply();
+            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.apply();
 
             if (player.isPlaying() && !isBackgroundPlay) {
                 player.pause();
@@ -2113,56 +2107,41 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void Fullscreen() {
-//        getWindow().getDecorView().setSystemUiVisibility(
-//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-//                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-//                        View.SYSTEM_UI_FLAG_FULLSCREEN |
-//                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-//        );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
 
     getWindow().getDecorView().setSystemUiVisibility(
-        View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                View.SYSTEM_UI_FLAG_FULLSCREEN
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
     );
 
-        // Set status bar color
+        // Setting status bar color same as toolbar
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_transparent));
         getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_transparent));
-
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//            WindowInsetsController insetsController = getWindow().getInsetsController();
-//            if (insetsController != null) {
-//                insetsController.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-//                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-//            }
-//        }
     }
 
     private void notFullscreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
+
         getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                        View.SYSTEM_UI_FLAG_VISIBLE
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         );
 
-        // Set status bar color
+        // Setting status bar color same as toolbar
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
         getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
-
-
-        //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-//                        WindowInsetsController insetsController = getWindow().getInsetsController();
-//                        if (insetsController != null) {
-//                            insetsController.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-//                            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
-//                        }
-//                    }
-//                    else {
     }
 
     private final ServiceConnection connection = new ServiceConnection() {
@@ -2175,7 +2154,7 @@ public class PlayerActivity extends AppCompatActivity {
             Log.d("service", "onServiceConnected: YES: " + player);
 
             if (player != null) {
-                manager = MediaRepository.getInstance().getPlaylistManager();
+                manager = isVideoFile ? MediaRepository.getInstance().getVideoPlaylistManager() : MediaRepository.getInstance().getAudioPlaylistManager();
                 manager.setCurrentIndex(currentIndex);
                 initializePlayer(MediaItem.fromUri(media_path), true);
                 Log.d("service", "isPlayer: YES");

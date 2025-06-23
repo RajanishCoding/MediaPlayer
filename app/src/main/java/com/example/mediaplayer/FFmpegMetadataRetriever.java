@@ -6,7 +6,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.arthenica.ffmpegkit.FFmpegKit;
+import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import com.arthenica.ffmpegkit.FFprobeKit;
+import com.arthenica.ffmpegkit.Level;
 import com.arthenica.ffmpegkit.ReturnCode;
 
 
@@ -34,7 +36,7 @@ public class FFmpegMetadataRetriever {
                 try {
 
                     String output = session.getOutput(); // ✅ FIX: Use session.getOutput() in v6.0.2
-                    Log.d("djkfhkd", output);
+//                    Log.d("djkfhkd", output);
 
                     JSONObject json = new JSONObject(output);
 

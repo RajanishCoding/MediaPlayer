@@ -1,22 +1,32 @@
 package com.example.mediaplayer;
 
 public class MediaRepository {
-    private static final MediaRepository instance = new MediaRepository();
+    private static MediaRepository instance = new MediaRepository();
 
-    private PlaylistManager playlistManager;
+    private PlaylistManager videoPlaylistManager;
+    private PlaylistManager audioPlaylistManager;
 
     private MediaRepository() {}
 
     public static MediaRepository getInstance() {
+        if (instance == null) instance = new MediaRepository();
         return instance;
     }
 
-    public void setPlaylistManager(PlaylistManager manager) {
-        this.playlistManager = manager;
+    public void setVideoPlaylistManager(PlaylistManager manager) {
+        this.videoPlaylistManager = manager;
     }
 
-    public PlaylistManager getPlaylistManager() {
-        return playlistManager;
+    public void setAudioPlaylistManager(PlaylistManager manager) {
+        this.audioPlaylistManager = manager;
+    }
+
+    public PlaylistManager getVideoPlaylistManager() {
+        return videoPlaylistManager;
+    }
+
+    public PlaylistManager getAudioPlaylistManager() {
+        return audioPlaylistManager;
     }
 }
 

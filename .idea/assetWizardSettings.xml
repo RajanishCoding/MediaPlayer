@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialsymbolsrounded/grid_view/rounded_grid_view_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialiconsround/menu/round_menu_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -34,7 +34,7 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="rounded_grid_view_24" />
+                            <entry key="outputName" value="round_menu_24" />
                             <entry key="sourceFile" value="C:\Users\rajan\Downloads\Untitled design (1).svg" />
                           </map>
                         </option>

@@ -107,7 +107,7 @@
         android:id="@+id/MenuContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/gradient_sidebar"
+        android:background="@drawable/gradient_menu"
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true"

@@ -73,7 +73,7 @@
         android:id="@+id/MenuContainer"
         android:layout_width="320dp"
         android:layout_height="0dp"
-        android:background="@drawable/gradient_sidebar_light"
+        android:background="@drawable/gradient_menu"
         android:paddingStart="20dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/toolbar"

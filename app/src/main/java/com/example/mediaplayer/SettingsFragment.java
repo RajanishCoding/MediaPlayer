@@ -88,18 +88,18 @@ public class SettingsFragment extends Fragment {
     }
 
     private void setModeSwitch() {
-        sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
         mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", true));
     }
 
     private void setThemeMode(int mode) {
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
         int savedMode = sharedPreferences.getInt("theme_mode", -1);
 
         if (savedMode == mode) {
             Log.d("theme_mode", "Theme mode is already set. No need to restart.");
-            return; // Avoid unnecessary restarts
+            return;
         }
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -114,10 +114,6 @@ public class SettingsFragment extends Fragment {
         FilesListActivity.isThemeChanged = true;
 
         AppCompatDelegate.setDefaultNightMode(mode);
-
-        // Restart activity to apply theme
-//        startActivity(new Intent(this, FilesListActivity.class));
-//        finish();
     }
 
     private void showMenuLayout() {

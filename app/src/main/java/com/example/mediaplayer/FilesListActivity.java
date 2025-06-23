@@ -103,7 +103,7 @@ public class FilesListActivity extends AppCompatActivity {
 
 //        lastPlay_Button = findViewById(R.id.Play_Last);
 
-        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
         setThemeMode();
@@ -197,7 +197,7 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
     private void setThemeMode() {
-        SharedPreferences sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("Settings", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
         int savedMode = sharedPreferences.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
@@ -205,8 +205,13 @@ public class FilesListActivity extends AppCompatActivity {
 
         if (savedMode != currentMode) {  // Only set if its different
             AppCompatDelegate.setDefaultNightMode(savedMode);
-            Log.d("niced", "onViewCreated: YES " + savedMode + currentMode);
+            Log.d("niced", "onViewCreated: YES " + savedMode + " , " + currentMode + " , " + AppCompatDelegate.getDefaultNightMode());
         }
+
+//       -100 - unspecified
+//        -1 - follow
+//        1 - Light
+//        2 - Night
     }
 
     private void showMenuLayout() {

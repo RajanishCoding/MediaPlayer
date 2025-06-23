@@ -97,113 +97,6 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
         setVisibilities(holder);
 
         if (media.getDuration() == null || media.getSize() == null) {
-            // MediaExtractor Thread
-//            new Thread(() -> {
-//                MediaExtractor extractor = new MediaExtractor();
-//                File file = new File(media.getPath());
-//
-//                try {
-//                    extractor.setDataSource(media.getPath());
-//
-//                    long sizeInBytes = file.length();
-//                    String size = getFormattedFileSize(sizeInBytes);
-//
-//                    // Iterate through tracks
-//                    for (int i = 0; i < extractor.getTrackCount(); i++) {
-//                        MediaFormat format = extractor.getTrackFormat(i);
-//
-//                        if (format.containsKey(MediaFormat.KEY_MIME) && format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
-//                            long duration = format.getLong(MediaFormat.KEY_DURATION);
-//                            int width = format.getInteger(MediaFormat.KEY_WIDTH);
-//                            int height = format.getInteger(MediaFormat.KEY_HEIGHT);
-//                            int fpsInt = 0;
-//                            float fpsFloat = 0f;
-//
-//                            if (format.containsKey(MediaFormat.KEY_FRAME_RATE)) {
-//                                try {
-//                                    fpsFloat = format.getFloat(MediaFormat.KEY_FRAME_RATE);
-//                                    Log.d("MediaFormat", "Frame rate (float): " + fpsFloat);
-//                                } catch (Exception e) {
-//                                    // Handle type mismatch
-//                                    Log.e("MediaFormat", "Frame rate is not a float: " + e.getMessage());
-//                                    fpsInt = format.getInteger(MediaFormat.KEY_FRAME_RATE);
-//                                    Log.d("MediaFormat", "Frame rate (int): " + fpsInt);
-//                                }
-//                            }
-//
-//                            // Setting all Values
-//                            media.setSize(size);
-//                            media.setDuration(String.valueOf(duration));
-//                            media.setResolution(String.valueOf(height));
-//                            media.setFrameRate(String.valueOf((fpsFloat != 0f ? fpsFloat : fpsInt)));
-//
-//                            Log.d("MediaExtractor", "File Size: " + size + " MB, Duration: " + MicrosToTime(duration) + ", Resolution: " + width + "x" + height + ", FPS: " + (fpsFloat != 0f ? fpsFloat : fpsInt));
-//
-//                            if (position == mediaList.size() - 1) {
-//                                saveMediaListToPreferences(mediaList);
-//                            }
-//                        }
-//                    }
-//                }
-//                catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    extractor.release();
-//                }
-//
-//                holder.itemView.post(() -> {
-//                    holder.duration1.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//                    holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//                    holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
-//                    holder.size.setText(media.getSize());
-//                });
-//            }).start();
-
-            // MediaMetadataRetriever Thread
-
-//          MediaMetadataRetriever Thread
-//            new Thread(() -> {
-//                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-//                File file = new File(media.getPath());
-//
-//                try {
-//                    retriever.setDataSource(media.getPath());
-//
-//                    long sizeInBytes = file.length();
-//                    String size = getFormattedFileSize(sizeInBytes);
-//
-//                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
-//
-//                    // Setting all Values
-//                    media.setSize(size);
-//                    media.setDuration(duration);
-//
-//                    Log.d("MediaExtractor", "File Size: " + size + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
-//
-//                    if (position == mediaList.size() - 1) {
-//                        saveMediaListToPreferences(mediaList);
-//                    }
-//                }
-//
-//                catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    try {
-//                        retriever.release();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//                holder.itemView.post(() -> {
-//                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-//                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-//                    holder.size.setText(media.getSize());
-//                });
-//            }).start();
-
             new FFmpegMetadataRetriever(media.getPath(), retriever -> {
                 try {
                     String sizeInBytes = String.valueOf(retriever.getFileSize());
@@ -295,6 +188,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
                 intent.putExtra("Name", media.getName());
                 intent.putExtra("Path", media.getPath());
                 intent.putExtra("isVideo", media.isVideo());
+                intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
                 Log.d("isVideoFile", "onClick: " + media.isVideo());
                 context.startActivity(intent);
             }

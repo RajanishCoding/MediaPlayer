@@ -279,96 +279,109 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:visibility="gone"/>
 
-    <ImageButton
-        android:id="@+id/expandB"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:background="@drawable/selector_player_button_lock"
-        android:contentDescription="UnLock Screen"
-        android:src="@drawable/baseline_lock_open_24"
-        android:tooltipText="UnLock Screen"
-        android:layout_marginTop="80dp"
-        android:layout_marginStart="50dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:visibility="visible"/>
+<!--    <ImageButton-->
+<!--        android:id="@+id/expandB"-->
+<!--        android:layout_width="50dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:background="@drawable/selector_expand_view_left"-->
+<!--        android:contentDescription="UnLock Screen"-->
+<!--        android:src="@drawable/ic_menu"-->
+<!--        android:tooltipText="UnLock Screen"-->
+<!--        android:layout_marginTop="80dp"-->
+<!--        android:layout_marginStart="60dp"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        android:visibility="gone"/>-->
+
 
     <ScrollView
-        android:id="@+id/scrollView"
         android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:scrollbars="none"
-        android:layout_marginStart="50dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/expandB"
-        android:visibility="visible">
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
+            android:id="@+id/expandView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:background="@drawable/shape_expand_view_right"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/selector_player_button_lock"
-                android:contentDescription="UnLock Screen"
-                android:src="@drawable/baseline_lock_open_24"
-                android:tooltipText="UnLock Screen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:visibility="visible"/>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/selector_player_button_lock"
-                android:contentDescription="UnLock Screen"
-                android:src="@drawable/baseline_lock_open_24"
-                android:tooltipText="UnLock Screen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:visibility="visible"/>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/selector_player_button_lock"
-                android:contentDescription="UnLock Screen"
-                android:src="@drawable/baseline_lock_open_24"
-                android:tooltipText="UnLock Screen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:visibility="visible"/>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/selector_player_button_lock"
-                android:contentDescription="UnLock Screen"
-                android:src="@drawable/baseline_lock_open_24"
-                android:tooltipText="UnLock Screen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:visibility="visible"/>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/selector_player_button_lock"
-                android:contentDescription="UnLock Screen"
-                android:src="@drawable/baseline_lock_open_24"
-                android:tooltipText="UnLock Screen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:visibility="visible"/>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
 
-        </LinearLayout>
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@color/transparent"
+            android:contentDescription="UnLock Screen"
+            android:src="@drawable/baseline_lock_open_24"
+            android:tooltipText="UnLock Screen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="visible"/>
+
+    </LinearLayout>
 
     </ScrollView>
 
@@ -391,7 +404,8 @@
             android:layout_height="match_parent"
             android:clickable="true"
             android:focusable="true"
-            tools:ignore="TouchTargetSizeCheck">
+            tools:ignore="TouchTargetSizeCheck"
+            tools:layout_editor_absoluteY="10dp">
 
             <ImageButton
                 android:id="@+id/back_button"
@@ -461,20 +475,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="22dp"
-                android:src="@drawable/hw"
                 android:background="@drawable/ripple_player_dark"
                 android:contentDescription="TODO"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:padding="3dp"
+                android:src="@drawable/hw"
                 android:tooltipText="Acceleration"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/menu_button"
+                app:layout_constraintEnd_toStartOf="@id/expandB"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
 
             <ImageButton
-                android:id="@+id/menu_button"
+                android:id="@+id/expandB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="15dp"
@@ -487,6 +501,20 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="20dp" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="20dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
@@ -495,8 +523,10 @@
         android:id="@+id/audioTracksContainer"
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:background="@drawable/gradient_sidebar"
-        android:paddingStart="20dp"
+        android:background="@drawable/shape_sidebar"
+        android:paddingHorizontal="20dp"
+        android:layout_margin="15dp"
+        android:elevation="5dp"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -575,8 +605,10 @@
         android:id="@+id/subTracksContainer"
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:background="@drawable/gradient_sidebar"
-        android:paddingStart="20dp"
+        android:background="@drawable/shape_sidebar"
+        android:paddingHorizontal="20dp"
+        android:layout_margin="15dp"
+        android:elevation="5dp"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -650,26 +682,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
-
-
-    <!--    <ImageView-->
-    <!--        android:id="@+id/imageView"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:contentDescription="Music Icon"-->
-
-    <!--        app:layout_constrainedWidth="true"-->
-    <!--        app:layout_constrainedHeight="true"-->
-    <!--        app:layout_constraintWidth="wrap_content_constrained"-->
-    <!--        app:layout_constraintHeight="wrap_content_constrained"-->
-
-    <!--        app:layout_constraintBottom_toTopOf="@+id/seekbar"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.0"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toBottomOf="@+id/toolbar"-->
-    <!--        app:layout_constraintVertical_bias="0.794"-->
-    <!--        app:srcCompat="@drawable/icon" />-->
 
 
     <!-- res/layout/media_player_controls.xml -->
