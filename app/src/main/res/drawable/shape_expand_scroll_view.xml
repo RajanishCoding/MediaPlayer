@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/overlayToastDark" /> <!-- No overlay -->
+    <solid android:color="#125B5B5B"/>
+    <corners android:radius="30dp" />
 </shape>

@@ -27,6 +27,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -120,6 +121,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isOutAnimation;
 
     private LinearLayout expandView;
+    private ScrollView expandScrollView;
     private ImageButton expandB;
     private boolean isIcon1 = true;
     private boolean isExpanded = false;
@@ -334,6 +336,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         expandB = findViewById(R.id.expandB);
         expandView = findViewById(R.id.expandView);
+        expandScrollView = findViewById(R.id.expandScroll);
 
         audioTracks_BackButton = findViewById(R.id.audioTracks_BackButton);
         audioTracksContainer = findViewById(R.id.audioTracksContainer);
@@ -574,7 +577,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         expandB.setOnClickListener(v -> {
             Log.d("dgiuhors", "onCreate: jbissg");
-            showExpandViewsLayout(expandView, 75, 300);
+            showExpandViewsLayout(75, 300);
             isExpandViewsShowing = true;
             hideControls();
             removeControlsRunnable();
@@ -627,7 +630,7 @@ public class PlayerActivity extends AppCompatActivity {
                     }
 
                     if (isExpandViewsShowing) {
-                        hideExpandViewsLayout(expandView);
+                        hideExpandViewsLayout();
                         isExpandViewsShowing = false;
                     }
 
@@ -1169,18 +1172,21 @@ public class PlayerActivity extends AppCompatActivity {
 //        }
 //    }
 
-    private void showExpandViewsLayout(LinearLayout linearLayout, long delayBetween, long duration) {
-        linearLayout.animate().cancel();
-        linearLayout.animate()
-                .translationX(0f)
-                .alpha(1f)
-                .setDuration(200)
-                .withStartAction(() -> {
-                    linearLayout.setAlpha(0f);
-                    linearLayout.setTranslationX(-linearLayout.getWidth());
-                    linearLayout.setVisibility(View.VISIBLE);
-                })
-                .start();
+    private void showExpandViewsLayout(long delayBetween, long duration) {
+        LinearLayout linearLayout = expandView;
+        ScrollView scrollView = expandScrollView;
+
+        scrollView.post(() -> {
+            scrollView.setTranslationX(scrollView.getWidth());
+            scrollView.setVisibility(View.VISIBLE);
+
+            scrollView.animate().cancel();
+            scrollView.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(200)
+                    .start();
+        });
 
         int count = linearLayout.getChildCount();
         linearLayout.setVisibility(View.VISIBLE);
@@ -1199,14 +1205,16 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void hideExpandViewsLayout(LinearLayout linearLayout) {
-        linearLayout.animate().cancel();
-        linearLayout.animate()
-                .translationX(linearLayout.getWidth())
+    private void hideExpandViewsLayout() {
+        ScrollView scrollView = expandScrollView;
+
+        scrollView.animate().cancel();
+        scrollView.animate()
+                .translationX(scrollView.getWidth())
                 .alpha(0f)
                 .setDuration(200)
                 .withEndAction(() -> {
-                    linearLayout.setVisibility(View.GONE);
+                    scrollView.setVisibility(View.GONE);
                 })
                 .start();
     }
