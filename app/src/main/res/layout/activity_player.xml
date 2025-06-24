@@ -519,6 +519,7 @@
     </androidx.appcompat.widget.Toolbar>
 
 
+    <!-- Audio Tracks Container -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/audioTracksContainer"
         android:layout_width="320dp"
@@ -526,7 +527,7 @@
         android:background="@drawable/shape_sidebar"
         android:paddingHorizontal="20dp"
         android:layout_margin="15dp"
-        android:elevation="5dp"
+        android:elevation="8dp"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -601,6 +602,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Sub Tracks Container -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/subTracksContainer"
         android:layout_width="320dp"
@@ -608,7 +610,7 @@
         android:background="@drawable/shape_sidebar"
         android:paddingHorizontal="20dp"
         android:layout_margin="15dp"
-        android:elevation="5dp"
+        android:elevation="8dp"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent">
 

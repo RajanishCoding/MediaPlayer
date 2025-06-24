@@ -79,7 +79,7 @@
     <color name="item_details_text_color_dark">#C7C7C7</color>
 
     <color name="sidebarLight">#80373737</color>
-    <color name="sidebarDark">#E61A1A1A</color>
+    <color name="sidebarDark">#E6101010</color>
 
     <!-- Overlay Colors -->
     <color name="overlayButtonLight">#33000000</color> <!-- Light theme -->
