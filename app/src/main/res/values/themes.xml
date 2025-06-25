@@ -105,6 +105,11 @@
         <item name="fontFamily">sans-serif</item>
     </style>
     
+    <style name="TextStyleExpandView">
+        <item name="android:layout_width">120dp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+    
     
     
     <!-- Base application theme. -->

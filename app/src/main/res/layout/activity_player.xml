@@ -294,12 +294,14 @@
 <!--        android:visibility="gone"/>-->
 
 
+    <!-- Side/Expand Bar -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="5dp"
         android:visibility="visible">
 
         <ScrollView
@@ -313,297 +315,299 @@
             android:scrollbars="none"
             android:visibility="invisible">
 
-        <LinearLayout
-            android:id="@+id/expandView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-
             <LinearLayout
+                android:id="@+id/expandView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                android:orientation="vertical"
+                android:padding="8dp">
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
-
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 1 -->
+                <LinearLayout
+                    android:id="@+id/mute_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/round_mute"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Mute"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 2 -->
+                <LinearLayout
+                    android:id="@+id/sleep_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/rounded_timer"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Sleep Timer"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 3 -->
+                <LinearLayout
+                    android:id="@+id/speed_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <TextView
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:text="1.00X"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/white"
+                        android:gravity="center"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Playback Speed"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 4 -->
+                <LinearLayout
+                    android:id="@+id/loop_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/round_repeat"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Loop Mode"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 5 -->
+                <LinearLayout
+                    android:id="@+id/shuffle_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/round_shuffle"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Shuffle Playlist"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 6 -->
+                <LinearLayout
+                    android:id="@+id/info_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/rounded_info"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:layout_weight="3"
+                        android:text="Media Information"
+                        android:textAlignment="center"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 7 -->
+                <LinearLayout
+                    android:id="@+id/playAudio_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/round_audio"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Play as Audio"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 8 -->
+                <LinearLayout
+                    android:id="@+id/lock_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/baseline_lock_open_24"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Lock Controls"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 9 -->
+                <LinearLayout
+                    android:id="@+id/rotate_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/baseline_screen_rotation_24"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@color/transparent"
-                    android:contentDescription="UnLock Screen"
-                    android:src="@drawable/baseline_lock_open_24"
-                    android:tooltipText="UnLock Screen"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_weight="1"
-                    android:visibility="visible" />
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Rotate Screen"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="100dp"
+                <!-- 10 -->
+                <LinearLayout
+                    android:id="@+id/pip_expand"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mute"
-                    android:textAlignment="center"
-                    android:layout_weight="3"
-                    android:visibility="visible" />
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/baseline_pip_alt_24"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Play as PopUp"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
+
             </LinearLayout>
-
-    </LinearLayout>
-
-    </ScrollView>
-
+        </ScrollView>
     </LinearLayout>
 
     <!-- Custom Toolbar -->
