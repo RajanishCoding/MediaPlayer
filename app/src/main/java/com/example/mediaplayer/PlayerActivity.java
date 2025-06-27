@@ -18,7 +18,6 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -168,7 +167,8 @@ public class PlayerActivity extends AppCompatActivity {
     private int seekCurrentTime;
     private int seekTime;
 
-    private boolean isLongPressed;
+    private boolean isLongPressed_Speed;
+    private boolean isLongPressed_Lock;
     private boolean isScrolling;
     private boolean isSeeking;
     private boolean isVolumeChanging;
@@ -204,6 +204,7 @@ public class PlayerActivity extends AppCompatActivity {
     private Button speed175;
     private Button speed200;
     private float PlaybackSpeed = 1;
+    private boolean isSpeedLayoutShowing;
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
@@ -632,10 +633,13 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+
         // Expand Views Buttons ---->
 
         speedExpandB.setOnClickListener(v -> {
-            ;
+            showSpeedLayout();
+            hideExpandViewsLayout();
+            isSpeedLayoutShowing = true;
         });
 
 
@@ -647,30 +651,22 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        sliderSpeed.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
-            @Override
-            public void onStartTrackingTouch(@NonNull Slider slider) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(@NonNull Slider slider) {
-                speedText_Expand.setText(String.format("%sX", PlaybackSpeed));
-            }
-        });
-
         incrSpeed.setOnClickListener(v -> {
-            PlaybackSpeed += 0.05F;
-            if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-            sliderSpeed.setValue(PlaybackSpeed);
-            speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            if (PlaybackSpeed < 4) {
+                PlaybackSpeed += 0.05F;
+                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+                sliderSpeed.setValue(PlaybackSpeed);
+                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            }
         });
 
         decrSpeed.setOnClickListener(v -> {
-            PlaybackSpeed -= 0.05F;
-            if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-            sliderSpeed.setValue(PlaybackSpeed);
-            speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            if (PlaybackSpeed > 0.25) {
+                PlaybackSpeed -= 0.05F;
+                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+                sliderSpeed.setValue(PlaybackSpeed);
+                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            }
         });
 
         Button[] speedButtons = {speed75, speed100, speed125, speed150, speed175, speed200};
@@ -686,7 +682,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
-                if (!isAudioTracksShowing && !isSubTracksShowing && !isExpandViewsShowing)
+                if (!isAudioTracksShowing && !isSubTracksShowing && !isExpandViewsShowing && !isSpeedLayoutShowing)
                     gestureDetector.onTouchEvent(event);
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -705,9 +701,14 @@ public class PlayerActivity extends AppCompatActivity {
                         isExpandViewsShowing = false;
                     }
 
-                    if (isLongPressed) {
-                        isLongPressed = false;
-                        player.setPlaybackSpeed(1);
+                    if (isSpeedLayoutShowing) {
+                        hideSpeedLayout();
+                        isSpeedLayoutShowing = false;
+                    }
+
+                    if (isLongPressed_Speed) {
+                        isLongPressed_Speed = false;
+                        player.setPlaybackSpeed(PlaybackSpeed);
                         speedToastLayout.startAnimation(fadeOut);
                         fadeOut.setAnimationListener(new Animation.AnimationListener() {
                             @Override
@@ -808,7 +809,7 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                if (!isLongPressed && !isScrolling) {
+                if (!isLongPressed_Speed && !isScrolling) {
                     if (e.getX() <= Q3_Width) {
                         player.seekTo(player.getCurrentPosition() - doubleTapSeekTime);
                         showRewindLayout(rewindLayout, rewindText);
@@ -841,12 +842,25 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onLongPress(MotionEvent e) {
                 if (isPlaying && !isScrolling) {
-                    isLongPressed = true;
                     hideLayouts(volumeLayout, brightnessLayout);
 
                     if (e.getX() < halfWidth) {
-                        ;
-                    } else {
+                        isLongPressed_Lock = true;
+                        if (!isScreenLocked) {
+                            isScreenLocked = true;
+                            hideControls();
+                            removeControlsRunnable();
+                            showLockButton();
+                            lockScreenToast();
+                        }
+                        else {
+                            isScreenLocked = false;
+                            hideLockButton();
+                            removeLockScreenRunnable();
+                        }
+                    }
+                    else {
+                        isLongPressed_Speed = true;
                         speedToastLayout.setVisibility(View.VISIBLE);
                         speedToastLayout.startAnimation(fadeIn);
 
@@ -860,7 +874,7 @@ public class PlayerActivity extends AppCompatActivity {
                 Log.d("Scrolling", "onScroll: " + gestureDirection.name() + "  " + isSeeking);
                 isScrolling = true;
 
-                if (gestureDirection == GestureDirection.NONE && !isLongPressed) {
+                if (gestureDirection == GestureDirection.NONE && !isLongPressed_Speed) {
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
                         if (isControlsShowing) {
                             removeControlsRunnable();
@@ -1287,6 +1301,32 @@ public class PlayerActivity extends AppCompatActivity {
                 .withEndAction(() -> {
                     scrollView.setVisibility(View.GONE);
                 })
+                .start();
+    }
+
+    private void showSpeedLayout() {
+        speedLayout.post(() -> {
+            speedLayout.setTranslationY(speedLayout.getHeight());
+            speedLayout.setVisibility(View.VISIBLE);
+
+            speedLayout.animate().cancel();
+            speedLayout.animate()
+                    .translationY(0)
+                    .alpha(1)
+                    .setDuration(300)
+                    .start();
+        });
+    }
+
+    private void hideSpeedLayout() {
+        speedText_Expand.setText(String.format("%sX", PlaybackSpeed));
+        speedLayout.setVisibility(View.VISIBLE);
+
+        speedLayout.animate().cancel();
+        speedLayout.animate()
+                .translationY(speedLayout.getHeight())
+                .alpha(0)
+                .setDuration(200)
                 .start();
     }
 

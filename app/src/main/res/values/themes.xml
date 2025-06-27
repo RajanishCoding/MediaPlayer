@@ -117,6 +117,7 @@
 
         <item name="thumbWidth">8dp</item>
         <item name="thumbHeight">18dp</item>
+        <item name="haloRadius">20dp</item>
     </style>
     
     

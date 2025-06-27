@@ -1121,6 +1121,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginHorizontal="5dp"
                 android:contentDescription="speed"
                 android:stepSize=".05"
                 android:value="1"
