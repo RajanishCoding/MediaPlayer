@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -62,6 +63,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import com.google.android.material.slider.Slider;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -96,9 +99,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     private SurfaceView surfaceView;
     private PlayerView playerView;
-    private SurfaceHolder surfaceHolder;
-    private Handler handler_surface;
-    private Runnable runnable_surface;
 
     private Toolbar toolbar;
     private ConstraintLayout PlaybackControls_Container;
@@ -119,14 +119,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isInAnimation;
     private boolean isOutAnimation;
-
-    private LinearLayout expandView;
-    private ScrollView expandScrollView;
-    private ImageButton expandB;
-    private boolean isIcon1 = true;
-    private boolean isExpanded = false;
-    private int collapsedSize, expandedSize;
-    private int animDuration, animDelay;
 
     private View buffer_view;
 
@@ -164,7 +156,7 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView seekCurrentTimeText;
     private TextView seekTimeText;
 
-    private View speedLayout;
+    private View speedToastLayout;
 
     private View forwardLayout;
     private View rewindLayout;
@@ -193,6 +185,25 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isScreenLocked;
     private boolean isLockScreenShowing;
+
+    private LinearLayout expandView;
+    private ScrollView expandScrollView;
+    private ImageButton expandB;
+
+    private TextView speedText_Expand;
+    private LinearLayout speedExpandB;
+    private LinearLayout speedLayout;
+    private TextView speedText;
+    private Slider sliderSpeed;
+    private ImageButton incrSpeed;
+    private ImageButton decrSpeed;
+    private Button speed75;
+    private Button speed100;
+    private Button speed125;
+    private Button speed150;
+    private Button speed175;
+    private Button speed200;
+    private float PlaybackSpeed = 1;
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
@@ -334,10 +345,6 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
 
-        expandB = findViewById(R.id.expandB);
-        expandView = findViewById(R.id.expandView);
-        expandScrollView = findViewById(R.id.expandScroll);
-
         audioTracks_BackButton = findViewById(R.id.audioTracks_BackButton);
         audioTracksContainer = findViewById(R.id.audioTracksContainer);
         audioTracksRecyclerView = findViewById(R.id.recyclerAudioTracksList);
@@ -350,7 +357,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
-        speedLayout = findViewById(R.id.speed_layout);
+        speedToastLayout = findViewById(R.id.speedToast_layout);
         volumeText = findViewById(R.id.volume_text);
         brightnessText = findViewById(R.id.brightness_text);
 
@@ -363,17 +370,30 @@ public class PlayerActivity extends AppCompatActivity {
         forwardText = findViewById(R.id.forward_text);
         rewindText = findViewById(R.id.rewind_text);
 
+        expandB = findViewById(R.id.expandB);
+        expandView = findViewById(R.id.expandView);
+        expandScrollView = findViewById(R.id.expandScroll);
+
+        speedText_Expand = findViewById(R.id.speedText_expand);
+        speedExpandB = findViewById(R.id.speed_expand);
+        speedLayout = findViewById(R.id.speedLayout);
+        speedText = findViewById(R.id.speedText);
+        sliderSpeed = findViewById(R.id.sliderSpeed);
+        incrSpeed = findViewById(R.id.incrSpeed);
+        decrSpeed = findViewById(R.id.decrSpeed);
+        speed75 = findViewById(R.id.speed75);
+        speed100 = findViewById(R.id.speed100);
+        speed125 = findViewById(R.id.speed125);
+        speed150 = findViewById(R.id.speed150);
+        speed175 = findViewById(R.id.speed175);
+        speed200 = findViewById(R.id.speed200);
+
         videoList = new ArrayList<>();
 
         audioTracksList = new ArrayList<>();
         subTracksList = new ArrayList<>();
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-
-        collapsedSize = DpToPixel(1, this);;
-        expandedSize = DpToPixel(200, this);
-        animDuration = 300;
-        animDelay = 100;
 
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
         Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
@@ -612,6 +632,57 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+        // Expand Views Buttons ---->
+
+        speedExpandB.setOnClickListener(v -> {
+            ;
+        });
+
+
+        sliderSpeed.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                PlaybackSpeed = value;
+                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+                speedText.setText(String.format("%sX", PlaybackSpeed));
+            }
+        });
+
+        sliderSpeed.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(@NonNull Slider slider) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                speedText_Expand.setText(String.format("%sX", PlaybackSpeed));
+            }
+        });
+
+        incrSpeed.setOnClickListener(v -> {
+            PlaybackSpeed += 0.05F;
+            if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+            sliderSpeed.setValue(PlaybackSpeed);
+            speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+        });
+
+        decrSpeed.setOnClickListener(v -> {
+            PlaybackSpeed -= 0.05F;
+            if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+            sliderSpeed.setValue(PlaybackSpeed);
+            speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+        });
+
+        Button[] speedButtons = {speed75, speed100, speed125, speed150, speed175, speed200};
+        for (Button btn : speedButtons) {
+            btn.setOnClickListener(v -> {
+                String speedStr = ((Button) v).getText().toString();
+                PlaybackSpeed = Float.parseFloat(speedStr);
+                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
+                sliderSpeed.setValue(PlaybackSpeed);
+                speedText.setText(String.format("%sX", PlaybackSpeed));
+            });
+        }
 
         playerView.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
@@ -637,7 +708,7 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isLongPressed) {
                         isLongPressed = false;
                         player.setPlaybackSpeed(1);
-                        speedLayout.startAnimation(fadeOut);
+                        speedToastLayout.startAnimation(fadeOut);
                         fadeOut.setAnimationListener(new Animation.AnimationListener() {
                             @Override
                             public void onAnimationStart(Animation animation) {
@@ -645,7 +716,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                             @Override
                             public void onAnimationEnd(Animation animation) {
-                                speedLayout.setVisibility(View.GONE);
+                                speedToastLayout.setVisibility(View.GONE);
                             }
 
                             @Override
@@ -776,8 +847,8 @@ public class PlayerActivity extends AppCompatActivity {
                     if (e.getX() < halfWidth) {
                         ;
                     } else {
-                        speedLayout.setVisibility(View.VISIBLE);
-                        speedLayout.startAnimation(fadeIn);
+                        speedToastLayout.setVisibility(View.VISIBLE);
+                        speedToastLayout.startAnimation(fadeIn);
 
                         player.setPlaybackSpeed(2);
                     }
@@ -1546,6 +1617,8 @@ public class PlayerActivity extends AppCompatActivity {
         View forward_image = findViewById(R.id.forward_image);
         View forward_text = findViewById(R.id.forward_text);
 
+        View speedLayout = findViewById(R.id.speedLayout);
+
         setMargin(back, 0, 20); // 7
 
         setMargin(tool_title, 0, 25); // 5
@@ -1592,6 +1665,8 @@ public class PlayerActivity extends AppCompatActivity {
         forward_layout.setScaleY(1.2f);
         forward_image.setScaleY(1.0f / 1.2f);
         forward_text.setScaleY(1.0f / 1.2f);
+
+        setSize(speedLayout, 0, 500);
     }
 
     private void onPortrait(){
@@ -1620,6 +1695,8 @@ public class PlayerActivity extends AppCompatActivity {
         View forward_layout = findViewById(R.id.forward_layout);
         View forward_image = findViewById(R.id.forward_image);
         View forward_text = findViewById(R.id.forward_text);
+
+        View speedLayout = findViewById(R.id.speedLayout);
 
         setMargin(back, 0, 13);
 
@@ -1667,13 +1744,15 @@ public class PlayerActivity extends AppCompatActivity {
         forward_layout.setScaleY(1.2f);
         forward_image.setScaleY(1.0f / 1.2f);
         forward_text.setScaleY(1.0f / 1.2f);
+
+        setSize(speedLayout, 0, -1);
     }
 
     private void setSize(View view, int side, int dp){
         int px;
 
         if (dp == ViewGroup.LayoutParams.MATCH_PARENT || dp == ViewGroup.LayoutParams.WRAP_CONTENT) {
-            px = dp;
+            px = dp; // Keep same for these sizes
         }
         else {
             px = DpToPixel(dp, this);  // Convert dp to pixels
