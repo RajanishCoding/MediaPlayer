@@ -115,7 +115,7 @@
         <item name="tickColorActive">@android:color/transparent</item>
         <item name="tickColorInactive">@android:color/transparent</item>
 
-        <item name="thumbWidth">8dp</item>
+        <item name="thumbWidth">10dp</item>
         <item name="thumbHeight">18dp</item>
         <item name="haloRadius">20dp</item>
     </style>

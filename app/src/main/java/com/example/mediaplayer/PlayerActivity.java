@@ -676,7 +676,7 @@ public class PlayerActivity extends AppCompatActivity {
                 PlaybackSpeed = Float.parseFloat(speedStr);
                 if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
                 sliderSpeed.setValue(PlaybackSpeed);
-                speedText.setText(String.format("%sX", PlaybackSpeed));
+                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
             });
         }
 
@@ -1319,7 +1319,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void hideSpeedLayout() {
-        speedText_Expand.setText(String.format("%sX", PlaybackSpeed));
+        speedText_Expand.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
         speedLayout.setVisibility(View.VISIBLE);
 
         speedLayout.animate().cancel();

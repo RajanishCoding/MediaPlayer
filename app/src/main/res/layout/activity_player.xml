@@ -1090,7 +1090,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="visible">
+        android:visibility="invisible">
 
         <TextView
             android:id="@+id/speedText"
@@ -1121,7 +1121,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginHorizontal="5dp"
+                android:layout_marginHorizontal="10dp"
                 android:contentDescription="speed"
                 android:stepSize=".05"
                 android:value="1"
