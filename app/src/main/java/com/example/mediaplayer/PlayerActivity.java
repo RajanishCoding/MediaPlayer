@@ -1632,12 +1632,10 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void onLandscape(){
         Log.d(TAG, "onLandscape: YES");
-        View back = findViewById(R.id.back_button);
+
         View tool_title = findViewById(R.id.toolbar_title);
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
-        View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.expandB);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);
@@ -1647,7 +1645,8 @@ public class PlayerActivity extends AppCompatActivity {
         View next = findViewById(R.id.next);
         View crop = findViewById(R.id.fit_crop);
         View pip = findViewById(R.id.pip);
-        View lower_container = findViewById(R.id.lower_container);
+        View toolbarLayout = findViewById(R.id.toolbarLayout);
+        View full_container = findViewById(R.id.full_container);
 
         View rewind_layout = findViewById(R.id.rewind_layout);
         View rewind_image = findViewById(R.id.rewind_image);
@@ -1659,7 +1658,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         View speedLayout = findViewById(R.id.speedLayout);
 
-        setMargin(back, 0, 20); // 7
+//        setMargin(back, 0, 20); // 7
 
         setMargin(tool_title, 0, 25); // 5
         setMargin(tool_title, 1, 35); // 10
@@ -1668,7 +1667,7 @@ public class PlayerActivity extends AppCompatActivity {
         audio.setVisibility(View.VISIBLE);
         subtitle.setVisibility(View.VISIBLE);
 
-        setMargin(more, 1, 23); // 8
+//        setMargin(more, 1, 23); // 8
 
         setPadding(text1, 0, 12);
         setPadding(text1, 1, 12);
@@ -1689,8 +1688,11 @@ public class PlayerActivity extends AppCompatActivity {
 
         setSize(pip, 0, 60);
 
-        setPadding(lower_container, 0, 20);
-        setPadding(lower_container, 1, 20);
+        setPadding(toolbarLayout, 0, 30);
+        setPadding(toolbarLayout, 1, 30);
+
+        setPadding(full_container, 0, 25);
+        setPadding(full_container, 1, 25);
 
         setSize(rewind_layout, 0, 230);
         setSize(rewind_layout, 1, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -1711,12 +1713,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void onPortrait(){
         Log.d(TAG, "onPortrait: YES");
-        View back = findViewById(R.id.back_button);
+
         View tool_title = findViewById(R.id.toolbar_title);
         View audio = findViewById(R.id.audio_tracks_button);
         View subtitle = findViewById(R.id.sub_tracks_button);
         View decoder = findViewById(R.id.decoder_button);
-        View more = findViewById(R.id.expandB);
         View text1 = findViewById(R.id.time1);
         View text2 = findViewById(R.id.time2);
         View lock = findViewById(R.id.lock);
@@ -1726,7 +1727,8 @@ public class PlayerActivity extends AppCompatActivity {
         View next = findViewById(R.id.next);
         View crop = findViewById(R.id.fit_crop);
         View pip = findViewById(R.id.pip);
-        View lower_container = findViewById(R.id.lower_container);
+        View toolbarLayout = findViewById(R.id.toolbarLayout);
+        View full_container = findViewById(R.id.full_container);
 
         View rewind_layout = findViewById(R.id.rewind_layout);
         View rewind_image = findViewById(R.id.rewind_image);
@@ -1738,7 +1740,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         View speedLayout = findViewById(R.id.speedLayout);
 
-        setMargin(back, 0, 13);
+//        setMargin(back, 0, 13);
 
         setMargin(tool_title, 0, 20);
         setMargin(tool_title, 1, 25);
@@ -1747,7 +1749,7 @@ public class PlayerActivity extends AppCompatActivity {
         audio.setVisibility(View.GONE);
         subtitle.setVisibility(View.GONE);
 
-        setMargin(more, 1, 15);
+//        setMargin(more, 1, 15);
 
         setPadding(text1, 0, 5);
         setPadding(text1, 1, 5);
@@ -1768,8 +1770,11 @@ public class PlayerActivity extends AppCompatActivity {
 
         setSize(pip, 0, 50);
 
-        setPadding(lower_container, 0, 15);
-        setPadding(lower_container, 1, 15);
+        setPadding(toolbarLayout, 0, 15);
+        setPadding(toolbarLayout, 1, 15);
+
+        setPadding(full_container, 0, 10);
+        setPadding(full_container, 1, 10);
 
         setSize(rewind_layout, 0, 130);
         setSize(rewind_layout, 1, 380);

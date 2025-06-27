@@ -25,14 +25,12 @@
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:label="Media Player"
             android:parentActivityName=".FilesListActivity"
             android:theme="@style/Base.Theme.MediaPlayer">
         </activity>
         <activity
             android:name=".FilesListActivity"
             android:exported="true"
-            android:label="Media Player"
             android:theme="@style/Base.Theme.MediaPlayer">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

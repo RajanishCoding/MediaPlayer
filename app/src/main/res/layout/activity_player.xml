@@ -16,9 +16,7 @@
         android:layout_centerInParent="true"
         android:visibility="visible"
         app:show_timeout="0"
-        app:use_controller="false"
-        tools:layout_editor_absoluteX="-61dp"
-        tools:layout_editor_absoluteY="41dp" />
+        app:use_controller="false" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/buffer_layout"
@@ -294,18 +292,19 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/toolbarLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingHorizontal="15dp"
             android:clickable="true"
             android:focusable="true"
-            tools:ignore="TouchTargetSizeCheck"
-            tools:layout_editor_absoluteY="10dp">
+            tools:ignore="TouchTargetSizeCheck">
 
             <ImageButton
                 android:id="@+id/back_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="13dp"
+
                 android:background="@drawable/ripple_player_dark"
                 android:contentDescription="TODO"
                 android:padding="3dp"
@@ -385,7 +384,7 @@
                 android:id="@+id/expandB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="15dp"
+
                 android:background="@drawable/ripple_player_dark"
                 android:contentDescription="TODO"
                 android:padding="3dp"
@@ -422,8 +421,8 @@
         android:paddingHorizontal="20dp"
         android:layout_margin="15dp"
         android:elevation="8dp"
-        android:visibility="invisible"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -506,7 +505,7 @@
         android:elevation="8dp"
         android:paddingHorizontal="20dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="invisible">
+        android:visibility="gone">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -587,6 +586,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/gradient_bottombar"
         android:paddingTop="10dp"
+        android:paddingHorizontal="10dp"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -597,7 +597,7 @@
             android:id="@+id/upper_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="4dp"
+            android:paddingVertical="5dp"
             android:layout_marginBottom="5dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -650,7 +650,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:paddingHorizontal="15dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -779,20 +778,24 @@
             android:layout_margin="15dp"
             android:elevation="5dp"
             android:scrollbars="none"
-            android:visibility="invisible">
+            android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/expandView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp">
 
                 <!-- 1 -->
                 <LinearLayout
                     android:id="@+id/mute_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
@@ -1077,7 +1080,7 @@
         </ScrollView>
     </LinearLayout>
 
-    <!-- Side/Expand Bar -->
+    <!-- Side/Expand Bar Layouts -->
     <LinearLayout
         android:id="@+id/speedLayout"
         android:layout_width="500dp"
@@ -1090,7 +1093,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="invisible">
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/speedText"
