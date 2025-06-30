@@ -702,8 +702,9 @@ public class AudioFragment extends Fragment {
                 MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
-            PlaylistManager manager = new PlaylistManager(mediaItemList);
-            MediaRepository.getInstance().setAudioPlaylistManager(manager);
+            MediaRepository.getInstance().setAudioPlaylist(mediaItemList);
+//            PlaylistManager manager = new PlaylistManager(mediaItemList);
+//            MediaRepository.getInstance().setAudioPlaylistManager(manager);
         }
     }
 

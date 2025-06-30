@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.session.legacy.MediaBrowserCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -751,8 +752,9 @@ public class VideoFragment extends Fragment {
                 MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
-            PlaylistManager manager = new PlaylistManager(mediaItemList);
-            MediaRepository.getInstance().setVideoPlaylistManager(manager);
+            MediaRepository.getInstance().setVideoPlaylist(mediaItemList);
+//            PlaylistManager manager = new PlaylistManager(mediaItemList);
+//            MediaRepository.getInstance().setVideoPlaylistManager(manager);
         }
     }
 

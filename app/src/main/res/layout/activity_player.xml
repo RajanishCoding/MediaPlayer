@@ -771,14 +771,14 @@
 
         <ScrollView
             android:id="@+id/expandScroll"
-            android:background="@drawable/shape_expand_view"
+            android:background="@drawable/shape_sidebar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:overScrollMode="never"
             android:layout_margin="15dp"
             android:elevation="5dp"
             android:scrollbars="none"
-            android:visibility="gone">
+            android:visibility="gone" >
 
             <LinearLayout
                 android:id="@+id/expandView"
@@ -788,7 +788,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp">
 
-                <!-- 1 -->
+                <!-- 1 Mute -->
                 <LinearLayout
                     android:id="@+id/mute_expand"
                     android:layout_width="wrap_content"
@@ -800,10 +800,12 @@
                     android:gravity="center">
 
                     <ImageButton
+                        android:id="@+id/mute_expand_image"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:background="@color/transparent"
+                        android:background="@drawable/shape_transparent"
                         android:src="@drawable/round_mute"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -819,44 +821,50 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 2 -->
-                <LinearLayout
-                    android:id="@+id/sleep_expand"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
+                <!-- 2 Sleep-->
+<!--                <LinearLayout-->
+<!--                    android:id="@+id/sleep_expand"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:background="@drawable/ripple_player_expand"-->
+<!--                    android:clickable="true"-->
+<!--                    android:focusable="true"-->
+<!--                    android:orientation="horizontal"-->
+<!--                    android:gravity="center">-->
 
-                    <ImageButton
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:background="@color/transparent"
-                        android:src="@drawable/rounded_timer"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        android:layout_weight="1"
-                        android:visibility="visible" />
+<!--                    <ImageButton-->
+<!--                        android:layout_width="50dp"-->
+<!--                        android:layout_height="50dp"-->
+<!--                        android:background="@color/transparent"-->
+<!--                        android:src="@drawable/rounded_timer"-->
+<!--                        app:layout_constraintStart_toStartOf="parent"-->
+<!--                        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                        app:layout_constraintTop_toTopOf="parent"-->
+<!--                        android:layout_weight="1"-->
+<!--                        android:visibility="visible" />-->
 
-                    <TextView
-                        android:layout_height="wrap_content"
-                        style="@style/TextStyleExpandView"
-                        android:text="Sleep Timer"
-                        android:textAlignment="center"
-                        android:layout_weight="3"
-                        android:visibility="visible" />
-                </LinearLayout>
+<!--                    <TextView-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        style="@style/TextStyleExpandView"-->
+<!--                        android:text="Sleep Timer"-->
+<!--                        android:textAlignment="center"-->
+<!--                        android:layout_weight="3"-->
+<!--                        android:visibility="visible" />-->
+<!--                </LinearLayout>-->
 
-                <!-- 3 -->
+                <!-- 3 Speed-->
                 <LinearLayout
                     android:id="@+id/speed_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
                     <TextView
-                        android:id="@+id/speedText_expand"
+                        android:id="@+id/speed_expand_text"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:background="@color/transparent"
@@ -880,19 +888,24 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 4 -->
+                <!-- 4 Loop -->
                 <LinearLayout
                     android:id="@+id/loop_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
                     <ImageButton
+                        android:id="@+id/loop_expand_image"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/round_repeat"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -908,19 +921,24 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 5 -->
+                <!-- 5 Shuffle -->
                 <LinearLayout
                     android:id="@+id/shuffle_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
                     <ImageButton
+                        android:id="@+id/shuffle_expand_image"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/round_shuffle"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -936,11 +954,14 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 6 -->
+                <!-- 6 Info -->
                 <LinearLayout
                     android:id="@+id/info_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
@@ -964,19 +985,24 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 7 -->
+                <!-- 7 PlayAudio-->
                 <LinearLayout
                     android:id="@+id/playAudio_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
                     <ImageButton
+                        android:id="@+id/playAudio_expand_image"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/round_audio"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -992,11 +1018,14 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 8 -->
+                <!-- 8 Lock-->
                 <LinearLayout
                     android:id="@+id/lock_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
@@ -1005,6 +1034,7 @@
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/baseline_lock_open_24"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -1020,11 +1050,14 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 9 -->
+                <!-- 9 Rotate-->
                 <LinearLayout
                     android:id="@+id/rotate_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
@@ -1033,6 +1066,7 @@
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/baseline_screen_rotation_24"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -1048,11 +1082,14 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 10 -->
+                <!-- 10 Pip-->
                 <LinearLayout
                     android:id="@+id/pip_expand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal"
                     android:gravity="center">
 
@@ -1061,6 +1098,7 @@
                         android:layout_height="50dp"
                         android:background="@color/transparent"
                         android:src="@drawable/baseline_pip_alt_24"
+                        android:clickable="false"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
