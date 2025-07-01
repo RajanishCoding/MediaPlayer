@@ -42,20 +42,26 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
     public void onBindViewHolder(AudioTrackViewHolder holder, int position) {
         AudioTracks track = audioTracksList.get(position);
 
-        if (track.getLabel() == null) {
-            holder.label.setText("Audio Track " + (position+1));
+        if (position != 0) {
+            if (track.getLabel() == null) {
+                holder.label.setText("Audio Track " + (position + 1));
+            } else {
+                holder.label.setText(track.getLabel());
+            }
+
+            String finalText;
+            if (track.getLanguage() != null)
+                finalText = track.getLanguage() + " - " + track.getChannels() + " Channels";
+            else
+                finalText = track.getChannels() + " Channels";
+
+            holder.LangChannels.setVisibility(View.VISIBLE);
+            holder.LangChannels.setText(finalText);
         }
         else {
-            holder.label.setText(track.getLabel());
+            holder.label.setText("None");
+            holder.LangChannels.setVisibility(View.GONE);
         }
-
-        String finalText;
-        if (track.getLanguage() != null)
-            finalText = track.getLanguage() + " - " + track.getChannels() + " Channels";
-        else
-            finalText = track.getChannels() + " Channels";
-
-        holder.LangChannels.setText(finalText);
 
         if (track.isSelected() && firstSelection) {
             holder.radioButton.setChecked(true);
@@ -70,28 +76,40 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
+                DefaultTrackSelector.Parameters parameters;
+                int pos = holder.getBindingAdapterPosition();
 
-                TrackSelectionOverride override = new TrackSelectionOverride(track.getTrackGroup(), track.getTrackIndex());
+                if (pos != 0 && pos != RecyclerView.NO_POSITION) {
+                    AudioTracks t = audioTracksList.get(pos);
+                    TrackSelectionOverride override = new TrackSelectionOverride(t.getTrackGroup(), t.getTrackIndex());
 
-                // Build new parameters with the override
-                DefaultTrackSelector.Parameters parameters = trackSelector.buildUponParameters()
-                        .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
-                        .addOverride(override)
-                        .build();
+                    // Build new parameters with the override
+                    parameters = trackSelector.buildUponParameters()
+                            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+                            .addOverride(override)
+                            .build();
+                }
+                else {
+                    parameters = trackSelector.buildUponParameters()
+                            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true) // disables audio
+                            .build();
+                }
 
                 // Apply the new parameters
                 trackSelector.setParameters(parameters);
 
-                if (selectedPosition != position) {
+                if (selectedPosition != pos) {
                     // Store the previous selected position
 
                     if (firstSelection) {
-                        selectedPosition = position;
+                        selectedPosition = pos;
                         firstSelection = false;
                     }
                     else {
                         previousPosition = selectedPosition;
-                        selectedPosition = position; // Update to the new position
+                        selectedPosition = pos; // Update to the new position
                     }
                     Log.d("AudioTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
 

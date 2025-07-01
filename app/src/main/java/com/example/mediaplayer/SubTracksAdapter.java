@@ -42,14 +42,20 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
     public void onBindViewHolder(SubTrackViewHolder holder, int position) {
         SubTracks track = subTracksList.get(position);
 
-        if (track.getLabel() == null) {
-            holder.label.setText("Sub Track " + (position+1));
+        if (position != 0) {
+            if (track.getLabel() == null) {
+                holder.label.setText("Sub Track " + (position + 1));
+            } else {
+                holder.label.setText(track.getLabel());
+            }
+
+            holder.language.setVisibility(View.VISIBLE);
+            holder.language.setText(track.getLanguage());
         }
         else {
-            holder.label.setText(track.getLabel());
+            holder.label.setText("None");
+            holder.language.setVisibility(View.GONE);
         }
-
-        holder.language.setText(track.getLanguage());
 
         if (track.isSelected() && firstSelection) {
             holder.radioButton.setChecked(true);
@@ -64,27 +70,40 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                TrackSelectionOverride override = new TrackSelectionOverride(track.getTrackGroup(), track.getTrackIndex());
+                DefaultTrackSelector.Parameters parameters;
+                int pos = holder.getBindingAdapterPosition();
 
-                // Build new parameters with the override
-                DefaultTrackSelector.Parameters parameters = trackSelector.buildUponParameters()
-                        .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-                        .addOverride(override)
-                        .build();
+                if (pos != 0 && pos != RecyclerView.NO_POSITION) {
+                    SubTracks t = subTracksList.get(pos);
+                    TrackSelectionOverride override = new TrackSelectionOverride(t.getTrackGroup(), t.getTrackIndex());
+
+                    // Build new parameters with the override
+                    parameters = trackSelector.buildUponParameters()
+                            .clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                            .addOverride(override)
+                            .build();
+                }
+                else {
+                    parameters = trackSelector.buildUponParameters()
+                            .clearOverridesOfType(C.TRACK_TYPE_TEXT)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true) // disables Subtitle
+                            .build();
+                }
 
                 // Apply the new parameters
                 trackSelector.setParameters(parameters);
 
-                if (selectedPosition != position) {
+                if (selectedPosition != pos) {
                     // Store the previous selected position
 
                     if (firstSelection) {
-                        selectedPosition = position;
+                        selectedPosition = pos;
                         firstSelection = false;
                     }
                     else {
                         previousPosition = selectedPosition;
-                        selectedPosition = position; // Update to the new position
+                        selectedPosition = pos; // Update to the new position
                     }
                     Log.d("SubTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
 

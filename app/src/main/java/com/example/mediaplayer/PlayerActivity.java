@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -20,7 +22,9 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -54,13 +58,16 @@ import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
+import androidx.media3.common.text.CueGroup;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
 import androidx.media3.exoplayer.source.TrackGroupArray;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.SubtitleView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -99,8 +106,10 @@ public class PlayerActivity extends AppCompatActivity {
     private Runnable controlsRunnable;
     private Runnable lockScreenRunnable;
 
-    private SurfaceView surfaceView;
+    private View playerContainer;
+    private View zoomW;
     private PlayerView playerView;
+    private SubtitleView subtitleView;
 
     private Toolbar toolbar;
     private ConstraintLayout PlaybackControls_Container;
@@ -135,6 +144,8 @@ public class PlayerActivity extends AppCompatActivity {
     private SharedPreferences.Editor playerPrefsEditor;
 
     private GestureDetector gestureDetector;
+    private ScaleGestureDetector scaleGestureDetector;
+
     private AudioManager audioManager;
     private AudioAttributes audioAttributes;
     private AudioFocusRequest focusRequest;
@@ -151,11 +162,19 @@ public class PlayerActivity extends AppCompatActivity {
     private float ScrollX_Speed = 1;
     private float ScrollY1_Speed = 1;
     private float ScrollY2_Speed = 1;
+    private float currentScale = 1f;
+    private float scaleStepAccumulator = 0f;
+    private final float MIN_SCALE = .8f;
+    private final float MAX_SCALE = 5f;
+    private int videoWidth = 0;
+    private int videoHeight = 0;
 
     private View volumeLayout;
-    private View brightnessLayout;
     private TextView volumeText;
+    private View brightnessLayout;
     private TextView brightnessText;
+    private View zoomLayout;
+    private TextView zoomText;
 
     private View seekLayout;
     private TextView seekCurrentTimeText;
@@ -173,9 +192,11 @@ public class PlayerActivity extends AppCompatActivity {
     private int seekCurrentTime;
     private int seekTime;
 
+    private boolean isLongPressed;
     private boolean isLongPressed_Speed;
     private boolean isLongPressed_Lock;
     private boolean isScrolling;
+    private boolean isScalling;
     private boolean isSeeking;
     private boolean isVolumeChanging;
     private boolean isBrightnessChanging;
@@ -378,7 +399,10 @@ public class PlayerActivity extends AppCompatActivity {
         audioTrackButton = findViewById(R.id.audio_tracks_button);
         subTrackButton = findViewById(R.id.sub_tracks_button);
 
-        playerView = findViewById(R.id.surface_view);
+        playerContainer = findViewById(R.id.playerContainer);
+        zoomW = findViewById(R.id.zoomW);
+        playerView = findViewById(R.id.player_view);
+        subtitleView = findViewById(R.id.customSubtitleView);
 
         toolbar = findViewById(R.id.toolbar);
         PlaybackControls_Container = findViewById(R.id.full_container);
@@ -401,8 +425,10 @@ public class PlayerActivity extends AppCompatActivity {
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
         speedToastLayout = findViewById(R.id.speedToast_layout);
+        zoomLayout = findViewById(R.id.zoom_layout);
         volumeText = findViewById(R.id.volume_text);
         brightnessText = findViewById(R.id.brightness_text);
+        zoomText = findViewById(R.id.zoom_text);
 
         seekLayout = findViewById(R.id.seek_layout);
         seekCurrentTimeText = findViewById(R.id.seek_current_time);
@@ -587,8 +613,25 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
-                if (!isAudioTracksShowing && !isSubTracksShowing && !isExpandViewsShowing && !isSpeedLayoutShowing)
-                    gestureDetector.onTouchEvent(event);
+                int pointerCount = event.getPointerCount();
+
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                        isScalling = true; // Block scroll as soon as second finger touches
+                        break;
+
+                    case MotionEvent.ACTION_POINTER_UP:
+                        isScalling = false;
+                        break;
+                }
+
+                if (!isAudioTracksShowing && !isSubTracksShowing && !isExpandViewsShowing && !isSpeedLayoutShowing) {
+                    if (pointerCount == 1 && !isScalling)
+                        gestureDetector.onTouchEvent(event);
+                    if (pointerCount == 2 && !isScrolling && !isLongPressed) {
+                        scaleGestureDetector.onTouchEvent(event);
+                    }
+                }
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                     if (isAudioTracksShowing) {
@@ -611,6 +654,8 @@ public class PlayerActivity extends AppCompatActivity {
                         isSpeedLayoutShowing = false;
                     }
 
+                    if (isLongPressed) isLongPressed = false;
+                    
                     if (isLongPressed_Speed) {
                         isLongPressed_Speed = false;
                         player.setPlaybackSpeed(PlaybackSpeed);
@@ -699,12 +744,12 @@ public class PlayerActivity extends AppCompatActivity {
 
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onDown(MotionEvent e) {
+            public boolean onDown(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
+            public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                 // Handle single tap
                 if (!surface_click_frag && !isInAnimation && !isOutAnimation) {
                     removeControlsRunnable();
@@ -717,7 +762,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean onDoubleTap(MotionEvent e) {
+            public boolean onDoubleTap(@NonNull MotionEvent e) {
                 if (!isLongPressed_Speed && !isScrolling) {
                     if (e.getX() <= Q3_Width) {
                         player.seekTo(player.getCurrentPosition() - doubleTapSeekTime);
@@ -749,9 +794,10 @@ public class PlayerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
-                if (isPlaying && !isScrolling) {
-                    hideLayouts(volumeLayout, brightnessLayout);
+            public void onLongPress(@NonNull MotionEvent e) {
+                if (isPlaying && !isScrolling && !isScalling) {
+                    isLongPressed = true;
+                    hideLayouts(volumeLayout, brightnessLayout, zoomLayout);
 
                     if (e.getX() < halfWidth) {
                         isLongPressed_Lock = true;
@@ -770,20 +816,19 @@ public class PlayerActivity extends AppCompatActivity {
                     }
                     else {
                         isLongPressed_Speed = true;
-                        speedToastLayout.setVisibility(View.VISIBLE);
-                        speedToastLayout.startAnimation(fadeIn);
-
+                        showCustomToast(speedToastLayout);
                         player.setPlaybackSpeed(2);
                     }
                 }
             }
 
             @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                Log.d("Scrolling", "onScroll: " + gestureDirection.name() + "  " + isSeeking);
-                isScrolling = true;
+            public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float distanceX, float distanceY) {
+                Log.d("Scrolling", "onScroll: "+ gestureDirection.name() + "  " + isSeeking + " - " + isScalling);
 
-                if (gestureDirection == GestureDirection.NONE && !isLongPressed_Speed) {
+                if (gestureDirection == GestureDirection.NONE && !isScalling && !isLongPressed_Speed) {
+                    isScrolling = true;
+
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
                         if (isControlsShowing) {
                             removeControlsRunnable();
@@ -799,10 +844,11 @@ public class PlayerActivity extends AppCompatActivity {
                         player.pause();
                         isControlsShowingByAction = true;
 
-                        // Lock as horizontal gesture (seeking)
+                        // Locking as horizontal gesture (seeking)
                         gestureDirection = GestureDirection.HORIZONTAL;
-                    } else {
-                        // Lock as vertical gesture (volume/brightness)
+                    }
+                    else {
+                        // Locking as vertical gesture (volume/brightness)
                         gestureDirection = GestureDirection.VERTICAL;
                     }
                 }
@@ -867,6 +913,131 @@ public class PlayerActivity extends AppCompatActivity {
                 return super.onDoubleTapEvent(e);
             }
         });
+
+        scaleGestureDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(@NonNull ScaleGestureDetector detector) {
+                if (!isScalling) return false;
+
+                float rawScaleFactor = detector.getScaleFactor();
+                float scaleFactor = (float) Math.pow(rawScaleFactor, .5);
+
+                float newScale = currentScale * scaleFactor;
+                currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+                playerView.setPivotX(playerView.getWidth() / 2f);
+                playerView.setPivotY(playerView.getHeight() / 2f);
+                playerView.setScaleX(currentScale);
+                playerView.setScaleY(currentScale);
+
+                int zoomPercent = (int) (currentScale * 100);
+                zoomText.setText(zoomPercent + "%");
+
+                Log.d("scaleD", "rawScaleFactor: " + rawScaleFactor + ", scaleFactor: " + scaleFactor + ", newScale: " + newScale + ", currentScale: " + currentScale);
+
+                return super.onScale(detector);
+            }
+
+            @Override
+            public boolean onScaleBegin(@NonNull ScaleGestureDetector detector) {
+                isScalling = true;
+                showCustomToast(zoomLayout);
+                return true;
+            }
+
+            @Override
+            public void onScaleEnd(@NonNull ScaleGestureDetector detector) {
+                isScalling = false;
+//                zoomLayout.setVisibility(View.GONE);
+                zoomLayout.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction(() -> zoomLayout.setVisibility(View.GONE))
+                        .start();
+            }
+        });
+    }
+
+    private void applyZoomToTexture(float scale) {
+        TextureView textureView = findTextureView(playerView);
+        if (textureView != null) {
+            float pivotX = textureView.getWidth() / 2f;
+            float pivotY = textureView.getHeight() / 2f;
+
+            Matrix matrix = new Matrix();
+            matrix.postScale(scale, scale, pivotX, pivotY);
+            textureView.setTransform(matrix);
+        }
+    }
+
+    private TextureView findTextureView(ViewGroup playerView) {
+        for (int i = 0; i < playerView.getChildCount(); i++) {
+            View child = playerView.getChildAt(i);
+            if (child instanceof TextureView) return (TextureView) child;
+        }
+        return null;
+    }
+
+
+    private float applyResizeCropMode() {
+        int viewWidth = playerView.getWidth();
+        int viewHeight = playerView.getHeight();
+
+        float viewAspectRatio = (float) viewWidth / viewHeight;
+        float videoAspectRatio = (float) videoWidth / videoHeight;
+
+        float scale = 1f;
+
+        if (videoAspectRatio > viewAspectRatio) {
+            // Video is wider than view → crop sides
+            scale = videoAspectRatio / viewAspectRatio;
+        }
+        else {
+            // Video is taller than view → crop top/bottom
+            scale = viewAspectRatio / videoAspectRatio;
+        }
+
+        playerView.setPivotX(playerView.getWidth() / 2f); // center crop
+        playerView.setPivotY(playerView.getHeight() / 2f);
+
+        playerView.setScaleX(scale);
+        playerView.setScaleY(scale);
+
+        return scale;
+    }
+
+
+    private void applyResizeFitMode() {
+        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT); // Always FIT
+
+        int containerW = playerView.getWidth();
+        int containerH = playerView.getHeight();
+
+        Format format = player.getVideoFormat();
+        if (format == null || containerW == 0 || containerH == 0) return;
+
+        float videoW = format.width;
+        float videoH = format.height;
+
+        float videoAspect = videoW / videoH;
+        float containerAspect = (float) containerW / containerH;
+
+        int newWidth, newHeight;
+
+        if (videoAspect > containerAspect) {
+            // Fit width → letterbox top/bottom
+            newWidth = containerW;
+            newHeight = (int) (containerW / videoAspect);
+        } else {
+            // Fit height → letterbox sides
+            newHeight = containerH;
+            newWidth = (int) (containerH * videoAspect);
+        }
+
+        ViewGroup.LayoutParams params = playerView.getLayoutParams();
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+        playerView.setLayoutParams(params);
     }
 
 
@@ -922,13 +1093,21 @@ public class PlayerActivity extends AppCompatActivity {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
+//                playerView.setScaleX(1);
+//                playerView.setScaleY(1);
+
                 if (!isFitScreen) {
                     fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
-                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+//                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+                    playerView.setScaleX(1);
+                    playerView.setScaleY(1);
+                    currentScale = 1;
+//                    applyResizeFitMode();
                     isFitScreen = true;
                 } else {
                     fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
-                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+//                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+                    currentScale = applyResizeCropMode();
                     isFitScreen = false;
                 }
             }
@@ -1142,16 +1321,20 @@ public class PlayerActivity extends AppCompatActivity {
 
         isFirstTimePlaying = true;
 
+        setSubtitleViewStyles();
+
+        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
+
+        playerView.setPlayer(player);
+        playerView.setKeepScreenOn(true);
+        playerView.getSubtitleView().setVisibility(View.GONE);
+
         if (isNamePresent) {
 //            player.setmed(mediaItem);
             player.prepare();
             playMedia();
         }
 
-        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
-
-        playerView.setPlayer(player);
-        playerView.setKeepScreenOn(true);
 
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
         layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
@@ -1166,6 +1349,9 @@ public class PlayerActivity extends AppCompatActivity {
 
                 int width = size.width;
                 int height = size.height;
+
+                videoWidth = width;
+                videoHeight = height;
 
                 if (player.getPlaybackState() == Player.STATE_READY && width != 0 || height != 0) {
 
@@ -1188,8 +1374,6 @@ public class PlayerActivity extends AppCompatActivity {
                     player.removeListener(this);
                 }
             }
-
-
         });
 
         player.addListener(new Player.Listener() {
@@ -1268,6 +1452,11 @@ public class PlayerActivity extends AppCompatActivity {
             public void onPlayerError(PlaybackException error) {
                 Log.d("playbackError", "onPlayerError: " + error);
             }
+
+            @Override
+            public void onCues(@NonNull CueGroup cueGroup) {
+                subtitleView.setCues(cueGroup.cues);
+            }
         });
 
         player.addAnalyticsListener(new AnalyticsListener() {
@@ -1283,12 +1472,33 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
+    private void setSubtitleViewStyles() {
+        subtitleView.setApplyEmbeddedStyles(true);           // Ignore subtitle file's styles
+        subtitleView.setApplyEmbeddedFontSizes(false);       // Ignore font sizes in subtitle file
+
+        subtitleView.setStyle(
+                new CaptionStyleCompat(
+                        Color.WHITE,                                // foreground (text color)
+                        Color.TRANSPARENT,                          // background
+                        Color.TRANSPARENT,                          // window background
+                        CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,   // edge type
+                        Color.BLACK,                                // edge color
+                        null                                        // typeface
+                )
+        );
+
+        // Adjust text size (0.05 = 5% of screen height)
+        subtitleView.setFractionalTextSize(0.055f);  // 5.5% of screen height
+    }
+
     @OptIn(markerClass = UnstableApi.class)
     private void loadAudioTracks() {
         // Get current tracks and check for selection
         Tracks currentTracks = player.getCurrentTracks();
 
         new Thread(() -> {
+            audioTracksList.add(new AudioTracks(null, -1, null, null, -1, false));
+
             // Fetch the track info
             DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
 
@@ -1335,7 +1545,6 @@ public class PlayerActivity extends AppCompatActivity {
                 }
             }
 
-
             runOnUiThread(() -> {
                 audioTracksAdapter.notifyDataSetChanged();
             });
@@ -1348,6 +1557,8 @@ public class PlayerActivity extends AppCompatActivity {
         Tracks currentTracks = player.getCurrentTracks();
 
         new Thread(() -> {
+            subTracksList.add(new SubTracks(null, -1, null, null, false));
+
             // Fetch the track info
             DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
 
@@ -1404,29 +1615,6 @@ public class PlayerActivity extends AppCompatActivity {
         Locale locale = new Locale(language);
         return locale.getDisplayLanguage();
     }
-
-//    private boolean getCurrentPlayingAudioTrack() {
-//        Tracks currentTracks = player.getCurrentTracks();
-//
-//        for (Tracks.Group group : currentTracks.getGroups()) {
-//            if (group.getType() == C.TRACK_TYPE_AUDIO) { // Ensure it's an audio track group
-//
-//                for (int i = 0; i < group.length; i++) { // Iterate through all tracks in this group
-//                    if (group.isTrackSelected(i)) { // Check if this specific track is selected
-//                        Format format = group.getTrackFormat(i);
-//
-//                        Log.d("SelectedAudioTrack", "Track ID: " + format.id +
-//                                ", Language: " + (format.language != null ? format.language : "Unknown") +
-//                                ", Channels: " + format.channelCount +
-//                                ", Label: " + format.label +
-//                                ", Bitrate: " + format.bitrate);
-//
-//                        // Perform any action with the selected track info
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private void showExpandViewsLayout(long delayBetween, long duration) {
         LinearLayout linearLayout = expandView;
@@ -2147,9 +2335,6 @@ public class PlayerActivity extends AppCompatActivity {
         return super.onKeyDown(keyCode, event);
     }
 
-    private long videoDuration;
-    private float scrollSensitivity = 50f;
-    private long totalScrollDistance = 0;
 
     private void performSeekByTouch(int incrementValue, boolean fromUser) {
         int seekValue = (int) player.getCurrentPosition() + incrementValue;
@@ -2275,11 +2460,12 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showCustomToast(View toastView) {
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-
-        if (toastView.getVisibility() == View.GONE) {
-            toastView.setVisibility(View.VISIBLE);
-            toastView.startAnimation(fadeIn);
-        }
+        toastView.clearAnimation();
+        toastView.setVisibility(View.VISIBLE);
+        toastView.animate()
+                .alpha(1f)
+                .setDuration(150)
+                .start();
     }
 
     private void hideCustomToast(View toastView) {
