@@ -8,11 +8,6 @@
     android:background="@color/black"
     tools:context=".PlayerActivity" >
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </View>
-
     <FrameLayout
         android:id="@+id/playerContainer"
         android:layout_width="match_parent"
@@ -20,23 +15,22 @@
         android:clipChildren="false"
         android:clipToPadding="false">
 
-    <FrameLayout
-        android:id="@+id/zoomW"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:clipChildren="false">
-
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/player_view"
+        <FrameLayout
+            android:id="@+id/zoomW"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:visibility="visible"
-            app:show_timeout="0"
-            app:use_controller="false"
-            app:resize_mode="fit"/>
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/player_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:visibility="visible"
+                app:show_timeout="0"
+                app:use_controller="false"
+                app:resize_mode="fit"/>
         </FrameLayout>
 
         <androidx.media3.ui.SubtitleView

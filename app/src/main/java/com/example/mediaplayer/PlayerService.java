@@ -313,7 +313,7 @@ public class PlayerService extends MediaSessionService {
                 startForegroundNotification();
             }
             else {
-                startForegroundNotification();
+                stopForegroundNotification();
             }
         }
     };
@@ -341,39 +341,4 @@ public class PlayerService extends MediaSessionService {
     }
 
 
-    private class MediaSessionCallback extends MediaSessionCompat.Callback {
-        @Override
-        public void onPlay() {
-            if (player != null) {
-                player.play();
-                updateNotification();
-            }
-        }
-
-        @Override
-        public void onPause() {
-            if (player != null) {
-                player.pause();
-                updateNotification();
-            }
-        }
-
-        @Override
-        public void onStop() {
-            if (player != null) {
-                player.stop();
-                stopForeground(true);
-                stopSelf();
-                handler.removeCallbacks(updateNotificationRunnable);
-            }
-        }
-
-        @Override
-        public void onSeekTo(long pos) {
-            if (player != null) {
-                player.seekTo(pos);
-                updateNotification();
-            }
-        }
-    }
 }

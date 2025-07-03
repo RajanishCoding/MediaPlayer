@@ -97,6 +97,7 @@ dependencies {
 //    implementation("com.github.Arthenica:ffmpeg-kit-full-gpl:5.1.LTS")
 //    implementation("com.github.Arthenica:ffmpeg-kit-min-gpl:5.1.LTS")
 
+    implementation("com.otaliastudios:zoomlayout:1.9.0")
 
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+2")
 

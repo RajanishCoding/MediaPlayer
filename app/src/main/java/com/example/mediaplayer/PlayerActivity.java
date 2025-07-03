@@ -20,10 +20,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +32,7 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -165,9 +166,20 @@ public class PlayerActivity extends AppCompatActivity {
     private float currentScale = 1f;
     private float scaleStepAccumulator = 0f;
     private final float MIN_SCALE = .8f;
-    private final float MAX_SCALE = 5f;
+    private final float MAX_SCALE = 2f;
+
+    private float mScaleFactor = 1.0f;
+    private float mTranslationX = 0f;
+    private float mTranslationY = 0f;
+    private float mMinScale = 1.0f;
+    private float mMaxScale = 5.0f; // Adjust max zoom level as needed
+    private float mZoomSpeedMultiplier = 0.05f; // Adjust this value to control zoom speed (0.1f to 1.0f)
+
+
     private int videoWidth = 0;
     private int videoHeight = 0;
+    private int originalWidth = 0;
+    private int originalHeight = 0;
 
     private View volumeLayout;
     private TextView volumeText;
@@ -610,8 +622,13 @@ public class PlayerActivity extends AppCompatActivity {
         // Expand Views Buttons - Listener ----->
         expandViewsListeners();
 
+        zoomW.post(() -> {
+            originalWidth = playerView.getWidth();
+            originalHeight = playerView.getHeight();
+        });
 
-        playerView.setOnTouchListener((v, event) -> {
+
+        zoomW.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
                 int pointerCount = event.getPointerCount();
 
@@ -925,10 +942,8 @@ public class PlayerActivity extends AppCompatActivity {
                 float newScale = currentScale * scaleFactor;
                 currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
-                playerView.setPivotX(playerView.getWidth() / 2f);
-                playerView.setPivotY(playerView.getHeight() / 2f);
-                playerView.setScaleX(currentScale);
-                playerView.setScaleY(currentScale);
+                zoomW.setScaleX(currentScale);
+                zoomW.setScaleY(currentScale);
 
                 int zoomPercent = (int) (currentScale * 100);
                 zoomText.setText(zoomPercent + "%");
@@ -942,6 +957,10 @@ public class PlayerActivity extends AppCompatActivity {
             public boolean onScaleBegin(@NonNull ScaleGestureDetector detector) {
                 isScalling = true;
                 showCustomToast(zoomLayout);
+                if (zoomW.getWidth() > 0 && zoomW.getHeight() > 0) {
+                    zoomW.setPivotX(zoomW.getWidth() / 2f);
+                    zoomW.setPivotY(zoomW.getHeight() / 2f);
+                }
                 return true;
             }
 
@@ -979,9 +998,9 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    private float applyResizeCropMode() {
-        int viewWidth = playerView.getWidth();
-        int viewHeight = playerView.getHeight();
+    private float applyCropMode() {
+        int viewWidth = zoomW.getWidth();
+        int viewHeight = zoomW.getHeight();
 
         float viewAspectRatio = (float) viewWidth / viewHeight;
         float videoAspectRatio = (float) videoWidth / videoHeight;
@@ -997,11 +1016,11 @@ public class PlayerActivity extends AppCompatActivity {
             scale = viewAspectRatio / videoAspectRatio;
         }
 
-        playerView.setPivotX(playerView.getWidth() / 2f); // center crop
-        playerView.setPivotY(playerView.getHeight() / 2f);
+        zoomW.setPivotX(viewWidth / 2f);
+        zoomW.setPivotY(viewHeight / 2f);
 
-        playerView.setScaleX(scale);
-        playerView.setScaleY(scale);
+        zoomW.setScaleX(scale);
+        zoomW.setScaleY(scale);
 
         return scale;
     }
@@ -1099,15 +1118,20 @@ public class PlayerActivity extends AppCompatActivity {
                 if (!isFitScreen) {
                     fitcropButton.setImageResource(R.drawable.baseline_fit_screen_24);
 //                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-                    playerView.setScaleX(1);
-                    playerView.setScaleY(1);
+                    if (zoomW.getWidth() > 0 && zoomW.getHeight() > 0) {
+                        zoomW.setPivotX(zoomW.getWidth() / 2f);
+                        zoomW.setPivotY(zoomW.getHeight() / 2f);
+                    }
+                    zoomW.setScaleX(1);
+                    zoomW.setScaleY(1);
                     currentScale = 1;
+
 //                    applyResizeFitMode();
                     isFitScreen = true;
                 } else {
                     fitcropButton.setImageResource(R.drawable.baseline_crop_din_24);
 //                    playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
-                    currentScale = applyResizeCropMode();
+                    currentScale = applyCropMode();
                     isFitScreen = false;
                 }
             }
