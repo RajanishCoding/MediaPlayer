@@ -10,43 +10,33 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.media.session.MediaButtonReceiver;
-import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
-import androidx.media3.session.DefaultMediaNotificationProvider;
-import androidx.media3.session.MediaController;
 import androidx.media3.session.MediaNotification;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
-import androidx.media3.session.MediaStyleNotificationHelper;
-
-import java.util.Objects;
 
 @UnstableApi
 public class PlayerService extends MediaSessionService {
@@ -64,6 +54,11 @@ public class PlayerService extends MediaSessionService {
     private String currentMediaPath;
     private MediaNotification.Provider notificationProvider;
 
+    private static final String ACTION_PLAY_PAUSE = "com.example.mediaplayer.ACTION_PLAY_PAUSE";
+    private static final String ACTION_NEXT = "com.example.mediaplayer.ACTION_NEXT";
+    private static final String ACTION_PREVIOUS = "com.example.mediaplayer.ACTION_PREVIOUS";
+    private static final String ACTION_STOP = "com.example.mediaplayer.ACTION_STOP";
+
 
     private PlayerActivity playerActivity;
 
@@ -75,12 +70,6 @@ public class PlayerService extends MediaSessionService {
         super.onCreate();
 
         createNotificationChannel();
-        mediaSessionCompat = new MediaSessionCompat(this, "MediaSessionTag");
-        mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        mediaSessionCompat.setMediaButtonReceiver(null);
-        mediaSessionCompat.setCallback(new MediaSessionCompat.Callback(){});
-
-        updateMediaSessionMetadata();
 
         DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
                 .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
@@ -88,9 +77,40 @@ public class PlayerService extends MediaSessionService {
         player = new ExoPlayer.Builder(this)
                 .setTrackSelector(new DefaultTrackSelector(this))
                 .build();
-  
+
 
         mediaSession = new MediaSession.Builder(this, player).build();
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                Log.d(TAG, "Player State Changed: " + playbackState);
+                updateNotification();
+            }
+
+            @Override
+            public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+                Log.d(TAG, "PlayWhenReady Changed: " + playWhenReady);
+                updateNotification();
+            }
+
+            @Override
+            public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
+                Log.d(TAG, "MediaMetadata Changed: " + mediaMetadata.title);
+                updateNotification(); // Update when track info changes
+            }
+
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
+                updateNotification();
+            }
+
+            @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                Log.d(TAG, "IsPlaying Changed: " + isPlaying);
+                updateNotification();
+            }
+        });
 
         LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS_CHANGED"));
     }
@@ -113,25 +133,30 @@ public class PlayerService extends MediaSessionService {
 
         if (mediaPath != null) {
             Log.d(TAG, "onStartCommandI: " + player + "  " + currentMediaPath + "  " + mediaPath);
-            initializePlayer(mediaPath);
+            startForegroundNotification();
             currentMediaPath = mediaPath;
         }
 
         String action = intent.getAction();
         if (action != null) {
             switch (action) {
-                case "ACTION_PLAY":
-                    player.play();
+                case ACTION_PLAY_PAUSE:
+                    if (player.isPlaying()) {
+                        player.pause();
+                    } else {
+                        player.play();
+                    }
                     break;
-                case "ACTION_PAUSE":
-                    player.pause();
+                case ACTION_NEXT:
+                    player.seekToNextMediaItem();
                     break;
-                case "ACTION_STOP":
-                    player.stop();
-                    stopForeground(true);
-                    stopSelf();
-                    handler.removeCallbacks(updateNotificationRunnable);
-                    return START_STICKY;
+                case ACTION_PREVIOUS:
+                    player.seekToPreviousMediaItem();
+                    break;
+                case ACTION_STOP:
+                    player.stop(); // This will trigger onPlaybackStateChanged -> updateNotification
+                    stopSelf(); // Stop the service completely after stopping playback
+                    break;
             }
             updateNotification();
         }
@@ -150,11 +175,6 @@ public class PlayerService extends MediaSessionService {
                 player.release();
             }
 
-            if (mediaSessionCompat != null) {
-                mediaSessionCompat.release();
-                mediaSessionCompat = null;
-            }
-
             if (mediaSession != null) {
                 mediaSession.release();
                 mediaSession = null;
@@ -169,88 +189,68 @@ public class PlayerService extends MediaSessionService {
     private void initializePlayer(String mediaPath) {
         isInitialized = true;
         Log.d(TAG, "initializePlayerS: YES");
-//        player.setMediaItem(MyMediaItem.fromUri(mediaPath));
-//        player.prepare();
-//        player.play();
-        updateMediaSessionMetadata();
-        Log.d(TAG, "initializePlayerL: YES");
-        startForegroundNotification();
-    }
 
-
-    private void updateMediaSessionMetadata() {
-        if (mediaSessionCompat != null && player != null) {
-            long duration = player.getDuration();
-            long position = player.getCurrentPosition();
-
-            mediaSessionCompat.setMetadata(new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, mediaName)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Artist Name")
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                    .build());
-        }
     }
 
 
     private Notification createNotification() {
-//        PendingIntent playPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT);
-//        PendingIntent pausePendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
 
-        Intent playIntent = new Intent(this, PlayerService.class).setAction("ACTION_PLAY");
-        PendingIntent playPendingIntent = PendingIntent.getService(this, 0, playIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        boolean isPlaying = player.getPlayWhenReady();
 
-        Intent pauseIntent = new Intent(this, PlayerService.class).setAction("ACTION_PAUSE");
-        PendingIntent pausePendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        // Getting current media metadata for notification content
+        MediaMetadata mediaMetadata = player.getMediaMetadata();
+        String title = mediaMetadata.title != null ? mediaMetadata.title.toString() : "Unknown Title";
+        String artist = mediaMetadata.artist != null ? mediaMetadata.artist.toString() : "Unknown Artist";
+        Bitmap albumArt = null;
 
-        Intent stopIntent = new Intent(this, PlayerService.class).setAction("ACTION_STOP");
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 2, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Log.d("servicePLay", "createNotification: " + title + " , " + artist);
+
+        // Load album art (replace with your actual asynchronous loading logic)
+        // For simplicity in this example, we'll use a static drawable icon.
+        albumArt = BitmapFactory.decodeResource(getResources(), R.drawable.icon1); // Your default/placeholder icon
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.icon)
-                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.icon))
+                .setSmallIcon(R.drawable.icon1)
+                .setLargeIcon(albumArt)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
-                .setContentTitle(mediaName)
-                .setContentText("Playing")
+                .setContentTitle(title)
+                .setContentText(artist);
 //                .setCustomContentView(remoteViews)
 //                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
 
-                .setStyle(new MediaStyleNotificationHelper.MediaStyle(mediaSession)
-                        .setShowActionsInCompactView(0, 1, 2));
+        builder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getPlatformToken()))
+                .setShowActionsInCompactView(0, 1, 2));
 
-//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_previous_24, "Previous", null).build())
-//                .addAction(new NotificationCompat.Action.Builder(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, player.isPlaying() ? "Pause" : "Play", player.isPlaying() ? pausePendingIntent : playPendingIntent).build())
-//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_skip_next_24, "Next", null).build())
-//                .addAction(new NotificationCompat.Action.Builder(R.drawable.baseline_close_24, "Stop", stopPendingIntent).build());
+        builder.addAction(generateAction(R.drawable.baseline_skip_previous_24, "Previous", ACTION_PREVIOUS));
+        builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
+        builder.addAction(generateAction(R.drawable.baseline_skip_next_24, "Next", ACTION_NEXT));
+        builder.addAction(generateAction(R.drawable.baseline_close_24, "Stop", ACTION_STOP));
 
 //        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
         return builder.build();
     }
 
-    private Handler handler = new Handler();
-    private Runnable updateNotificationRunnable = new Runnable() {
-        @Override
-        public void run() {
-            updateNotification();
-            handler.postDelayed(this, 1000); // Update every second
-        }
-    };
+    private NotificationCompat.Action generateAction(int icon, String title, String intentAction) {
+        Intent intent = new Intent(this, PlayerService.class);
+        intent.setAction(intentAction);
+        return new NotificationCompat.Action.Builder(icon, title,
+                PendingIntent.getService(this, intentAction.hashCode(), intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT))
+                .build();
+    }
 
     private void updateNotification() {
         Notification notification = createNotification();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
 
-//        Log.d("TAG", "updateNotification: " + player.getCurrentPosition() + "  " + player.getDuration());
         notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
@@ -275,11 +275,6 @@ public class PlayerService extends MediaSessionService {
             player.release();
         }
 
-        if (mediaSessionCompat != null) {
-            mediaSessionCompat.release();
-            mediaSessionCompat = null;
-        }
-
         if (mediaSession != null) {
             mediaSession.release();
             mediaSession = null;
@@ -287,7 +282,6 @@ public class PlayerService extends MediaSessionService {
 
         stopForegroundNotification();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
-        handler.removeCallbacks(updateNotificationRunnable);
     }
 
 
@@ -319,13 +313,19 @@ public class PlayerService extends MediaSessionService {
     };
 
     private void startForegroundNotification() {
-        startForeground(NOTIFICATION_ID, createNotification());
-        handler.postDelayed(updateNotificationRunnable, 100); // Start updating notifications
+        Notification notification = createNotification();
+
+        if (notification == null) {
+            stopForeground(true); // Remove any existing notification and stop foreground status
+            Log.w(TAG, "Notification could not be created, stopping foreground if active.");
+            return;
+        }
+
+        startForeground(NOTIFICATION_ID, notification);
     }
 
     private void stopForegroundNotification() {
-        stopForeground(true);
-        handler.removeCallbacks(updateNotificationRunnable); // Stop updating notifications
+        stopForeground(Service.STOP_FOREGROUND_REMOVE);
     }
 
 

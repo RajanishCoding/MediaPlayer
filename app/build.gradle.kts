@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.preference)
     implementation(libs.androidx.gridlayout)
+    implementation(libs.cronet.embedded)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -78,7 +79,9 @@ dependencies {
 
     implementation(libs.androidx.swiperefreshlayout)
 
-    implementation(libs.androidx.media.v170)
+    implementation(libs.androidx.media.compat)
+
+//    implementation(libs.androidx.media.v170)
     implementation(libs.core.v1110)
 
     implementation(libs.flexbox)
