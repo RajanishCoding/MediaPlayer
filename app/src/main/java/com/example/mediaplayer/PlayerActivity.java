@@ -9,7 +9,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -20,11 +19,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -32,13 +29,13 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 
@@ -62,7 +59,6 @@ import androidx.media3.common.VideoSize;
 import androidx.media3.common.text.CueGroup;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.analytics.AnalyticsListener;
 import androidx.media3.exoplayer.source.TrackGroupArray;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.ui.AspectRatioFrameLayout;
@@ -139,6 +135,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isBufferingFinished;
     private boolean isVideoFile;
+    private boolean isLandscapeVideo;
     private boolean isBackgroundPlay;
 
     private SharedPreferences playerPrefs;
@@ -287,8 +284,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isPlaying;
     private boolean wasPlaying;
+    private boolean isMediaReady;
 
-    private boolean isFirstTimePlaying;
+    private boolean isFirstTimeForCurrentMedia;
+    private boolean isBuffuringForCurrentMedia;
+    private boolean isOnStateReadyCalled;
 
     private View audioTracksContainer;
     private ImageButton audioTracks_BackButton;
@@ -310,6 +310,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     private float lastPlayedTime;
     private float lastPlayedFile;
+    
+    private Player.Listener listener;
+    private Player.Listener listener_size;
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -576,7 +579,6 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-//                player.seekTo(seekBar.getProgress());
                 isSeekbarMoving = false;
 
                 if (isControlsShowing) {
@@ -977,26 +979,6 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void applyZoomToTexture(float scale) {
-        TextureView textureView = findTextureView(playerView);
-        if (textureView != null) {
-            float pivotX = textureView.getWidth() / 2f;
-            float pivotY = textureView.getHeight() / 2f;
-
-            Matrix matrix = new Matrix();
-            matrix.postScale(scale, scale, pivotX, pivotY);
-            textureView.setTransform(matrix);
-        }
-    }
-
-    private TextureView findTextureView(ViewGroup playerView) {
-        for (int i = 0; i < playerView.getChildCount(); i++) {
-            View child = playerView.getChildAt(i);
-            if (child instanceof TextureView) return (TextureView) child;
-        }
-        return null;
-    }
-
 
     private float applyCropMode() {
         int viewWidth = zoomW.getWidth();
@@ -1059,6 +1041,213 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setLayoutParams(params);
     }
 
+    private void player_Listeners() {
+        listener = new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_READY) {
+                    Log.d("statePlay", " Ready ");
+                    onStateReady();
+                }
+
+                if (playbackState == Player.STATE_ENDED) {
+                    playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+                    playerPrefsEditor.apply();
+                    Log.d("statePlay", " Ended " + playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
+
+                if (playbackState == Player.STATE_BUFFERING) {
+                    if (isBuffuringForCurrentMedia) {
+                        buffer_view.setVisibility(View.VISIBLE);
+                    }
+                    Log.d("statePlay", " Buffering ");
+                    Log.d("brightness", "initializePlayer: " + playerPrefs.getFloat("Brightness", 0f));
+                }
+
+                if (playbackState == Player.STATE_IDLE) {
+                    Log.d("statePlay", " Idle ");
+                }
+            }
+
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
+                Log.d("heibeibvi", "onMediaItemTransition: ");
+                mediaItem = newMediaItem;
+                updatePlayerUI(false);
+                if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
+                    onStateReady();
+                }
+            }
+
+            @Override
+            public void onIsPlayingChanged(boolean isPlayingOn) {
+                Log.d("statePlay", "isPlaying: " + isPlayingOn);
+                if (isPlayingOn) {
+                    isPlaying = true;
+                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                } else {
+                    isPlaying = false;
+                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                }
+            }
+
+            @Override
+            public void onPositionDiscontinuity(@NonNull Player.PositionInfo oldPosition, @NonNull Player.PositionInfo newPosition, int reason) {
+                seekbar.setProgress((int) player.getCurrentPosition());
+            }
+
+            @Override
+            public void onCues(@NonNull CueGroup cueGroup) {
+                subtitleView.setCues(cueGroup.cues);
+            }
+
+            @Override
+            public void onPlayerError(@NonNull PlaybackException error) {
+                Log.d("playbackError", "onPlayerError: " + error);
+            }
+        };
+        player.addListener(listener);
+//        player.addAnalyticsListener(new AnalyticsListener() {
+//            @Override
+//            public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
+//                if (decoderName.contains("hardware")) {
+//                    decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
+//                } else {
+//                    decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
+//                }
+//                Log.d("DecoderInfo", "Decoder Name: " + decoderName);
+//            }
+//        });
+    }
+
+    private void onStateReady() {
+        Log.d("heibeibvi", "isfirst: " + isFirstTimeForCurrentMedia);
+
+        if (isFirstTimeForCurrentMedia) {
+            lastPlayedTime = playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+            player.seekTo((long) lastPlayedTime);
+
+            buffer_view.setVisibility(View.GONE);
+            isBuffuringForCurrentMedia = false;
+
+            seekbar.setMax((int) player.getDuration());
+            seekbar.setProgress((int) player.getCurrentPosition());
+            time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
+            time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
+            isFirstTimeForCurrentMedia = false;
+            controlsToast();
+        }
+    }
+
+    private void updatePlayerUI(boolean isNamePresent) {
+        String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
+        ToolbarText.setText(name);
+        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+        buffer_view.setVisibility(View.VISIBLE);
+        isBuffuringForCurrentMedia = true;
+        isFirstTimeForCurrentMedia = true;
+
+        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
+        Log.d("heibeibvi", "updatePlayerUI: ");
+
+        if (isNamePresent) {
+            playMedia();
+        }
+
+        isBackgroundPlay = !isVideoFile;
+
+        Intent intent = new Intent("BG_PLAY_STATUS");
+        intent.putExtra("isBGPlay", isBackgroundPlay);
+        LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
+
+        audioTracksList.clear();
+        audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+        audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
+        audioTracksRecyclerView.setAdapter(audioTracksAdapter);
+
+        subTracksList.clear();
+        subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+        subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
+        subTracksRecyclerView.setAdapter(subTracksAdapter);
+
+        loadAudioTracks();
+        loadSubTracks();
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onVideoSizeChanged(@NonNull VideoSize size) {
+                int width = size.width;
+                int height = size.height;
+
+                videoWidth = width;
+                videoHeight = height;
+
+                if (player.getPlaybackState() == Player.STATE_READY && width != 0 || height != 0) {
+
+                    Log.d("VideoDimensions", "Width: " + width + ", Height: " + height);
+
+                    Log.d("isVideoFile", "listener1: " + isVideoFile);
+
+                    // Rotating logic according to dimensions
+                    isLandscapeVideo = height < width;
+
+                    if (isLandscapeVideo) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+                    Log.d("isVideoFile", "listener2: " + isLandscapeVideo);
+
+                    isLandscapeVideo = false;
+
+                    // Removing the listener after first usage
+                    player.removeListener(this);
+                }
+            }
+        });
+    }
+
+    @OptIn(markerClass = UnstableApi.class)
+    private void initializePlayer() {
+        Log.d("TAG", "initializePlayer: " + player);
+
+        List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
+        mediaItem = mediaItemList.get(currentIndex);
+        player.setMediaItems(mediaItemList, currentIndex, 0);
+        player.prepare();
+
+        playerView.setPlayer(player);
+        playerView.setKeepScreenOn(true);
+        playerView.getSubtitleView().setVisibility(View.GONE);
+        setSubtitleViewStyles();
+
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
+        getWindow().setAttributes(layoutParams);
+
+        Log.d("inittt", "init: " + playerPrefs.getFloat("Brightness", 0f));
+    }
+
+
+    private final ServiceConnection connection = new ServiceConnection() {
+        @OptIn(markerClass = UnstableApi.class)
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
+            PlayerService playerService = binder.getService();
+            player = PlayerService.getPlayer();
+            Log.d("service", "onServiceConnected: YES: " + player);
+
+            if (player != null) {
+                player_Listeners();
+                initializePlayer();
+                updatePlayerUI(true);
+                Log.d("service", "isPlayer: YES");
+            }
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
 
     private void playerControls_Listeners() {
         playButton.setOnClickListener(v -> {
@@ -1077,13 +1266,15 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         prevButton.setOnClickListener(v -> {
+            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.apply();
             player.seekToPreviousMediaItem();
-            initializePlayer(false);
         });
 
         nextButton.setOnClickListener(v -> {
+            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.apply();
             player.seekToNextMediaItem();
-            initializePlayer(false);
         });
 
 
@@ -1329,172 +1520,6 @@ public class PlayerActivity extends AppCompatActivity {
         img.setBackground(drw);
     }
 
-
-    @OptIn(markerClass = UnstableApi.class)
-    private void initializePlayer(boolean isNamePresent) {
-//        this.mediaItem = mediaItem;
-
-        mediaItem = player.getCurrentMediaItem();
-
-        Log.d("TAG", "initializePlayer: " + player);
-
-        String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
-        ToolbarText.setText(name);
-        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-        buffer_view.setVisibility(View.VISIBLE);
-
-        isFirstTimePlaying = true;
-
-        setSubtitleViewStyles();
-
-        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
-
-        playerView.setPlayer(player);
-        playerView.setKeepScreenOn(true);
-        playerView.getSubtitleView().setVisibility(View.GONE);
-
-        if (isNamePresent) {
-//            player.setmed(mediaItem);
-            player.prepare();
-            playMedia();
-        }
-
-
-        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
-        getWindow().setAttributes(layoutParams);
-
-        Log.d("inittt", "init: " + playerPrefs.getFloat("Brightness", 0f));
-        
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onVideoSizeChanged(VideoSize size) {
-                Player.Listener.super.onVideoSizeChanged(size);
-
-                int width = size.width;
-                int height = size.height;
-
-                videoWidth = width;
-                videoHeight = height;
-
-                if (player.getPlaybackState() == Player.STATE_READY && width != 0 || height != 0) {
-
-                    Log.d("VideoDimensions", "Width: " + width + ", Height: " + height);
-
-                    Log.d("isVideoFile", "listener1: " + isVideoFile);
-
-                    // Rotating logic according to dimensions
-                    if (isVideoFile) {
-                        if (height > width) {
-                            isVideoFile = false;
-                        } else {
-                            isVideoFile = true;
-                        }
-                    }
-
-                    Log.d("isVideoFile", "listener2: " + isVideoFile);
-
-                    // Removing the listener after first usage
-                    player.removeListener(this);
-                }
-            }
-        });
-
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onPlaybackStateChanged(int playbackState) {
-                switch (playbackState) {
-                    case Player.STATE_READY:
-                        if (!isSeekbarUpdating) {
-                            handler.post(updateSeekBar);
-                            isSeekbarUpdating = true;
-                        }
-
-                        Log.d("playback544", "onPlaybackStateChanged PLaying: " + isFirstTimePlaying);
-                        if (isFirstTimePlaying) {
-                            Log.d("isVideoFile", "initializePlayer: " + isVideoFile);
-
-                            lastPlayedTime = playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-                            player.seekTo((long) lastPlayedTime);
-
-                            if (isVideoFile) {
-                                isBackgroundPlay = false;
-                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                            }
-                            else {
-                                isBackgroundPlay = true;
-                            }
-
-                            // saveData("isBackgroundPlay", null, isBackgroundPlay);
-                            Intent intent = new Intent("BG_PLAY_STATUS_CHANGED");
-                            intent.putExtra("bgPlay", isBackgroundPlay);
-                            LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
-
-                            audioTracksList.clear();
-                            audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
-                            audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
-                            audioTracksRecyclerView.setAdapter(audioTracksAdapter);
-
-                            subTracksList.clear();
-                            subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
-                            subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
-                            subTracksRecyclerView.setAdapter(subTracksAdapter);
-
-                            loadAudioTracks();
-                            loadSubTracks();
-
-                            buffer_view.setVisibility(View.GONE);
-                            seekbar.setMax((int) player.getDuration());
-                            seekbar.setProgress((int) player.getCurrentPosition());
-                            time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
-                            time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
-                            isFirstTimePlaying = false;
-                            controlsToast();
-                        }
-                        break;
-
-                    case Player.STATE_ENDED:
-                        playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-                        playerPrefsEditor.apply();
-                        player.pause();
-                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                        seekbar.setProgress(0);
-                        player.seekTo(0);
-                        break;
-
-                    case Player.STATE_BUFFERING:
-                        Log.d("brightness", "initializePlayer: " + playerPrefs.getFloat("Brightness", 0f));
-                        break;
-
-                    case Player.STATE_IDLE:
-                        Log.d(TAG, "onPlaybackStateChanged: IDLE");
-                        break;
-                }
-            }
-
-            @Override
-            public void onPlayerError(PlaybackException error) {
-                Log.d("playbackError", "onPlayerError: " + error);
-            }
-
-            @Override
-            public void onCues(@NonNull CueGroup cueGroup) {
-                subtitleView.setCues(cueGroup.cues);
-            }
-        });
-
-        player.addAnalyticsListener(new AnalyticsListener() {
-            @Override
-            public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-                if (decoderName.contains("hardware")) {
-                    decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
-                } else {
-                    decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
-                }
-                Log.d("DecoderInfo", "Decoder Name: " + decoderName);
-            }
-        });
-    }
 
     private void setSubtitleViewStyles() {
         subtitleView.setApplyEmbeddedStyles(true);           // Ignore subtitle file's styles
@@ -1987,22 +2012,14 @@ public class PlayerActivity extends AppCompatActivity {
             public void run() {
                 if (player != null) {
                     if (player.isPlaying() && !f) {
-//                        Log.d("playback544", "run: " + isTime1ButtonClicked + isTime2ButtonClicked);
                         seekbar.setProgress((int) player.getCurrentPosition());
-                    }
-
-                    if (player.isPlaying()) {
-                        isPlaying = true;
-                        playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                    } else {
-                        isPlaying = false;
-                        playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                     }
                 }
                 long dur = player != null ? player.getDuration() : 0;
                 handler.postDelayed(this, dur < 60000 ? 500 : 1000);
             }
         };
+        handler.post(updateSeekBar);
     }
 
     private void controlsToast() {
@@ -2675,33 +2692,6 @@ public class PlayerActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
         getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.toolbar_background_player_black));
     }
-
-    private final ServiceConnection connection = new ServiceConnection() {
-        @OptIn(markerClass = UnstableApi.class)
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
-            PlayerService playerService = binder.getService();
-            player = PlayerService.getPlayer();
-            Log.d("service", "onServiceConnected: YES: " + player);
-
-            if (player != null) {
-//                manager = isVideoFile ? MediaRepository.getInstance().getVideoPlaylistManager() : MediaRepository.getInstance().getAudioPlaylistManager();
-//                manager.setCurrentIndex(currentIndex);
-                List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
-                mediaItem = mediaItemList.get(currentIndex);
-                player.setMediaItems(mediaItemList, currentIndex, 0);
-                initializePlayer(true);
-                Log.d("service", "isPlayer: YES");
-            }
-            isBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            isBound = false;
-        }
-    };
 
     private void updateScreenDimension() {
         screenWidth = getResources().getDisplayMetrics().widthPixels;

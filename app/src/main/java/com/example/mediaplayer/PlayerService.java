@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
@@ -34,9 +35,17 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.session.CommandButton;
 import androidx.media3.session.MediaNotification;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
+import androidx.media3.session.SessionCommand;
+import androidx.media3.session.SessionResult;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.util.List;
 
 @UnstableApi
 public class PlayerService extends MediaSessionService {
@@ -45,19 +54,20 @@ public class PlayerService extends MediaSessionService {
     private static final String CHANNEL_ID = "media_playback_channel";
 
     private static ExoPlayer player;
-    private MediaSessionCompat mediaSessionCompat;
     private String mediaName;
     private final IBinder binder = (IBinder) new LocalBinder();
     MediaSession mediaSession;
 
+    private boolean isForeground;
+
     private boolean isInitialized;
     private String currentMediaPath;
-    private MediaNotification.Provider notificationProvider;
 
-    private static final String ACTION_PLAY_PAUSE = "com.example.mediaplayer.ACTION_PLAY_PAUSE";
-    private static final String ACTION_NEXT = "com.example.mediaplayer.ACTION_NEXT";
-    private static final String ACTION_PREVIOUS = "com.example.mediaplayer.ACTION_PREVIOUS";
-    private static final String ACTION_STOP = "com.example.mediaplayer.ACTION_STOP";
+    private static final String ACTION_LOOP_MODE = "ACTION_LOOP_MODE";
+    private static final String ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE";
+    private static final String ACTION_NEXT = "ACTION_NEXT";
+    private static final String ACTION_PREVIOUS = "ACTION_PREVIOUS";
+    private static final String ACTION_SHUFFLE = "ACTION_SHUFFLE";
 
 
     private PlayerActivity playerActivity;
@@ -77,7 +87,6 @@ public class PlayerService extends MediaSessionService {
         player = new ExoPlayer.Builder(this)
                 .setTrackSelector(new DefaultTrackSelector(this))
                 .build();
-
 
         mediaSession = new MediaSession.Builder(this, player).build();
 
@@ -112,7 +121,7 @@ public class PlayerService extends MediaSessionService {
             }
         });
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS_CHANGED"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS"));
     }
 
 
@@ -133,7 +142,6 @@ public class PlayerService extends MediaSessionService {
 
         if (mediaPath != null) {
             Log.d(TAG, "onStartCommandI: " + player + "  " + currentMediaPath + "  " + mediaPath);
-            startForegroundNotification();
             currentMediaPath = mediaPath;
         }
 
@@ -153,12 +161,10 @@ public class PlayerService extends MediaSessionService {
                 case ACTION_PREVIOUS:
                     player.seekToPreviousMediaItem();
                     break;
-                case ACTION_STOP:
-                    player.stop(); // This will trigger onPlaybackStateChanged -> updateNotification
-                    stopSelf(); // Stop the service completely after stopping playback
+                case ACTION_SHUFFLE:
+                    player.setShuffleModeEnabled(!player.getShuffleModeEnabled());
                     break;
             }
-            updateNotification();
         }
 
         return START_STICKY;
@@ -198,7 +204,9 @@ public class PlayerService extends MediaSessionService {
             return null;
         }
 
-        boolean isPlaying = player.getPlayWhenReady();
+        boolean isPlaying = player.isPlaying();
+        int loopValue = player.getRepeatMode();
+        boolean isShuffling = player.getShuffleModeEnabled();
 
         // Getting current media metadata for notification content
         MediaMetadata mediaMetadata = player.getMediaMetadata();
@@ -218,18 +226,24 @@ public class PlayerService extends MediaSessionService {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
                 .setContentTitle(title)
-                .setContentText(artist);
-//                .setCustomContentView(remoteViews)
-//                .setContentIntent(playPendingIntent) // This is optional if you have a specific action on clicking the notification
+                .setContentText(artist)
+                .setContentIntent(createContentPendingIntent()); // This is optional if you have a specific action on clicking the notification
 
         builder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getPlatformToken()))
                 .setShowActionsInCompactView(0, 1, 2));
 
+        builder.addAction(
+                (loopValue == 0) ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_off, "Shuffle Off", ACTION_LOOP_MODE) :
+                        (loopValue == 1)  ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_one, "Shuffle One", ACTION_LOOP_MODE) :
+                                generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_all, "Shuffle All", ACTION_LOOP_MODE)
+        );
         builder.addAction(generateAction(R.drawable.baseline_skip_previous_24, "Previous", ACTION_PREVIOUS));
-        builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
+        builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_24 : R.drawable.baseline_play_arrow_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
         builder.addAction(generateAction(R.drawable.baseline_skip_next_24, "Next", ACTION_NEXT));
-        builder.addAction(generateAction(R.drawable.baseline_close_24, "Stop", ACTION_STOP));
+        builder.addAction(
+                (isShuffling) ? generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_on, "Shuffle Enable", ACTION_SHUFFLE) :
+                        generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_off, "Shuffle Disable", ACTION_SHUFFLE));
 
 //        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
         return builder.build();
@@ -244,14 +258,41 @@ public class PlayerService extends MediaSessionService {
     }
 
     private void updateNotification() {
-        Notification notification = createNotification();
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (!isForeground || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
+        Notification notification = createNotification();
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
         notificationManager.notify(NOTIFICATION_ID, notification);
+    }
+
+    private void startForegroundNotification() {
+        if (mediaSession == null) {
+            mediaSession = new MediaSession.Builder(this, player).build();
+        }
+
+        Notification notification = createNotification();
+
+        if (notification == null) {
+            stopForegroundNotification();
+            Log.w(TAG, "Notification could not be created, stopping foreground if active.");
+            return;
+        }
+
+        isForeground = true;
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private void stopForegroundNotification() {
+        isForeground = false;
+        stopForeground(Service.STOP_FOREGROUND_REMOVE);
+
+        if (mediaSession != null) {
+            mediaSession.release();
+            mediaSession = null;
+        }
     }
 
     private void createNotificationChannel() {
@@ -266,22 +307,6 @@ public class PlayerService extends MediaSessionService {
                 notificationManager.createNotificationChannel(channel);
             }
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (player != null) {
-            player.release();
-        }
-
-        if (mediaSession != null) {
-            mediaSession.release();
-            mediaSession = null;
-        }
-
-        stopForegroundNotification();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
     }
 
 
@@ -302,32 +327,38 @@ public class PlayerService extends MediaSessionService {
     private final BroadcastReceiver bgPlayReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean bgPlay = intent.getBooleanExtra("bgPlay", false);
-            if (bgPlay) {
-                startForegroundNotification();
-            }
-            else {
-                stopForegroundNotification();
-            }
+            boolean isBGPlay = intent.getBooleanExtra("isBGPlay", false);
+            Log.d("isBGPLAY", "onReceive: " + isBGPlay);
+            if (isBGPlay) startForegroundNotification();
+            else stopForegroundNotification();
         }
     };
 
-    private void startForegroundNotification() {
-        Notification notification = createNotification();
 
-        if (notification == null) {
-            stopForeground(true); // Remove any existing notification and stop foreground status
-            Log.w(TAG, "Notification could not be created, stopping foreground if active.");
-            return;
+    private PendingIntent createContentPendingIntent() {
+        Intent contentIntent = new Intent(this, PlayerActivity.class);
+        contentIntent.setAction(Intent.ACTION_MAIN);
+        contentIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        // FLAG_IMMUTABLE is crucial for Android 12+
+        return PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (player != null) {
+            player.release();
         }
 
-        startForeground(NOTIFICATION_ID, notification);
-    }
+        if (mediaSession != null) {
+            mediaSession.release();
+            mediaSession = null;
+        }
 
-    private void stopForegroundNotification() {
-        stopForeground(Service.STOP_FOREGROUND_REMOVE);
+        stopForegroundNotification();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
     }
-
 
     public void stopService() {
         stopSelf();
