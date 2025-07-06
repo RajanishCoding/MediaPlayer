@@ -1,5 +1,6 @@
 package com.example.mediaplayer;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -34,6 +36,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -53,6 +56,7 @@ import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
+import androidx.media3.common.Timeline;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
@@ -135,7 +139,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isBufferingFinished;
     private boolean isVideoFile;
-    private boolean isLandscapeVideo;
+    private boolean isOrientationChangedOnReady;
     private boolean isBackgroundPlay;
 
     private SharedPreferences playerPrefs;
@@ -307,6 +311,7 @@ public class PlayerActivity extends AppCompatActivity {
     private List<MediaItem> videoList;
     private PlaylistManager manager;
     private MediaItem mediaItem;
+    private MediaItem oldMediaItem;
 
     private float lastPlayedTime;
     private float lastPlayedFile;
@@ -1041,84 +1046,6 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setLayoutParams(params);
     }
 
-    private void player_Listeners() {
-        listener = new Player.Listener() {
-            @Override
-            public void onPlaybackStateChanged(int playbackState) {
-                if (playbackState == Player.STATE_READY) {
-                    Log.d("statePlay", " Ready ");
-                    onStateReady();
-                }
-
-                if (playbackState == Player.STATE_ENDED) {
-                    playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-                    playerPrefsEditor.apply();
-                    Log.d("statePlay", " Ended " + playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
-
-                if (playbackState == Player.STATE_BUFFERING) {
-                    if (isBuffuringForCurrentMedia) {
-                        buffer_view.setVisibility(View.VISIBLE);
-                    }
-                    Log.d("statePlay", " Buffering ");
-                    Log.d("brightness", "initializePlayer: " + playerPrefs.getFloat("Brightness", 0f));
-                }
-
-                if (playbackState == Player.STATE_IDLE) {
-                    Log.d("statePlay", " Idle ");
-                }
-            }
-
-            @Override
-            public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
-                Log.d("heibeibvi", "onMediaItemTransition: ");
-                mediaItem = newMediaItem;
-                updatePlayerUI(false);
-                if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
-                    onStateReady();
-                }
-            }
-
-            @Override
-            public void onIsPlayingChanged(boolean isPlayingOn) {
-                Log.d("statePlay", "isPlaying: " + isPlayingOn);
-                if (isPlayingOn) {
-                    isPlaying = true;
-                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                } else {
-                    isPlaying = false;
-                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
-                }
-            }
-
-            @Override
-            public void onPositionDiscontinuity(@NonNull Player.PositionInfo oldPosition, @NonNull Player.PositionInfo newPosition, int reason) {
-                seekbar.setProgress((int) player.getCurrentPosition());
-            }
-
-            @Override
-            public void onCues(@NonNull CueGroup cueGroup) {
-                subtitleView.setCues(cueGroup.cues);
-            }
-
-            @Override
-            public void onPlayerError(@NonNull PlaybackException error) {
-                Log.d("playbackError", "onPlayerError: " + error);
-            }
-        };
-        player.addListener(listener);
-//        player.addAnalyticsListener(new AnalyticsListener() {
-//            @Override
-//            public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-//                if (decoderName.contains("hardware")) {
-//                    decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
-//                } else {
-//                    decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
-//                }
-//                Log.d("DecoderInfo", "Decoder Name: " + decoderName);
-//            }
-//        });
-    }
-
     private void onStateReady() {
         Log.d("heibeibvi", "isfirst: " + isFirstTimeForCurrentMedia);
 
@@ -1171,36 +1098,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         loadAudioTracks();
         loadSubTracks();
-
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onVideoSizeChanged(@NonNull VideoSize size) {
-                int width = size.width;
-                int height = size.height;
-
-                videoWidth = width;
-                videoHeight = height;
-
-                if (player.getPlaybackState() == Player.STATE_READY && width != 0 || height != 0) {
-
-                    Log.d("VideoDimensions", "Width: " + width + ", Height: " + height);
-
-                    Log.d("isVideoFile", "listener1: " + isVideoFile);
-
-                    // Rotating logic according to dimensions
-                    isLandscapeVideo = height < width;
-
-                    if (isLandscapeVideo) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
-                    Log.d("isVideoFile", "listener2: " + isLandscapeVideo);
-
-                    isLandscapeVideo = false;
-
-                    // Removing the listener after first usage
-                    player.removeListener(this);
-                }
-            }
-        });
     }
 
     @OptIn(markerClass = UnstableApi.class)
@@ -1249,6 +1146,129 @@ public class PlayerActivity extends AppCompatActivity {
         }
     };
 
+
+    private void player_Listeners() {
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_READY) {
+                    Log.d("statePlay", " Ready ");
+                    onStateReady();
+                }
+
+                if (playbackState == Player.STATE_ENDED) {
+                    Log.d("statePlay", " Ended " + playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
+
+                if (playbackState == Player.STATE_BUFFERING) {
+                    if (isBuffuringForCurrentMedia) {
+                        buffer_view.setVisibility(View.VISIBLE);
+                    }
+                    Log.d("statePlay", " Buffering ");
+                    Log.d("brightness", "initializePlayer: " + playerPrefs.getFloat("Brightness", 0f));
+                }
+
+                if (playbackState == Player.STATE_IDLE) {
+                    Log.d("statePlay", " Idle ");
+                }
+            }
+
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
+                Log.d("heibeibvi", "onMediaItemTransition: ");
+                mediaItem = newMediaItem;
+                isOrientationChangedOnReady = false;
+                updatePlayerUI(false);
+                if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
+                    onStateReady();
+                }
+            }
+
+            @Override
+            public void onIsPlayingChanged(boolean isPlayingOn) {
+                Log.d("statePlay", "isPlaying: " + isPlayingOn);
+                if (isPlayingOn) {
+                    isPlaying = true;
+                    playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
+                } else {
+                    isPlaying = false;
+                    playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
+                }
+            }
+
+            @Override
+            public void onPositionDiscontinuity(@NonNull Player.PositionInfo oldPosition, @NonNull Player.PositionInfo newPosition, int reason) {
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) seekbar.setProgress((int) player.getCurrentPosition());
+
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    MediaItem oldMediaItem = oldPosition.mediaItem;
+                    if (oldMediaItem != null){
+                        Log.d("onPosDIs", "onPositionDiscontinuity: " + oldMediaItem.mediaMetadata.title);
+                        playerPrefsEditor.putFloat("lastTime : " + oldMediaItem.requestMetadata.mediaUri, 0);
+                        playerPrefsEditor.apply();
+                    }
+                }
+
+                if (reason == Player.DISCONTINUITY_REASON_SKIP) {
+                    MediaItem oldMediaItem = oldPosition.mediaItem;
+                    if (oldMediaItem != null) {
+                        Log.d("onPosDIs", "onPositionDiscontinuity: " +  oldMediaItem.mediaMetadata.title + oldPosition.positionMs);
+                        playerPrefsEditor.putFloat("lastTime : " + oldMediaItem.requestMetadata.mediaUri, oldPosition.positionMs);
+                        playerPrefsEditor.apply();
+                    }
+                }
+            }
+
+            @Override
+            public void onCues(@NonNull CueGroup cueGroup) {
+                subtitleView.setCues(cueGroup.cues);
+            }
+
+            @Override
+            public void onPlayerError(@NonNull PlaybackException error) {
+                Log.d("playbackError", "onPlayerError: " + error);
+            }
+        });
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onVideoSizeChanged(@NonNull VideoSize size) {
+                int width = size.width;
+                int height = size.height;
+
+                videoWidth = width;
+                videoHeight = height;
+
+                if (!isOrientationChangedOnReady && width != 0 && height != 0) {
+
+                    Log.d("VideoDimensions", "Width: " + width + ", Height: " + height);
+
+                    Log.d("isVideoFile", "listener1: " + isVideoFile);
+
+                    // Rotating logic according to dimensions
+                    boolean isLandscapeVideo = height < width;
+
+                    if (isLandscapeVideo) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    else setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+
+                    Log.d("isVideoFile", "listener2: " + isLandscapeVideo);
+                    isOrientationChangedOnReady = true;
+                }
+            }
+        });
+
+//        player.addAnalyticsListener(new AnalyticsListener() {
+//            @Override
+//            public void onVideoDecoderInitialized(EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) {
+//                if (decoderName.contains("hardware")) {
+//                    decoderButton.setImageResource(R.drawable.sw); // Software decoder is being used
+//                } else {
+//                    decoderButton.setImageResource(R.drawable.hw); // Hardware decoder is being used
+//                }
+//                Log.d("DecoderInfo", "Decoder Name: " + decoderName);
+//            }
+//        });
+    }
+
     private void playerControls_Listeners() {
         playButton.setOnClickListener(v -> {
             if (player != null) {
@@ -1290,10 +1310,10 @@ public class PlayerActivity extends AppCompatActivity {
 
         rotateButton.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
                 Log.d(TAG, "onRotate: " + "Landscape");
             } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
                 Log.d(TAG, "onRotate: " + "Portrait");
             }
             isOrientation = true;
@@ -1438,12 +1458,12 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void rotateExpand_Listeners() {
-        rotateButton.setOnClickListener(v -> {
+        rotateExpandB.setOnClickListener(v -> {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
                 Log.d(TAG, "onRotate: " + "Landscape");
             } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
                 Log.d(TAG, "onRotate: " + "Portrait");
             }
             isOrientation = true;
@@ -2348,6 +2368,7 @@ public class PlayerActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         updateScreenDimension();
+        updateDisplayOrientationText();
 
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Log.d("Orientation", "Changed to Landscape");
@@ -2359,6 +2380,30 @@ public class PlayerActivity extends AppCompatActivity {
         }
 
         Log.d(TAG, "onConfigurationChanged: " + getResources().getDisplayMetrics().heightPixels + " " + getResources().getDisplayMetrics().widthPixels);
+    }
+
+    private void updateDisplayOrientationText() {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        String orientationStatus = "";
+
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                orientationStatus = "Portrait (Upright)";
+                break;
+            case Surface.ROTATION_90:
+                orientationStatus = "Landscape (Left, Home button on right)";
+                break;
+            case Surface.ROTATION_180:
+                orientationStatus = "Portrait (Upside-down)";
+                break;
+            case Surface.ROTATION_270:
+                orientationStatus = "Landscape (Right, Home button on left)";
+                break;
+            default:
+                orientationStatus = "Unknown";
+                break;
+        }
+        Toast.makeText(this, orientationStatus, Toast.LENGTH_SHORT).show();
     }
 
     @Override

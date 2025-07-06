@@ -444,19 +444,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_begin="20dp" />
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_begin="20dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
@@ -872,36 +859,36 @@
                         android:visibility="visible" />
                 </LinearLayout>
 
-                <!-- 2 Sleep-->
-<!--                <LinearLayout-->
-<!--                    android:id="@+id/sleep_expand"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:background="@drawable/ripple_player_expand"-->
-<!--                    android:clickable="true"-->
-<!--                    android:focusable="true"-->
-<!--                    android:orientation="horizontal"-->
-<!--                    android:gravity="center">-->
+                <!-- 2 BG Play-->
+                <LinearLayout
+                    android:id="@+id/bgplay_expand"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ripple_player_expand"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
-<!--                    <ImageButton-->
-<!--                        android:layout_width="50dp"-->
-<!--                        android:layout_height="50dp"-->
-<!--                        android:background="@color/transparent"-->
-<!--                        android:src="@drawable/rounded_timer"-->
-<!--                        app:layout_constraintStart_toStartOf="parent"-->
-<!--                        app:layout_constraintBottom_toBottomOf="parent"-->
-<!--                        app:layout_constraintTop_toTopOf="parent"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:visibility="visible" />-->
+                    <ImageButton
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/round_headphones"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_weight="1"
+                        android:visibility="visible" />
 
-<!--                    <TextView-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        style="@style/TextStyleExpandView"-->
-<!--                        android:text="Sleep Timer"-->
-<!--                        android:textAlignment="center"-->
-<!--                        android:layout_weight="3"-->
-<!--                        android:visibility="visible" />-->
-<!--                </LinearLayout>-->
+                    <TextView
+                        android:layout_height="wrap_content"
+                        style="@style/TextStyleExpandView"
+                        android:text="Background Play"
+                        android:textAlignment="center"
+                        android:layout_weight="3"
+                        android:visibility="visible" />
+                </LinearLayout>
 
                 <!-- 3 Speed-->
                 <LinearLayout
