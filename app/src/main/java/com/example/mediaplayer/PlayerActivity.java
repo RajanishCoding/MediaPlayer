@@ -83,7 +83,7 @@ import java.util.Locale;
 @UnstableApi
 public class PlayerActivity extends AppCompatActivity {
     private static final String TAG = "tag";
-    private static ExoPlayer player;  // Make the player instance static
+    private ExoPlayer player;  // Make the player instance static
 
     private TextView time1;
     private TextView time2;
@@ -313,7 +313,7 @@ public class PlayerActivity extends AppCompatActivity {
     private MediaItem mediaItem;
     private MediaItem oldMediaItem;
 
-    private float lastPlayedTime;
+    private long lastPlayedTime;
     private float lastPlayedFile;
     
     private Player.Listener listener;
@@ -521,6 +521,9 @@ public class PlayerActivity extends AppCompatActivity {
 
         isTime1ButtonClicked = playerPrefs.getBoolean("isTime1Clicked", false);
         isTime2ButtonClicked = playerPrefs.getBoolean("isTime2Clicked", false);
+
+        loopValue = playerPrefs.getInt("loopValue", 0);
+        isShuffled = playerPrefs.getBoolean("isShuffle", false);
 
 
         Intent intent = getIntent();
@@ -883,9 +886,9 @@ public class PlayerActivity extends AppCompatActivity {
 
                     if (Math.abs(totalScrollX) > 20) {
                         if (totalScrollX > 0) {
-                            performSeekByTouch(-1000, false);
+                            performSeekByTouch(-500, false);
                         } else {
-                            performSeekByTouch(1000, false);
+                            performSeekByTouch(500, false);
                         }
                         totalScrollX = 0;
                     }
@@ -1012,7 +1015,6 @@ public class PlayerActivity extends AppCompatActivity {
         return scale;
     }
 
-
     private void applyResizeFitMode() {
         playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT); // Always FIT
 
@@ -1050,8 +1052,8 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d("heibeibvi", "isfirst: " + isFirstTimeForCurrentMedia);
 
         if (isFirstTimeForCurrentMedia) {
-            lastPlayedTime = playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-            player.seekTo((long) lastPlayedTime);
+            lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+            player.seekTo(lastPlayedTime);
 
             buffer_view.setVisibility(View.GONE);
             isBuffuringForCurrentMedia = false;
@@ -1080,6 +1082,8 @@ public class PlayerActivity extends AppCompatActivity {
             playMedia();
         }
 
+        updateExpandViews();
+
         isBackgroundPlay = !isVideoFile;
 
         Intent intent = new Intent("BG_PLAY_STATUS");
@@ -1100,6 +1104,28 @@ public class PlayerActivity extends AppCompatActivity {
         loadSubTracks();
     }
 
+    private void updateExpandViews() {
+        if (loopValue == 0) {
+            loopExpandImg.setImageResource(R.drawable.round_repeat);
+            setExpandViewColors(loopExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+        }
+        else if (loopValue == 1) {
+            loopExpandImg.setImageResource(R.drawable.round_repeat_one);
+            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+        else {
+            loopExpandImg.setImageResource(R.drawable.round_repeat);
+            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+
+        if (isShuffled) {
+            setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+        else {
+            setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+        }
+    }
+
     @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
@@ -1108,6 +1134,9 @@ public class PlayerActivity extends AppCompatActivity {
         mediaItem = mediaItemList.get(currentIndex);
         player.setMediaItems(mediaItemList, currentIndex, 0);
         player.prepare();
+
+        player.setRepeatMode(loopValue);
+        player.setShuffleModeEnabled(isShuffled);
 
         playerView.setPlayer(player);
         playerView.setKeepScreenOn(true);
@@ -1128,7 +1157,7 @@ public class PlayerActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
             PlayerService playerService = binder.getService();
-            player = PlayerService.getPlayer();
+            player = playerService.getPlayer();
             Log.d("service", "onServiceConnected: YES: " + player);
 
             if (player != null) {
@@ -1157,7 +1186,7 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 if (playbackState == Player.STATE_ENDED) {
-                    Log.d("statePlay", " Ended " + playerPrefs.getFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
+                    Log.d("statePlay", " Ended " + playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
 
                 if (playbackState == Player.STATE_BUFFERING) {
                     if (isBuffuringForCurrentMedia) {
@@ -1203,16 +1232,7 @@ public class PlayerActivity extends AppCompatActivity {
                     MediaItem oldMediaItem = oldPosition.mediaItem;
                     if (oldMediaItem != null){
                         Log.d("onPosDIs", "onPositionDiscontinuity: " + oldMediaItem.mediaMetadata.title);
-                        playerPrefsEditor.putFloat("lastTime : " + oldMediaItem.requestMetadata.mediaUri, 0);
-                        playerPrefsEditor.apply();
-                    }
-                }
-
-                if (reason == Player.DISCONTINUITY_REASON_SKIP) {
-                    MediaItem oldMediaItem = oldPosition.mediaItem;
-                    if (oldMediaItem != null) {
-                        Log.d("onPosDIs", "onPositionDiscontinuity: " +  oldMediaItem.mediaMetadata.title + oldPosition.positionMs);
-                        playerPrefsEditor.putFloat("lastTime : " + oldMediaItem.requestMetadata.mediaUri, oldPosition.positionMs);
+                        playerPrefsEditor.putLong("lastTime : " + oldMediaItem.requestMetadata.mediaUri, 0);
                         playerPrefsEditor.apply();
                     }
                 }
@@ -1286,13 +1306,13 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         prevButton.setOnClickListener(v -> {
-            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
             player.seekToPreviousMediaItem();
         });
 
         nextButton.setOnClickListener(v -> {
-            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
             player.seekToNextMediaItem();
         });
@@ -1457,26 +1477,48 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void rotateExpand_Listeners() {
-        rotateExpandB.setOnClickListener(v -> {
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                Log.d(TAG, "onRotate: " + "Landscape");
-            } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                Log.d(TAG, "onRotate: " + "Portrait");
+    private void muteExpand_Listeners() {
+        muteExpandB.setOnClickListener(v -> {
+            if (isMuted) {
+                setExpandViewColors(muteExpandImg, expandButtonsTint0, expandButtonsDrawable0);
             }
-            isOrientation = true;
+            else {
+                setExpandViewColors(muteExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            }
+            isMuted = !isMuted;
         });
     }
 
-    private void lockExpand_Listeners() {
-        lockExpandB.setOnClickListener(v -> {
-            isScreenLocked = true;
-            hideControls();
-            removeControlsRunnable();
-            showLockButton();
-            lockScreenToast();
+    private void loopExpand_Listeners() {
+        loopExpandB.setOnClickListener(v -> {
+            if (loopValue == 0) {
+                setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+                loopValue = 2;
+            }
+            else if (loopValue == 2) {
+                loopExpandImg.setImageResource(R.drawable.round_repeat_one);
+                setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+                loopValue = 1;
+            }
+            else {
+                loopExpandImg.setImageResource(R.drawable.round_repeat);
+                setExpandViewColors(loopExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+                loopValue = 0;
+            }
+            player.setRepeatMode(loopValue);
+        });
+    }
+
+    private void shuffleExpand_Listeners() {
+        shuffleExpandB.setOnClickListener(v -> {
+            if (isShuffled) {
+                setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+            }
+            else {
+                setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            }
+            isShuffled = !isShuffled;
+            player.setShuffleModeEnabled(isShuffled);
         });
     }
 
@@ -1492,46 +1534,26 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void shuffleExpand_Listeners() {
-        shuffleExpandB.setOnClickListener(v -> {
-            if (isShuffled) {
-                setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-            }
-            else {
-                setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-            }
-            isShuffled = !isShuffled;
+    private void lockExpand_Listeners() {
+        lockExpandB.setOnClickListener(v -> {
+            isScreenLocked = true;
+            hideControls();
+            removeControlsRunnable();
+            showLockButton();
+            lockScreenToast();
         });
     }
 
-    private void loopExpand_Listeners() {
-        loopExpandB.setOnClickListener(v -> {
-            if (loopValue == 0) {
-                setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-                loopValue = 1;
+    private void rotateExpand_Listeners() {
+        rotateExpandB.setOnClickListener(v -> {
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                Log.d(TAG, "onRotate: " + "Landscape");
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                Log.d(TAG, "onRotate: " + "Portrait");
             }
-            else if (loopValue == 1) {
-                loopExpandImg.setImageResource(R.drawable.round_repeat_one);
-                setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-                loopValue = 2;
-            }
-            else {
-                loopExpandImg.setImageResource(R.drawable.round_repeat);
-                setExpandViewColors(loopExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-                loopValue = 0;
-            }
-        });
-    }
-
-    private void muteExpand_Listeners() {
-        muteExpandB.setOnClickListener(v -> {
-            if (isMuted) {
-                setExpandViewColors(muteExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-            }
-            else {
-                setExpandViewColors(muteExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-            }
-            isMuted = !isMuted;
+            isOrientation = true;
         });
     }
 
@@ -2321,7 +2343,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            playerPrefsEditor.putFloat("lastTime : " + mediaItem.requestMetadata.mediaUri, ((float) player.getCurrentPosition()));
+            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
 
             if (player.isPlaying() && !isBackgroundPlay) {
@@ -2354,6 +2376,10 @@ public class PlayerActivity extends AppCompatActivity {
             unbindService(connection);
             isBound = false;
         }
+
+        playerPrefsEditor.putInt("loopValue", loopValue);
+        playerPrefsEditor.putBoolean("isShuffle", isShuffled);
+        playerPrefsEditor.apply();
 
         if (isFinishing() && !isBackgroundPlay) {
             if (player != null) {

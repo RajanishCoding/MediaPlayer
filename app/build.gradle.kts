@@ -95,6 +95,8 @@ dependencies {
     implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
 //    implementation("com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS")
 
+//    implementation(libs.androidx.media3.decoder.ffmpeg)
+
 //    implementation("com.github.Arthenica:ffmpeg-kit:5.1.LTS")
 //    implementation("com.github.Arthenica:ffmpeg-kit-full:4.5.LTS")
 //    implementation("com.github.Arthenica:ffmpeg-kit-full-gpl:5.1.LTS")

@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -53,7 +54,7 @@ public class PlayerService extends MediaSessionService {
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "media_playback_channel";
 
-    private static ExoPlayer player;
+    private ExoPlayer player;
     private String mediaName;
     private final IBinder binder = (IBinder) new LocalBinder();
     MediaSession mediaSession;
@@ -63,11 +64,17 @@ public class PlayerService extends MediaSessionService {
     private boolean isInitialized;
     private String currentMediaPath;
 
+    private SharedPreferences playerPrefs;
+    private SharedPreferences.Editor playerPrefsEditor;
+
     private static final String ACTION_LOOP_MODE = "ACTION_LOOP_MODE";
     private static final String ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE";
     private static final String ACTION_NEXT = "ACTION_NEXT";
     private static final String ACTION_PREVIOUS = "ACTION_PREVIOUS";
     private static final String ACTION_SHUFFLE = "ACTION_SHUFFLE";
+
+    private int loopValue;
+    private boolean isShuffled;
 
 
     private PlayerActivity playerActivity;
@@ -82,13 +89,17 @@ public class PlayerService extends MediaSessionService {
         createNotificationChannel();
 
         DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
-                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
 
         player = new ExoPlayer.Builder(this)
                 .setTrackSelector(new DefaultTrackSelector(this))
+//                .setRenderersFactory(renderersFactory)
                 .build();
 
         mediaSession = new MediaSession.Builder(this, player).build();
+
+        playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefsEditor = playerPrefs.edit();
 
         player.addListener(new Player.Listener() {
             @Override
@@ -112,6 +123,18 @@ public class PlayerService extends MediaSessionService {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 updateNotification();
+            }
+
+            @Override
+            public void onPositionDiscontinuity(@NonNull Player.PositionInfo oldPosition, @NonNull Player.PositionInfo newPosition, int reason) {
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    MediaItem oldMediaItem = oldPosition.mediaItem;
+                    if (oldMediaItem != null){
+                        Log.d("onPosDIs", "onPositionDiscontinuity: " + oldMediaItem.mediaMetadata.title);
+                        playerPrefsEditor.putLong("lastTime : " + oldMediaItem.requestMetadata.mediaUri, 0);
+                        playerPrefsEditor.apply();
+                    }
+                }
             }
 
             @Override
@@ -155,47 +178,42 @@ public class PlayerService extends MediaSessionService {
                         player.play();
                     }
                     break;
+
                 case ACTION_NEXT:
+                    playerPrefsEditor.putLong("lastTime : " + player.getCurrentMediaItem().requestMetadata.mediaUri, player.getCurrentPosition());
+                    playerPrefsEditor.apply();
                     player.seekToNextMediaItem();
                     break;
+
                 case ACTION_PREVIOUS:
+                    playerPrefsEditor.putLong("lastTime : " + player.getCurrentMediaItem().requestMetadata.mediaUri, player.getCurrentPosition());
+                    playerPrefsEditor.apply();
                     player.seekToPreviousMediaItem();
                     break;
+
+                case ACTION_LOOP_MODE:
+                    loopValue = player.getRepeatMode();
+                    if (loopValue == 0) {
+                        loopValue = 2;
+                        player.setRepeatMode(loopValue);
+                    }
+                    else if (loopValue == 2) {
+                        loopValue = 1;
+                        player.setRepeatMode(loopValue);
+                    }
+                    else {
+                        loopValue = 0;
+                        player.setRepeatMode(loopValue);
+                    }
+
                 case ACTION_SHUFFLE:
-                    player.setShuffleModeEnabled(!player.getShuffleModeEnabled());
+                    isShuffled = !player.getShuffleModeEnabled();
+                    player.setShuffleModeEnabled(isShuffled);
                     break;
             }
         }
 
         return START_STICKY;
-    }
-
-
-    @Override
-    public void onTaskRemoved(@Nullable Intent rootIntent) {
-        if (!player.getPlayWhenReady()
-                || player.getMediaItemCount() == 0
-                || player.getPlaybackState() == Player.STATE_ENDED) {
-
-            if (player != null) {
-                player.release();
-            }
-
-            if (mediaSession != null) {
-                mediaSession.release();
-                mediaSession = null;
-            }
-
-            stopForegroundNotification();
-            stopSelf();
-        }
-    }
-
-
-    private void initializePlayer(String mediaPath) {
-        isInitialized = true;
-        Log.d(TAG, "initializePlayerS: YES");
-
     }
 
 
@@ -205,8 +223,8 @@ public class PlayerService extends MediaSessionService {
         }
 
         boolean isPlaying = player.isPlaying();
-        int loopValue = player.getRepeatMode();
-        boolean isShuffling = player.getShuffleModeEnabled();
+        loopValue = player.getRepeatMode();
+        isShuffled = player.getShuffleModeEnabled();
 
         // Getting current media metadata for notification content
         MediaMetadata mediaMetadata = player.getMediaMetadata();
@@ -233,16 +251,17 @@ public class PlayerService extends MediaSessionService {
                 .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getPlatformToken()))
                 .setShowActionsInCompactView(0, 1, 2));
 
-        builder.addAction(
-                (loopValue == 0) ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_off, "Shuffle Off", ACTION_LOOP_MODE) :
-                        (loopValue == 1)  ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_one, "Shuffle One", ACTION_LOOP_MODE) :
-                                generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_all, "Shuffle All", ACTION_LOOP_MODE)
-        );
         builder.addAction(generateAction(R.drawable.baseline_skip_previous_24, "Previous", ACTION_PREVIOUS));
         builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_24 : R.drawable.baseline_play_arrow_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
         builder.addAction(generateAction(R.drawable.baseline_skip_next_24, "Next", ACTION_NEXT));
+
         builder.addAction(
-                (isShuffling) ? generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_on, "Shuffle Enable", ACTION_SHUFFLE) :
+                (loopValue == 0) ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_off, "Shuffle Off", ACTION_LOOP_MODE) :
+                        (loopValue == 1)  ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_one, "Shuffle One", ACTION_LOOP_MODE) :
+                                generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_all, "Shuffle All", ACTION_LOOP_MODE));
+
+        builder.addAction(
+                (isShuffled) ? generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_on, "Shuffle Enable", ACTION_SHUFFLE) :
                         generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_off, "Shuffle Disable", ACTION_SHUFFLE));
 
 //        builder.setProgress((int) player.getDuration(), (int) player.getCurrentPosition(), false);
@@ -347,6 +366,7 @@ public class PlayerService extends MediaSessionService {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
         if (player != null) {
             player.release();
         }
@@ -356,15 +376,21 @@ public class PlayerService extends MediaSessionService {
             mediaSession = null;
         }
 
+        playerPrefsEditor.putInt("loopValue", loopValue);
+        playerPrefsEditor.putBoolean("isShuffle", isShuffled);
+        playerPrefsEditor.apply();
+
         stopForegroundNotification();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(bgPlayReceiver);
     }
 
-    public void stopService() {
+
+    @Override
+    public void onTaskRemoved(@Nullable Intent rootIntent) {
         stopSelf();
     }
 
-    public static ExoPlayer getPlayer(){
+    public ExoPlayer getPlayer(){
         if (player != null){
             return player;
         }
