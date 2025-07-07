@@ -2394,7 +2394,6 @@ public class PlayerActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         updateScreenDimension();
-        updateDisplayOrientationText();
 
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Log.d("Orientation", "Changed to Landscape");
@@ -2408,29 +2407,6 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d(TAG, "onConfigurationChanged: " + getResources().getDisplayMetrics().heightPixels + " " + getResources().getDisplayMetrics().widthPixels);
     }
 
-    private void updateDisplayOrientationText() {
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        String orientationStatus = "";
-
-        switch (rotation) {
-            case Surface.ROTATION_0:
-                orientationStatus = "Portrait (Upright)";
-                break;
-            case Surface.ROTATION_90:
-                orientationStatus = "Landscape (Left, Home button on right)";
-                break;
-            case Surface.ROTATION_180:
-                orientationStatus = "Portrait (Upside-down)";
-                break;
-            case Surface.ROTATION_270:
-                orientationStatus = "Landscape (Right, Home button on left)";
-                break;
-            default:
-                orientationStatus = "Unknown";
-                break;
-        }
-        Toast.makeText(this, orientationStatus, Toast.LENGTH_SHORT).show();
-    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

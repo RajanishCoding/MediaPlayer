@@ -16,6 +16,7 @@ public class Video {
     private String lastPlayedTime;
     private Bitmap thumbnailUrl;
     private boolean isVideo;
+    public boolean isSelected;
 
     public Video(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
         this.name = name;
@@ -72,6 +73,13 @@ public class Video {
         return size != null ? size : "0";
     }
 
+    public void setIsSelected(boolean isSelected) {
+        this.isSelected = isSelected;
+    }
+
+    public boolean getIsSelected() {
+        return isSelected;
+    }
 
     public boolean isVideo() {
         return isVideo;

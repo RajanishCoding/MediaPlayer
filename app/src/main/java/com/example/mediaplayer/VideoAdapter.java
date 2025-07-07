@@ -6,12 +6,14 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -27,6 +29,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -46,6 +49,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private boolean fps;
     private boolean size = true;
     private boolean date = true;
+
+    private boolean isSelectionMode;
 
 
     public VideoAdapter(Context context, List<Video> mediaList) {
@@ -81,11 +86,37 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
     }
 
+    @NonNull
     @Override
     public VideoViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_layout, parent, false);
         return new VideoViewHolder(view);
+    }
+
+    public static class VideoViewHolder extends RecyclerView.ViewHolder {
+        ImageView thumbnail;
+        TextView name;
+        TextView path;
+        TextView dateAdded;
+        TextView duration1;
+        TextView duration2;
+        TextView resolutionFrame;
+        TextView size;
+        ImageButton moreB;
+
+        public VideoViewHolder(View item_layout) {
+            super(item_layout);
+            thumbnail = item_layout.findViewById(R.id.thumbnail);
+            name = item_layout.findViewById(R.id.name);
+            path = item_layout.findViewById(R.id.path);
+            dateAdded = item_layout.findViewById(R.id.t4_date);
+            duration1 = item_layout.findViewById(R.id.duration);
+            duration2 = item_layout.findViewById(R.id.t1_duration);
+            resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
+            size = item_layout.findViewById(R.id.t3_size);
+            moreB = item_layout.findViewById(R.id.moreB_item);
+        }
     }
 
     @Override
@@ -95,6 +126,10 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
 
+        Drawable selectedColor = ContextCompat.getDrawable(holder.itemView.getContext(), R.drawable.shape_list_color_selected);
+        Drawable unselectedColor = ContextCompat.getDrawable(holder.itemView.getContext(), R.drawable.selector_list_view);
+
+        holder.itemView.setBackground(media.isSelected ? selectedColor : unselectedColor);
 
 //        holder.thumbnail.setImageBitmap(media.getThumbnail());
 //        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
@@ -102,122 +137,10 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         setVisibilities(holder);
 
         if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
-            // MediaExtractor Thread
-//            new Thread(() -> {
-//                MediaExtractor extractor = new MediaExtractor();
-//                File file = new File(media.getPath());
-//
-//                try {
-//                    extractor.setDataSource(media.getPath());
-//
-//                    long sizeInBytes = file.length();
-//                    String size = getFormattedFileSize(sizeInBytes);
-//
-//                    // Iterate through tracks
-//                    for (int i = 0; i < extractor.getTrackCount(); i++) {
-//                        MediaFormat format = extractor.getTrackFormat(i);
-//
-//                        if (format.containsKey(MediaFormat.KEY_MIME) && format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
-//                            long duration = format.getLong(MediaFormat.KEY_DURATION);
-//                            int width = format.getInteger(MediaFormat.KEY_WIDTH);
-//                            int height = format.getInteger(MediaFormat.KEY_HEIGHT);
-//                            int fpsInt = 0;
-//                            float fpsFloat = 0f;
-//
-//                            if (format.containsKey(MediaFormat.KEY_FRAME_RATE)) {
-//                                try {
-//                                    fpsFloat = format.getFloat(MediaFormat.KEY_FRAME_RATE);
-//                                    Log.d("MediaFormat", "Frame rate (float): " + fpsFloat);
-//                                } catch (Exception e) {
-//                                    // Handle type mismatch
-//                                    Log.e("MediaFormat", "Frame rate is not a float: " + e.getMessage());
-//                                    fpsInt = format.getInteger(MediaFormat.KEY_FRAME_RATE);
-//                                    Log.d("MediaFormat", "Frame rate (int): " + fpsInt);
-//                                }
-//                            }
-//
-//                            // Setting all Values
-//                            media.setSize(size);
-//                            media.setDuration(String.valueOf(duration));
-//                            media.setResolution(String.valueOf(height));
-//                            media.setFrameRate(String.valueOf((fpsFloat != 0f ? fpsFloat : fpsInt)));
-//
-//                            Log.d("MediaExtractor", "File Size: " + size + " MB, Duration: " + MicrosToTime(duration) + ", Resolution: " + width + "x" + height + ", FPS: " + (fpsFloat != 0f ? fpsFloat : fpsInt));
-//
-//                            if (position == mediaList.size() - 1) {
-//                                saveMediaListToPreferences(mediaList);
-//                            }
-//                        }
-//                    }
-//                }
-//                catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    extractor.release();
-//                }
-//
-//                holder.itemView.post(() -> {
-//                    holder.duration1.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//                    holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//                    holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
-//                    holder.size.setText(media.getSize());
-//                });
-//            }).start();
-
-            // MediaMetadataRetriever Thread
-//            new Thread(() -> {
-//                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-//
-//                File file = new File(media.getPath());
-//
-//                try {
-//                    retriever.setDataSource(media.getPath());
-//
-//                    long sizeInBytes = file.length();
-////                  String size = getFormattedFileSize(sizeInBytes);
-//
-//                    String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); // in ms
-//                    String width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-//                    String height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
-//                    String fps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE); // in float
-//
-//                    // Setting all Values
-//                    media.setSize(String.valueOf(sizeInBytes));
-//                    media.setDuration(duration);
-//                    media.setResolution(height);
-//                    media.setFrameRate(fps);
-//
-//                    Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
-//
-//                    if (position == mediaList.size() - 1) {
-//                        saveMediaListToPreferences(mediaList);
-//                    }
-//                }
-//
-//                catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    try {
-//                        retriever.release();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//                holder.itemView.post(() -> {
-//                    holder.duration1.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-//                    holder.duration2.setText(MillisToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-//                    holder.resolutionFrame.setText(media.getResolution() + "@" + media.getFrameRate());
-//                    holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
-//                });
-//            }).start();
-
-//            new Thread(() -> {
-
                 new FFmpegMetadataRetriever(media.getPath(), retriever -> {
                     try {
+
+
                         String sizeInBytes = String.valueOf(retriever.getFileSize());
     //                    String size = getFormattedFileSize(sizeInBytes);
 
@@ -264,10 +187,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         else {
             Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
-
-            // MediaExtractor Thread
-//            holder.duration1.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//            holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
 
             // MediaMetadataRetriever Thread
             holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
@@ -322,45 +241,54 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         Log.d("Video Added", "Added");
 
+        holder.moreB.setOnClickListener(v -> {
+            File file = new File(media.getPath());
+        });
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
                 Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
 
-                Intent intent = new Intent(context, PlayerActivity.class);
-                intent.putExtra("Name", media.getName());
-                intent.putExtra("Path", media.getPath());
-                intent.putExtra("isVideo", media.isVideo());
-                intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
-                Log.d("isVideoFile", "onClick: " + media.isVideo());
-                context.startActivity(intent);
+                if (isSelectionMode) {
+                    toggleSelection(position);
+                }
+                else {
+                    Intent intent = new Intent(context, PlayerActivity.class);
+                    intent.putExtra("Name", media.getName());
+                    intent.putExtra("Path", media.getPath());
+                    intent.putExtra("isVideo", media.isVideo());
+                    intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
+                    Log.d("isVideoFile", "onClick: " + media.isVideo());
+                    context.startActivity(intent);
+                }
             }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!isSelectionMode) {
+                isSelectionMode = true;
+            }
+            toggleSelection(position);
+            return true;
         });
     }
 
+    private void toggleSelection(int position) {
+        Video item = mediaList.get(position);
+        item.isSelected = !item.isSelected;
+        notifyItemChanged(position);
 
-    public static class VideoViewHolder extends RecyclerView.ViewHolder {
-        ImageView thumbnail;
-        TextView name;
-        TextView path;
-        TextView dateAdded;
-        TextView duration1;
-        TextView duration2;
-        TextView resolutionFrame;
-        TextView size;
-
-        public VideoViewHolder(View item_layout) {
-            super(item_layout);
-            thumbnail = item_layout.findViewById(R.id.thumbnail);
-            name = item_layout.findViewById(R.id.name);
-            path = item_layout.findViewById(R.id.path);
-            dateAdded = item_layout.findViewById(R.id.t4_date);
-            duration1 = item_layout.findViewById(R.id.duration);
-            duration2 = item_layout.findViewById(R.id.t1_duration);
-            resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
-            size = item_layout.findViewById(R.id.t3_size);
-        }
+        // update selected count in ActionMode title
+//        if (actionMode != null) {
+//            int count = getSelectedItemCount();
+//            if (count == 0) {
+//                actionMode.finish();
+//            } else {
+//                actionMode.setTitle(count + " selected");
+//            }
+//        }
     }
 
 

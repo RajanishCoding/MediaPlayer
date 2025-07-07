@@ -9,6 +9,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.MediaItem;
@@ -54,6 +55,8 @@ public class VideoFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private VideoAdapter adapter;
+
+    private Toolbar toolbar;
 
     private List<Video> mediaList;
 
@@ -145,6 +148,8 @@ public class VideoFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewVideo);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        toolbar = view.findViewById(R.id.toolbar);
+
         foundText = view.findViewById(R.id.found_text_video);
 
         mediaList = new ArrayList<>();
@@ -207,6 +212,8 @@ public class VideoFragment extends Fragment {
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
+
+
 
 //        mediaList.add(new Video("Name", "Path", "Size", null));
         adapter = new VideoAdapter(requireContext(), mediaList);
