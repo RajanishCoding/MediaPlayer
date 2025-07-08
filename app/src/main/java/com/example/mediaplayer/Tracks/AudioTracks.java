@@ -1,7 +1,6 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Tracks;
 
 import androidx.media3.common.TrackGroup;
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 
 public class AudioTracks {
     private TrackGroup trackGroup;

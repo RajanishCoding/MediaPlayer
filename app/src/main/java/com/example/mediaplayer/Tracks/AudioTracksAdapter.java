@@ -1,4 +1,4 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Tracks;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,11 +14,13 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.mediaplayer.R;
+
 import java.util.List;
 
 @UnstableApi
-public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubTrackViewHolder> {
-    private List<SubTracks> subTracksList;
+public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.AudioTrackViewHolder> {
+    private List<AudioTracks> audioTracksList;
     private DefaultTrackSelector trackSelector;
 
     private int selectedPosition = -1; // Tracks the selected position
@@ -26,41 +28,47 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
     private boolean firstSelection = true;
 
 
-    public SubTracksAdapter(List<SubTracks> subTracksList, DefaultTrackSelector trackSelector) {
-        this.subTracksList = subTracksList;
+    public AudioTracksAdapter(List<AudioTracks> audioTracksList, DefaultTrackSelector trackSelector) {
+        this.audioTracksList = audioTracksList;
         this.trackSelector = trackSelector;
     }
 
     @Override
-    public SubTrackViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public AudioTrackViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.subtrackslist_layout, parent, false);
-        return new SubTrackViewHolder(view);
+                .inflate(R.layout.audiotrackslist_layout, parent, false);
+        return new AudioTrackViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(SubTrackViewHolder holder, int position) {
-        SubTracks track = subTracksList.get(position);
+    public void onBindViewHolder(AudioTrackViewHolder holder, int position) {
+        AudioTracks track = audioTracksList.get(position);
 
         if (position != 0) {
             if (track.getLabel() == null) {
-                holder.label.setText("Sub Track " + (position + 1));
+                holder.label.setText("Audio Track " + (position + 1));
             } else {
                 holder.label.setText(track.getLabel());
             }
 
-            holder.language.setVisibility(View.VISIBLE);
-            holder.language.setText(track.getLanguage());
+            String finalText;
+            if (track.getLanguage() != null)
+                finalText = track.getLanguage() + " - " + track.getChannels() + " Channels";
+            else
+                finalText = track.getChannels() + " Channels";
+
+            holder.LangChannels.setVisibility(View.VISIBLE);
+            holder.LangChannels.setText(finalText);
         }
         else {
             holder.label.setText("None");
-            holder.language.setVisibility(View.GONE);
+            holder.LangChannels.setVisibility(View.GONE);
         }
 
         if (track.isSelected() && firstSelection) {
             holder.radioButton.setChecked(true);
             previousPosition = position;
-            Log.d("SubTrackSelect", "onBindViewHolder: " + position);
+            Log.d("AudioTrackSelect", "onBindViewHolder: " + position);
         }
         else {
             holder.radioButton.setChecked(position == selectedPosition);
@@ -74,20 +82,20 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
                 int pos = holder.getBindingAdapterPosition();
 
                 if (pos != 0 && pos != RecyclerView.NO_POSITION) {
-                    SubTracks t = subTracksList.get(pos);
+                    AudioTracks t = audioTracksList.get(pos);
                     TrackSelectionOverride override = new TrackSelectionOverride(t.getTrackGroup(), t.getTrackIndex());
 
                     // Build new parameters with the override
                     parameters = trackSelector.buildUponParameters()
-                            .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
                             .addOverride(override)
                             .build();
                 }
                 else {
                     parameters = trackSelector.buildUponParameters()
-                            .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true) // disables Subtitle
+                            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true) // disables audio
                             .build();
                 }
 
@@ -105,7 +113,7 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
                         previousPosition = selectedPosition;
                         selectedPosition = pos; // Update to the new position
                     }
-                    Log.d("SubTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
+                    Log.d("AudioTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
 
                     // Notify adapter to refresh previously and newly selected items
                     notifyItemChanged(previousPosition); // Uncheck the previously selected RadioButton
@@ -120,23 +128,23 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
 
     @Override
     public int getItemCount() {
-        if (subTracksList != null) {
-            return subTracksList.size();
+        if (audioTracksList != null) {
+            return audioTracksList.size();
         }
         return 0;
     }
 
 
-    public static class SubTrackViewHolder extends RecyclerView.ViewHolder {
+    public static class AudioTrackViewHolder extends RecyclerView.ViewHolder {
         TextView label;
-        TextView language;
+        TextView LangChannels;
         RadioButton radioButton;
 
-        public SubTrackViewHolder(View subtrackslist_layout) {
-            super(subtrackslist_layout);
-            label = subtrackslist_layout.findViewById(R.id.subTrackLabel);
-            language = subtrackslist_layout.findViewById(R.id.subTrackLanguage);
-            radioButton = subtrackslist_layout.findViewById(R.id.subRadioButton);
+        public AudioTrackViewHolder(View audiotrackslist_layout) {
+            super(audiotrackslist_layout);
+            label = audiotrackslist_layout.findViewById(R.id.audioTrackLabel);
+            LangChannels = audiotrackslist_layout.findViewById(R.id.audioTrack_LangChannels);
+            radioButton = audiotrackslist_layout.findViewById(R.id.audioRadioButton);
         }
     }
 

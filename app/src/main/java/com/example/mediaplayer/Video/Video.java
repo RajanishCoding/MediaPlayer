@@ -1,4 +1,4 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Video;
 
 import android.graphics.Bitmap;
 import android.util.Log;

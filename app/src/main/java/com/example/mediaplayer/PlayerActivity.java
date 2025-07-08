@@ -1,6 +1,5 @@
 package com.example.mediaplayer;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +22,6 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -36,7 +34,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -56,7 +53,6 @@ import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
-import androidx.media3.common.Timeline;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
@@ -73,6 +69,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import com.example.mediaplayer.Extra.MediaRepository;
+import com.example.mediaplayer.Extra.PlaylistManager;
+import com.example.mediaplayer.Tracks.AudioTracks;
+import com.example.mediaplayer.Tracks.AudioTracksAdapter;
+import com.example.mediaplayer.Tracks.SubTracks;
+import com.example.mediaplayer.Tracks.SubTracksAdapter;
 import com.google.android.material.slider.Slider;
 
 import java.util.ArrayList;
@@ -1304,6 +1306,11 @@ public class PlayerActivity extends AppCompatActivity {
                 }
             }
         });
+        
+        playButton.setOnLongClickListener(v -> {
+            playButton.setSelected(!playButton.isSelected());
+            return true;
+        });
 
         prevButton.setOnClickListener(v -> {
             playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
@@ -2403,6 +2410,7 @@ public class PlayerActivity extends AppCompatActivity {
             Log.d("Orientation", "Changed to Portrait");
             onPortrait();
         }
+
 
         Log.d(TAG, "onConfigurationChanged: " + getResources().getDisplayMetrics().heightPixels + " " + getResources().getDisplayMetrics().widthPixels);
     }

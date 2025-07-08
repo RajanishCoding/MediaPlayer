@@ -1,4 +1,4 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Video;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.MediaItem;
@@ -30,6 +31,11 @@ import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
+
+import com.example.mediaplayer.Extra.MediaRepository;
+import com.example.mediaplayer.Extra.MyMediaItem;
+import com.example.mediaplayer.PlayerActivity;
+import com.example.mediaplayer.R;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -47,27 +53,36 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
-public class AudioFragment extends Fragment {
+public class VideoFragment extends Fragment {
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
-    private AudioAdapter adapter;
-    private List<Audio> mediaList;
+    private VideoAdapter adapter;
+
+    private Toolbar toolbar_main;
+    private Toolbar toolbar_selection;
+    private View bottomBar_selection;
+
+    private List<Video> mediaList;
 
     private TextView foundText;
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
-    private static ArrayList<String> AudioFilesPath;
+    private static ArrayList<String> VideoFilesPath;
     private ArrayList<String> FilesDateAdded;
 
-    private String TAG = "AudioTag";
+    private String TAG = "VideoTag";
     private boolean isInsert;
 
     private ExecutorService executorService;
 
-    private List<Audio> storedMediaList;
+    private List<Video> storedMediaList;
     private boolean isFilesStored;
+
+    private VideoAdapter mediaAdapter;
+
+    private Thread thread;
 
     private View menu_Container;
     private ImageButton menu_Button;
@@ -81,11 +96,15 @@ public class AudioFragment extends Fragment {
     private Button BySize_sort;
     private Button ByDate_sort;
     private Button ByLength_sort;
+    private Button ByResol_sort;
+    private Button ByFps_sort;
     private Button Asc_sort;
     private Button Desc_sort;
 
     private Button path_Details;
     private Button date_Details;
+    private Button resol_Details;
+    private Button fps_Details;
     private Button size_Details;
     private Button dur_Details;
     private CheckBox durThumbnail_Details;
@@ -95,6 +114,8 @@ public class AudioFragment extends Fragment {
 
     private boolean isPath_Visible;
     private boolean isDate_Visible;
+    private boolean isResol_Visible;
+    private boolean isFps_Visible;
     private boolean isSize_Visible;
     private boolean isDur_Visible;
 
@@ -114,7 +135,8 @@ public class AudioFragment extends Fragment {
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
 
-    public AudioFragment() {}
+
+    public VideoFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -125,22 +147,26 @@ public class AudioFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_audio, container, false);
+        View view = inflater.inflate(R.layout.fragment_video, container, false);
 
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
-        recyclerView = view.findViewById(R.id.recyclerViewAudio);
+        recyclerView = view.findViewById(R.id.recyclerViewVideo);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        foundText = view.findViewById(R.id.found_text_audio);
+        toolbar_main = view.findViewById(R.id.toolbar);
+        toolbar_selection = view.findViewById(R.id.toolbar_sel);
+        bottomBar_selection = view.findViewById(R.id.bottomBar_sel);
+
+        foundText = view.findViewById(R.id.found_text_video);
 
         mediaList = new ArrayList<>();
 
         FilesName = new ArrayList<>();
         FilesPath = new ArrayList<>();
-        AudioFilesPath = new ArrayList<>();
+        VideoFilesPath = new ArrayList<>();
         FilesDateAdded = new ArrayList<>();
 
-        menu_Container = view.findViewById(R.id.MenuContainer_Audio);
+        menu_Container = view.findViewById(R.id.MenuContainer);
         menu_Button = view.findViewById(R.id.menu_button);
         search_Button = view.findViewById(R.id.search_button);
 
@@ -150,12 +176,16 @@ public class AudioFragment extends Fragment {
         ByDate_sort = view.findViewById(R.id.sort_byDate);
         ByLength_sort = view.findViewById(R.id.sort_byLength);
         BySize_sort = view.findViewById(R.id.sort_bySize);
+        ByResol_sort = view.findViewById(R.id.sort_byResol);
+        ByFps_sort = view.findViewById(R.id.sort_byFps);
 
         Asc_sort = view.findViewById(R.id.sort_Asc);
         Desc_sort = view.findViewById(R.id.sort_Desc);
 
         path_Details = view.findViewById(R.id.details_Path);
         date_Details = view.findViewById(R.id.details_Date);
+        resol_Details = view.findViewById(R.id.details_Resol);
+        fps_Details = view.findViewById(R.id.details_Fps);
         size_Details = view.findViewById(R.id.details_Size);
         dur_Details = view.findViewById(R.id.details_Dur);
         durThumbnail_Details = view.findViewById(R.id.more_dur);
@@ -168,7 +198,7 @@ public class AudioFragment extends Fragment {
 
         executorService = Executors.newSingleThreadExecutor();
 
-        settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
+        settingsPrefs = requireContext().getSharedPreferences("VideoSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
 
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
@@ -181,17 +211,17 @@ public class AudioFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                swipeRefreshLayout.setRefreshing(true);
-                Load_Or_Query_MediaList();
-                swipeRefreshLayout.setRefreshing(false);
-            }
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            swipeRefreshLayout.setRefreshing(true);
+            Load_Or_Query_MediaList();
+            swipeRefreshLayout.setRefreshing(false);
         });
 
-        adapter = new AudioAdapter(requireContext(), mediaList);
+
+//        mediaList.add(new Video("Name", "Path", "Size", null));
+        adapter = new VideoAdapter(requireContext(), mediaList);
         recyclerView.setAdapter(adapter);
+        recyclerView.setItemAnimator(null);
 
         menu_Button.setOnClickListener(v -> {
             if (switch_isEnd) {
@@ -203,62 +233,64 @@ public class AudioFragment extends Fragment {
             }
         });
 
-
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
         isList = settingsPrefs.getBoolean("isList", true);
+
+//        Loading at Start
         loadDetailsButtonVisibility();
 
-//        Notify Adapter at Start
+//        Notifying Adapter at Start
         setDetailsVisibility();
 
-//        Set BG at Start
+//        Setting BG at Start
         setBackground_LayoutButtons(isList);
         setBackground_SortButtons(sortBy);
         setBackground_AscDesc_Buttons(isAscending);
         setBackground_DetailsButtons();
 
+        adapter.addSelectionListener(new VideoAdapter.SelectionListener() {
+            @Override
+            public void onSelectionStarts() {
+                toolbar_selection.setVisibility(View.VISIBLE);
+                toolbar_selection.animate()
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start();
 
-        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
-        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+                bottomBar_selection.setVisibility(View.VISIBLE);
+                bottomBar_selection.animate()
+                        .alpha(1f)
+                        .setDuration(150)
+                        .start();
+            }
 
-        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
-        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
-        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
-        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+            @Override
+            public void onSelectionEnds() {
+                toolbar_selection.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction(() -> toolbar_selection.setVisibility(View.GONE))
+                        .start();
 
-        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
-        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
-
-        path_Details.setOnClickListener(v -> {
-            isPath_Visible = !isPath_Visible;
-            setBackground(path_Details, isPath_Visible);
+                bottomBar_selection.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction(() -> bottomBar_selection.setVisibility(View.GONE))
+                        .start();
+            }
         });
 
-        date_Details.setOnClickListener(v -> {
-            isDate_Visible = !isDate_Visible;
-            setBackground(date_Details, isDate_Visible);
-        });
-
-        size_Details.setOnClickListener(v -> {
-            isSize_Visible = !isSize_Visible;
-            setBackground(size_Details, isSize_Visible);
-        });
-
-        dur_Details.setOnClickListener(v -> {
-            isDur_Visible = !isDur_Visible;
-            setBackground(dur_Details, isDur_Visible);
-        });
-
-        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            isDur_OnThumbnail = isChecked;
-        });
+        layoutB_Listeners();
+        sortB_Listeners();
+        detailsB_Listeners();
 
         apply_Button.setOnClickListener(v -> {
             setDetailsVisibility();
             sortMediaList(isAscending);
             hideMenuLayout();
+            Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
         });
 
         cancel_Button.setOnClickListener(v -> hideMenuLayout());
@@ -280,18 +312,69 @@ public class AudioFragment extends Fragment {
                 }
             }
         });
+    }
 
+
+    private void layoutB_Listeners() {
+        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
+        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+    }
+
+    private void sortB_Listeners() {
+        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
+        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
+        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
+        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+        ByResol_sort.setOnClickListener(v -> setBackground_SortButtons("Resol"));
+        ByFps_sort.setOnClickListener(v -> setBackground_SortButtons("Fps"));
+
+        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
+        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+    }
+
+    private void detailsB_Listeners() {
+        path_Details.setOnClickListener(v -> {
+            isPath_Visible = !isPath_Visible;
+            setBackground(path_Details, isPath_Visible);
+        });
+
+        resol_Details.setOnClickListener(v -> {
+            isResol_Visible = !isResol_Visible;
+            setBackground(resol_Details, isResol_Visible);
+        });
+
+        fps_Details.setOnClickListener(v -> {
+            isFps_Visible = !isFps_Visible;
+            setBackground(fps_Details, isFps_Visible);
+        });
+
+        date_Details.setOnClickListener(v -> {
+            isDate_Visible = !isDate_Visible;
+            setBackground(date_Details, isDate_Visible);
+        });
+
+        size_Details.setOnClickListener(v -> {
+            isSize_Visible = !isSize_Visible;
+            setBackground(size_Details, isSize_Visible);
+        });
+
+        dur_Details.setOnClickListener(v -> {
+            isDur_Visible = !isDur_Visible;
+            setBackground(dur_Details, isDur_Visible);
+        });
+
+        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> isDur_OnThumbnail = isChecked);
     }
 
 
     private void sortMediaList(boolean isAsc) {
         boolean isSorted = true;
 
-        Comparator<Audio> comparator = null;
+        Comparator<Video> comparator = null;
 
         switch (sortBy) {
             case "Name":
-                comparator = Comparator.comparing(Audio::getName, String.CASE_INSENSITIVE_ORDER);
+                comparator = Comparator.comparing(Video::getName, String.CASE_INSENSITIVE_ORDER);
                 break;
 
             case "Size":
@@ -304,6 +387,14 @@ public class AudioFragment extends Fragment {
 
             case "Date":
                 comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded()));
+                break;
+
+            case "Resol":
+                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getResolution()));
+                break;
+
+            case "Fps":
+                comparator = Comparator.comparingDouble(m -> Double.parseDouble(m.getFrameRate()));
                 break;
 
             default:
@@ -328,7 +419,7 @@ public class AudioFragment extends Fragment {
     }
 
     private void setDetailsVisibility() {
-        adapter.setDetailsVisibility(isPath_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
+        adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isFps_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
 
@@ -348,7 +439,7 @@ public class AudioFragment extends Fragment {
     }
 
     private void setBackground_SortButtons(String sortBy_Button) {
-        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort);
+        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort, ByResol_sort, ByFps_sort);
 
         // Set all buttons to false first
         for (Button button : sortButtons) {
@@ -361,6 +452,8 @@ public class AudioFragment extends Fragment {
             case "Size":   setBackground(BySize_sort, true);  break;
             case "Length": setBackground(ByLength_sort, true); break;
             case "Date":   setBackground(ByDate_sort, true);  break;
+            case "Resol":  setBackground(ByResol_sort, true); break;
+            case "Fps":    setBackground(ByFps_sort, true);   break;
         }
 
         sortBy = sortBy_Button;
@@ -375,6 +468,8 @@ public class AudioFragment extends Fragment {
 
     private void setBackground_DetailsButtons() {
         setBackground(path_Details, isPath_Visible);
+        setBackground(resol_Details, isResol_Visible);
+        setBackground(fps_Details, isFps_Visible);
         setBackground(size_Details, isSize_Visible);
         setBackground(date_Details, isDate_Visible);
         setBackground(dur_Details, isDur_Visible);
@@ -382,10 +477,12 @@ public class AudioFragment extends Fragment {
     }
 
     private void loadDetailsButtonVisibility() {
-        isPath_Visible = settingsPrefs.getBoolean("path", false);
         isDate_Visible = settingsPrefs.getBoolean("date", true);
         isSize_Visible = settingsPrefs.getBoolean("size", true);
         isDur_Visible = settingsPrefs.getBoolean("dur", true);
+        isPath_Visible = settingsPrefs.getBoolean("path", false);
+        isResol_Visible = settingsPrefs.getBoolean("resol", false);
+        isFps_Visible = settingsPrefs.getBoolean("fps", false);
         isDur_OnThumbnail = settingsPrefs.getBoolean("isDur_Thumbnail", true);
     }
 
@@ -393,10 +490,13 @@ public class AudioFragment extends Fragment {
         settingsPrefsEditor.putBoolean("path", isPath_Visible);
         settingsPrefsEditor.putBoolean("date", isDate_Visible);
         settingsPrefsEditor.putBoolean("size", isSize_Visible);
+        settingsPrefsEditor.putBoolean("resol", isResol_Visible);
+        settingsPrefsEditor.putBoolean("fps", isFps_Visible);
         settingsPrefsEditor.putBoolean("dur", isDur_Visible);
         settingsPrefsEditor.putBoolean("isDur_Thumbnail", isDur_OnThumbnail);
         settingsPrefsEditor.apply();
     }
+
 
 
     private void showMenuLayout() {
@@ -441,9 +541,9 @@ public class AudioFragment extends Fragment {
                 menu_Container.setVisibility(View.GONE);
                 switch_isEnd = true;
 
-                loadDetailsButtonVisibility();
                 sortBy = settingsPrefs.getString("sortBy", "Name");
                 isAscending = settingsPrefs.getBoolean("isAscending", true);
+                loadDetailsButtonVisibility();
                 setBackground_SortButtons(sortBy);
                 setBackground_AscDesc_Buttons(isAscending);
                 setBackground_DetailsButtons();
@@ -480,7 +580,7 @@ public class AudioFragment extends Fragment {
             if (storedMediaList == null || storedMediaList.isEmpty()) {
                 isFilesStored = false;
 
-                Log.d("audio", "Load_Or_Query_MediaList: ");
+                Log.d("video", "Load_Or_Query_MediaList: ");
 
                 // If no media files in preferences, query media files
                 mediaList.clear();
@@ -490,7 +590,7 @@ public class AudioFragment extends Fragment {
                 isFilesStored = true;
             }
 
-            setAudioPlaylist();
+            setVideoPlaylist();
 
             requireActivity().runOnUiThread(() -> {
                 if (isAdded()) {
@@ -500,8 +600,9 @@ public class AudioFragment extends Fragment {
                         else
                             foundText.setVisibility(View.GONE);
 
-                        adapter.notifyDataSetChanged();
-                        saveMediaListToPreferences(mediaList);
+                        sortMediaList(isAscending);
+//                        adapter.notifyDataSetChanged();
+//                        saveMediaListToPreferences(mediaList);
                     }
 
                     else {
@@ -511,9 +612,13 @@ public class AudioFragment extends Fragment {
                         adapter.notifyDataSetChanged();
 
                         Check_And_Update_Files();
+
+
                     }
 
-                    Log.d("Hello", "UIThread-Stored: " + storedMediaList);
+
+
+                    Log.d("Hello", "UIThread: " + storedMediaList);
                     Log.d("Hello", "UIThread: " + mediaList);
 
 //                    if (!refresh) {
@@ -533,21 +638,21 @@ public class AudioFragment extends Fragment {
         });
     }
 
-    private List<Audio> queryMediaFiles(boolean refresh) {
-        List<Audio> mediaList = new ArrayList<>();
-        
-        String[] audioProjection = new String[]{
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.DATE_ADDED
+    private List<Video> queryMediaFiles(boolean refresh) {
+        List<Video> mediaList = new ArrayList<>();
+
+        String[] videoProjection = new String[]{
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DATE_ADDED
         };
 
-        String sortOrder = MediaStore.Audio.Media.DISPLAY_NAME + " ASC";
+        String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
 
-        Cursor audioCursor = requireContext().getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                audioProjection,
+        Cursor videoCursor = requireContext().getContentResolver().query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                videoProjection,
                 null,
                 null,
                 sortOrder
@@ -556,10 +661,10 @@ public class AudioFragment extends Fragment {
         Set<String> parentFolders = new HashSet<>();
 
         // Process video files
-        if (audioCursor != null) {
-            mediaList.addAll(processCursor(audioCursor, parentFolders));
-            Log.d(TAG, "Audio list Count: " + audioCursor.getCount());
-            audioCursor.close();
+        if (videoCursor != null) {
+            mediaList.addAll(processCursor(videoCursor, parentFolders));
+            Log.d(TAG, "Video list Count: " + videoCursor.getColumnCount());
+            videoCursor.close();
         }
 
         // Retrieve and display files in each parent folder
@@ -570,25 +675,20 @@ public class AudioFragment extends Fragment {
         Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
         Log.d("queryMediaFiles", String.valueOf(FilesPath));
 
-        Log.d(TAG, "Audio list: " + mediaList);
+        Log.d(TAG, "Video list: " + mediaList);
 
         return mediaList;
     }
 
-    private List<Audio> processCursor(Cursor cursor, Set<String> parentFolders) {
-        List<Audio> mediaList = new ArrayList<>();
+    private List<Video> processCursor(Cursor cursor, Set<String> parentFolders) {
+        List<Video> mediaList = new ArrayList<>();
 
-        int filePathInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-        int displayNameInd = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-        int dateAddedInd = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED);
+        int filePathInd = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
+        int displayNameInd = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
+        int dateAddedInd = cursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED);
 
         if (filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
-            Log.d(TAG, "processCursor1: " + cursor.getCount());
             while (cursor.moveToNext()) {
-                Log.d(TAG, "processCursor2: " + cursor.getCount());
-
-                Log.d(TAG, "Indices: " + filePathInd + ", " + displayNameInd + ", " + dateAddedInd);
-
                 String filePath = cursor.getString(filePathInd);
                 String displayName = cursor.getString(displayNameInd);
                 String date = cursor.getString(dateAddedInd);
@@ -603,7 +703,7 @@ public class AudioFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Audio media = new Audio(displayName, filePath, date, null, false);
+                Video media = new Video(displayName, filePath, date, null, true);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {
@@ -612,6 +712,8 @@ public class AudioFragment extends Fragment {
 ////                        Log.d(TAG, "processCursor: " + isInsert + " : " + media.getName());
 //                    }
 //                }
+
+                Log.d(TAG, "processCursor: ");
 
                 Log.d("wowo", displayName);
                 Log.d("wowo", date);
@@ -624,30 +726,29 @@ public class AudioFragment extends Fragment {
     private void Check_And_Update_Files() {
         new Thread(() -> {
             // For Deletion
-            List<Audio> removingMediaList = new ArrayList<>();
-            List<Audio> newMediaList = new ArrayList<>(queryMediaFiles(false));
+            List<Video> removingMediaList = new ArrayList<>();
+            List<Video> newMediaList = new ArrayList<>(queryMediaFiles(false));
             Set<String> newListNames = new HashSet<>();
 
-            for (Audio m : newMediaList) {
+            for (Video m : newMediaList) {
                 newListNames.add(m.getName());
             }
 
-            for (Audio m : storedMediaList) {
+            for (Video m : storedMediaList) {
                 if (!newListNames.contains(m.getName())) {
                     removingMediaList.add(m);
                 }
             }
 
-
             // For Insertion
-            List<Audio> addingMediaList = new ArrayList<>();
+            List<Video> addingMediaList = new ArrayList<>();
             Set<String> storedListNames = new HashSet<>();
 
-            for (Audio m : storedMediaList) {
+            for (Video m : storedMediaList) {
                 storedListNames.add(m.getName());
             }
 
-            for (Audio m : newMediaList) {
+            for (Video m : newMediaList) {
                 if (!storedListNames.contains(m.getName())) {
                     addingMediaList.add(m);
                 }
@@ -674,7 +775,7 @@ public class AudioFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
 //                mediaList.removeAll(removingMediaList);
 
-                for (Audio m : removingMediaList) {
+                for (Video m : removingMediaList) {
                     int index = mediaList.indexOf(m);
                     if (index >= 0) {
                         mediaList.remove(index);
@@ -684,41 +785,34 @@ public class AudioFragment extends Fragment {
 
                 mediaList.addAll(addingMediaList);
 
-                setAudioPlaylist();
+                setVideoPlaylist();
 
-                adapter.notifyDataSetChanged();
-                saveMediaListToPreferences(mediaList);
+                sortMediaList(isAscending);
+
+//                adapter.notifyDataSetChanged();
+//                saveMediaListToPreferences(mediaList);
             });
 
         }).start();
     }
 
-
-    public void setAudioPlaylist() {
+    public void setVideoPlaylist() {
         if (mediaList != null) {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
-            for (Audio v : mediaList) {
+            for (Video v : mediaList) {
                 MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
-            MediaRepository.getInstance().setAudioPlaylist(mediaItemList);
+            MediaRepository.getInstance().setVideoPlaylist(mediaItemList);
 //            PlaylistManager manager = new PlaylistManager(mediaItemList);
-//            MediaRepository.getInstance().setAudioPlaylistManager(manager);
+//            MediaRepository.getInstance().setVideoPlaylistManager(manager);
         }
     }
 
-
-    public static ArrayList<String> getSongList() {
-        if (FilesPath != null) {
-            return FilesPath;
-        }
-        return null;
-    }
-
-    public boolean isInsertFiles(List<Audio> storedList, Audio media) {
+    public boolean isInsertFiles(List<Video> storedList, Video media) {
         boolean f = false;
-        for (Audio m: storedList) {
+        for (Video m: storedList) {
             if (Objects.equals(m.getName(), media.getName())) {
                 f = true;
                 break;
@@ -733,14 +827,14 @@ public class AudioFragment extends Fragment {
     }
 
 
-    private void saveMediaListToPreferences(List<Audio> mediaList) {
+    private void saveMediaListToPreferences(List<Video> mediaList) {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
                 Gson gson = new Gson();
                 String json = gson.toJson(mediaList);
-                editor.putString("audioList", json);
+                editor.putString("videoList", json);
                 editor.apply();
             } catch (Exception e) {
                 Log.e(TAG, "saveMediaListToPreferences: ", e);
@@ -748,12 +842,11 @@ public class AudioFragment extends Fragment {
         }).start();
     }
 
-
-    public List<Audio> loadMediaListFromPreferences() {
+    private List<Video> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
         Gson gson = new Gson();
-        String json = prefs.getString("audioList", null);
-        Type type = new TypeToken<ArrayList<Audio>>() {}.getType();
+        String json = prefs.getString("videoList", null);
+        Type type = new TypeToken<ArrayList<Video>>() {}.getType();
         return gson.fromJson(json, type);
     }
 

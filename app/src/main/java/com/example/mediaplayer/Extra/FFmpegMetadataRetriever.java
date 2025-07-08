@@ -1,14 +1,11 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Extra;
 
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import com.arthenica.ffmpegkit.FFprobeKit;
-import com.arthenica.ffmpegkit.Level;
 import com.arthenica.ffmpegkit.ReturnCode;
 
 

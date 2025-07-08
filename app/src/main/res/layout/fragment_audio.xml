@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AudioFragment"
+    tools:context=".Audio.AudioFragment"
     style="@style/FilesListBG" >
 
     <!-- Custom Toolbar -->
@@ -95,9 +95,7 @@
             android:layout_marginStart="1dp"
             android:layout_marginEnd="1dp" />
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

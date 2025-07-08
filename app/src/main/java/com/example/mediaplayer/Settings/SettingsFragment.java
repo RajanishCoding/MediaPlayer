@@ -1,4 +1,4 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,6 +18,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.Switch;
 
+import com.example.mediaplayer.FilesListActivity;
+import com.example.mediaplayer.R;
+import com.example.mediaplayer.Video.Video;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 

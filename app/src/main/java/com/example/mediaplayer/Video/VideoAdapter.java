@@ -1,4 +1,4 @@
-package com.example.mediaplayer;
+package com.example.mediaplayer.Video;
 
 import android.content.Context;
 import android.content.Intent;
@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
@@ -16,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +27,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
+import com.example.mediaplayer.PlayerActivity;
+import com.example.mediaplayer.R;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -35,9 +38,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHolder> {
+
+    public interface SelectionListener {
+        void onSelectionStarts();
+        void onSelectionEnds();
+    }
+
     private List<Video> mediaList;
     private Context context;
 
@@ -50,40 +58,23 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private boolean size = true;
     private boolean date = true;
 
-    private boolean isSelectionMode;
+    public boolean isSelectionMode;
+    public int selectionCounts = 0;
+
+    public SelectionListener listener;
+
+    private Drawable icon_more;
+    private Drawable icon_check;
+    private Drawable icon_uncheck;
 
 
     public VideoAdapter(Context context, List<Video> mediaList) {
         this.context = context;
         this.mediaList = mediaList;
-    }
 
-    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
-        path = isPath;
-        resol = isResol;
-        fps = isFps;
-        size = isSize;
-        date = isDate;
-        dur = isDur;
-        dur_onThumbnail = isDur_onThumb;
-        notifyDataSetChanged();
-    }
-
-    private void setVisibilities(VideoViewHolder holder) {
-        if (path) holder.path.setVisibility(View.VISIBLE);
-        else holder.path.setVisibility(View.GONE);
-
-        if (size) holder.size.setVisibility(View.VISIBLE);
-        else holder.size.setVisibility(View.GONE);
-
-        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
-        else holder.dateAdded.setVisibility(View.GONE);
-
-        if (resol || fps) holder.resolutionFrame.setVisibility(View.VISIBLE);
-        else holder.resolutionFrame.setVisibility(View.GONE);
-
-        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
-        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
+        icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
+        icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
+        icon_uncheck = ContextCompat.getDrawable(context, R.drawable.round_check_circle_outline);
     }
 
     @NonNull
@@ -91,7 +82,10 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     public VideoViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_layout, parent, false);
-        return new VideoViewHolder(view);
+
+        VideoViewHolder holder = new VideoViewHolder(view);
+
+        return holder;
     }
 
     public static class VideoViewHolder extends RecyclerView.ViewHolder {
@@ -126,20 +120,27 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
 
-        Drawable selectedColor = ContextCompat.getDrawable(holder.itemView.getContext(), R.drawable.shape_list_color_selected);
-        Drawable unselectedColor = ContextCompat.getDrawable(holder.itemView.getContext(), R.drawable.selector_list_view);
-
-        holder.itemView.setBackground(media.isSelected ? selectedColor : unselectedColor);
-
-//        holder.thumbnail.setImageBitmap(media.getThumbnail());
-//        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
-
         setVisibilities(holder);
+
+        if (isSelectionMode) {
+            holder.moreB.setEnabled(false);
+            if (media.isSelected) {
+                holder.itemView.setSelected(true);
+                holder.moreB.setImageDrawable(icon_check);
+            }
+            else {
+                holder.itemView.setSelected(false);
+                holder.moreB.setImageDrawable(icon_uncheck);
+            }
+        }
+        else {
+            holder.moreB.setEnabled(true);
+            holder.moreB.setImageDrawable(icon_more);
+        }
 
         if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
                 new FFmpegMetadataRetriever(media.getPath(), retriever -> {
                     try {
-
 
                         String sizeInBytes = String.valueOf(retriever.getFileSize());
     //                    String size = getFormattedFileSize(sizeInBytes);
@@ -243,6 +244,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         holder.moreB.setOnClickListener(v -> {
             File file = new File(media.getPath());
+            Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
         });
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -269,6 +271,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.itemView.setOnLongClickListener(v -> {
             if (!isSelectionMode) {
                 isSelectionMode = true;
+                listener.onSelectionStarts();
+                notifyDataSetChanged();
             }
             toggleSelection(position);
             return true;
@@ -340,21 +344,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         return thumbnail;
     }
 
-    public void addMediaItem(Video media) {
-        mediaList.add(media);  // Add new item to the list
-        notifyItemInserted(mediaList.size() - 1);  // Notify the adapter of the new item
-    }
-
-    public void addMediaItems(List<Video> newMediaItems) {
-        int startPosition = mediaList.size();
-        mediaList.addAll(newMediaItems);
-        notifyItemRangeInserted(startPosition, newMediaItems.size());
-    }
-
-    public void addAllMediaItems() {
-        notifyDataSetChanged();
-    }
-
     @Override
     public int getItemCount() {
         if (mediaList != null) {
@@ -363,6 +352,41 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         return 0;
     }
 
+    public void removeSelections() {
+        ;
+    }
+
+    public void addSelectionListener(SelectionListener listener) {
+        this.listener = listener;
+    }
+
+    public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
+        path = isPath;
+        resol = isResol;
+        fps = isFps;
+        size = isSize;
+        date = isDate;
+        dur = isDur;
+        dur_onThumbnail = isDur_onThumb;
+        notifyDataSetChanged();
+    }
+
+    private void setVisibilities(VideoViewHolder holder) {
+        if (path) holder.path.setVisibility(View.VISIBLE);
+        else holder.path.setVisibility(View.GONE);
+
+        if (size) holder.size.setVisibility(View.VISIBLE);
+        else holder.size.setVisibility(View.GONE);
+
+        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
+        else holder.dateAdded.setVisibility(View.GONE);
+
+        if (resol || fps) holder.resolutionFrame.setVisibility(View.VISIBLE);
+        else holder.resolutionFrame.setVisibility(View.GONE);
+
+        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
+        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
+    }
 
     private void saveMediaListToPreferences(List<Video> mediaList) {
         new Thread(() -> {
