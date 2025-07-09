@@ -15,12 +15,12 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,11 +28,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
+import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -44,6 +44,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     public interface SelectionListener {
         void onSelectionStarts();
         void onSelectionEnds();
+        void onCountChanged(int counts);
     }
 
     private List<Video> mediaList;
@@ -58,6 +59,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private boolean size = true;
     private boolean date = true;
 
+    private FragmentManager fragmentManager;
+
     public boolean isSelectionMode;
     public int selectionCounts = 0;
 
@@ -68,9 +71,10 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private Drawable icon_uncheck;
 
 
-    public VideoAdapter(Context context, List<Video> mediaList) {
+    public VideoAdapter(Context context, List<Video> mediaList, FragmentManager fragmentManager) {
         this.context = context;
         this.mediaList = mediaList;
+        this.fragmentManager = fragmentManager;
 
         icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
         icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
@@ -115,7 +119,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
     @Override
     public void onBindViewHolder(VideoViewHolder holder, int position) {
-        Video media = mediaList.get(position);
+        Video media = mediaList.get(holder.getBindingAdapterPosition());
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
@@ -134,6 +138,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             }
         }
         else {
+            holder.itemView.setSelected(false);
             holder.moreB.setEnabled(true);
             holder.moreB.setImageDrawable(icon_more);
         }
@@ -158,7 +163,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
                         Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
 
-                        if (position == mediaList.size() - 1) {
+                        if (holder.getBindingAdapterPosition() == mediaList.size() - 1) {
                             saveMediaListToPreferences(mediaList);
                         }
                     }
@@ -242,10 +247,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         Log.d("Video Added", "Added");
 
-        holder.moreB.setOnClickListener(v -> {
-            File file = new File(media.getPath());
-            Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
-        });
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
@@ -254,7 +255,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                 Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
 
                 if (isSelectionMode) {
-                    toggleSelection(position);
+                    toggleSelection(holder.getBindingAdapterPosition());
                 }
                 else {
                     Intent intent = new Intent(context, PlayerActivity.class);
@@ -269,13 +270,20 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         });
 
         holder.itemView.setOnLongClickListener(v -> {
+            int p = holder.getBindingAdapterPosition();
             if (!isSelectionMode) {
                 isSelectionMode = true;
                 listener.onSelectionStarts();
                 notifyDataSetChanged();
             }
-            toggleSelection(position);
+            toggleSelection(p);
             return true;
+        });
+
+        holder.moreB.setOnClickListener(v -> {
+            int p = holder.getBindingAdapterPosition();
+            MyBottomSheet sheet = new MyBottomSheet(p);
+            sheet.show(fragmentManager, sheet.getTag());
         });
     }
 
@@ -283,16 +291,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         Video item = mediaList.get(position);
         item.isSelected = !item.isSelected;
         notifyItemChanged(position);
+        selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
+        listener.onCountChanged(selectionCounts);
 
-        // update selected count in ActionMode title
-//        if (actionMode != null) {
-//            int count = getSelectedItemCount();
-//            if (count == 0) {
-//                actionMode.finish();
-//            } else {
-//                actionMode.setTitle(count + " selected");
-//            }
-//        }
+        if (selectionCounts == 0) {
+            isSelectionMode = false;
+            listener.onSelectionEnds();
+            notifyDataSetChanged();
+        }
     }
 
 
@@ -352,12 +358,12 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         return 0;
     }
 
-    public void removeSelections() {
-        ;
-    }
-
     public void addSelectionListener(SelectionListener listener) {
         this.listener = listener;
+    }
+
+    public boolean isAllSelected() {
+        return selectionCounts == mediaList.size();
     }
 
     public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {

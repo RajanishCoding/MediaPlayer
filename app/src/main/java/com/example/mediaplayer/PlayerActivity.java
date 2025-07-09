@@ -1177,7 +1177,6 @@ public class PlayerActivity extends AppCompatActivity {
         }
     };
 
-
     private void player_Listeners() {
         player.addListener(new Player.Listener() {
             @Override

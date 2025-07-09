@@ -4,8 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -34,8 +37,10 @@ import android.widget.TextView;
 
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyMediaItem;
+import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -129,11 +134,21 @@ public class VideoFragment extends Fragment {
 
     private ImageButton lastPlay_Button;
 
+    private View bottomSheet;
+    private BottomSheetBehavior<View> behavior;
+
+    private ImageButton toolbarSel_back;
+    private ImageButton toolbarSel_play;
+    private ImageButton toolbarSel_sel;
+    private TextView toolbarSel_text;
+    private boolean isAllSelected;
+
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsPrefsEditor;
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
+
 
 
     public VideoFragment() {}
@@ -196,6 +211,14 @@ public class VideoFragment extends Fragment {
         apply_Button = view.findViewById(R.id.buttonApply);
         cancel_Button = view.findViewById(R.id.buttonCancel);
 
+        toolbarSel_back = view.findViewById(R.id.toolbarSel_backB);
+        toolbarSel_play = view.findViewById(R.id.toolbarSel_playB);
+        toolbarSel_sel = view.findViewById(R.id.toolbarSel_selB);
+        toolbarSel_text = view.findViewById(R.id.toolbarSel_title);
+
+        bottomSheet = view.findViewById(R.id.bottomsheet);
+        behavior = BottomSheetBehavior.from(bottomSheet);
+
         executorService = Executors.newSingleThreadExecutor();
 
         settingsPrefs = requireContext().getSharedPreferences("VideoSettings", Context.MODE_PRIVATE);
@@ -203,6 +226,7 @@ public class VideoFragment extends Fragment {
 
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
+
 
         return view;
     }
@@ -213,13 +237,24 @@ public class VideoFragment extends Fragment {
 
         swipeRefreshLayout.setOnRefreshListener(() -> {
             swipeRefreshLayout.setRefreshing(true);
+//            File[] files = new File("/storage/emulated/0").listFiles();
+//            for (File file : files) {
+//                MediaScannerConnection.scanFile(
+//                        getContext(),
+//                        new String[]{file.getPath()},
+//                        new String[]{"video/*"},
+//                        (path, uri) -> {
+//
+//                        }
+//                );
+//            }
             Load_Or_Query_MediaList();
             swipeRefreshLayout.setRefreshing(false);
         });
 
 
 //        mediaList.add(new Video("Name", "Path", "Size", null));
-        adapter = new VideoAdapter(requireContext(), mediaList);
+        adapter = new VideoAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
@@ -253,16 +288,18 @@ public class VideoFragment extends Fragment {
         adapter.addSelectionListener(new VideoAdapter.SelectionListener() {
             @Override
             public void onSelectionStarts() {
+                toolbar_selection.setAlpha(0f);
                 toolbar_selection.setVisibility(View.VISIBLE);
                 toolbar_selection.animate()
                     .alpha(1f)
-                    .setDuration(150)
+                    .setDuration(350)
                     .start();
 
+                bottomBar_selection.setAlpha(0f);
                 bottomBar_selection.setVisibility(View.VISIBLE);
                 bottomBar_selection.animate()
                         .alpha(1f)
-                        .setDuration(150)
+                        .setDuration(350)
                         .start();
             }
 
@@ -270,16 +307,35 @@ public class VideoFragment extends Fragment {
             public void onSelectionEnds() {
                 toolbar_selection.animate()
                         .alpha(0f)
-                        .setDuration(150)
+                        .setDuration(350)
                         .withEndAction(() -> toolbar_selection.setVisibility(View.GONE))
                         .start();
 
                 bottomBar_selection.animate()
                         .alpha(0f)
-                        .setDuration(150)
+                        .setDuration(350)
                         .withEndAction(() -> bottomBar_selection.setVisibility(View.GONE))
                         .start();
             }
+
+            @Override
+            public void onCountChanged(int counts) {
+                toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+            }
+        });
+
+        toolbarSel_back.setOnClickListener(v -> {
+            clearSelection();
+        });
+
+        toolbarSel_sel.setOnClickListener(v -> {
+            if (!adapter.isAllSelected()) {
+                selectAllItems();
+            }
+            else {
+                deselectAllItems();
+            }
+            isAllSelected = !isAllSelected;
         });
 
         layoutB_Listeners();
@@ -312,7 +368,47 @@ public class VideoFragment extends Fragment {
                 }
             }
         });
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter.isSelectionMode) {
+                    clearSelection();
+                }
+                else{
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
+
+    private void selectAllItems() {
+        for (Video v : mediaList) {
+            v.isSelected = true;
+        }
+        adapter.notifyDataSetChanged();
+        adapter.selectionCounts = mediaList.size();
+        adapter.listener.onCountChanged(mediaList.size());
+    }
+
+    private void deselectAllItems() {
+        for (Video v : mediaList) {
+            v.isSelected = false;
+        }
+        adapter.notifyDataSetChanged();
+        adapter.selectionCounts = 0;
+        adapter.listener.onCountChanged(0);
+    }
+
+    private void clearSelection() {
+        for (Video v : mediaList) {
+            v.isSelected = false;
+        }
+        adapter.isSelectionMode = false;
+        adapter.notifyDataSetChanged();
+        adapter.listener.onSelectionEnds();
+    }
+
 
 
     private void layoutB_Listeners() {
