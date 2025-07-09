@@ -68,9 +68,9 @@ public class VideoFragment extends Fragment {
     private Toolbar toolbar_selection;
     private View bottomBar_selection;
 
-    private List<Video> mediaList;
-
     private TextView foundText;
+
+    private List<Video> mediaList;
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
@@ -382,6 +382,7 @@ public class VideoFragment extends Fragment {
         });
     }
 
+
     private void selectAllItems() {
         for (Video v : mediaList) {
             v.isSelected = true;
@@ -408,7 +409,6 @@ public class VideoFragment extends Fragment {
         adapter.notifyDataSetChanged();
         adapter.listener.onSelectionEnds();
     }
-
 
 
     private void layoutB_Listeners() {

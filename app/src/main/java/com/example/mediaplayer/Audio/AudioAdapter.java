@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,8 +28,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
+import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
+import com.example.mediaplayer.Video.Video;
+import com.example.mediaplayer.Video.VideoAdapter;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
@@ -37,6 +42,13 @@ import java.util.List;
 import java.util.Locale;
 
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHolder> {
+
+    public interface SelectionListener {
+        void onSelectionStarts();
+        void onSelectionEnds();
+        void onCountChanged(int counts);
+    }
+
     private List<Audio> mediaList;
     private Context context;
 
@@ -47,55 +59,88 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
     private boolean size = true;
     private boolean date = true;
 
+    private FragmentManager fragmentManager;
 
-    public AudioAdapter(Context context, List<Audio> mediaList) {
+    public boolean isSelectionMode;
+    public int selectionCounts = 0;
+
+    public SelectionListener listener;
+
+    private Drawable icon_more;
+    private Drawable icon_check;
+    private Drawable icon_uncheck;
+
+
+    public AudioAdapter(Context context, List<Audio> mediaList, FragmentManager fragmentManager) {
         this.context = context;
         this.mediaList = mediaList;
+        this.fragmentManager = fragmentManager;
+
+        icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
+        icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
+        icon_uncheck = ContextCompat.getDrawable(context, R.drawable.round_check_circle_outline);
     }
 
-    public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
-        path = isPath;
-        size = isSize;
-        date = isDate;
-        dur = isDur;
-        dur_onThumbnail = isDur_onThumb;
-        notifyDataSetChanged();
-    }
-
-    private void setVisibilities(AudioAdapter.AudioViewHolder holder) {
-        holder.resolutionFrame.setVisibility(View.GONE);
-
-        if (path) holder.path.setVisibility(View.VISIBLE);
-        else holder.path.setVisibility(View.GONE);
-
-        if (size) holder.size.setVisibility(View.VISIBLE);
-        else holder.size.setVisibility(View.GONE);
-
-        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
-        else holder.dateAdded.setVisibility(View.GONE);
-
-        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
-        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
-    }
-
+    @NonNull
     @Override
     public AudioViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_layout, parent, false);
-        return new AudioViewHolder(view);
+        AudioViewHolder holder = new AudioViewHolder(view);
+
+        return holder;
+    }
+
+    public static class AudioViewHolder extends RecyclerView.ViewHolder {
+        ImageView thumbnail;
+        TextView name;
+        TextView path;
+        TextView dateAdded;
+        TextView duration1;
+        TextView duration2;
+        TextView resolutionFrame;
+        TextView size;
+        ImageButton moreB;
+
+        public AudioViewHolder(View item_layout) {
+            super(item_layout);
+            thumbnail = item_layout.findViewById(R.id.thumbnail);
+            name = item_layout.findViewById(R.id.name);
+            path = item_layout.findViewById(R.id.path);
+            dateAdded = item_layout.findViewById(R.id.t4_date);
+            duration1 = item_layout.findViewById(R.id.duration);
+            duration2 = item_layout.findViewById(R.id.t1_duration);
+            resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
+            size = item_layout.findViewById(R.id.t3_size);
+            moreB = item_layout.findViewById(R.id.moreB_item);
+        }
     }
 
     @Override
     public void onBindViewHolder(AudioViewHolder holder, int position) {
-        Audio media = mediaList.get(position);
+        Audio media = mediaList.get(holder.getBindingAdapterPosition());
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
 
-//        holder.thumbnail.setImageBitmap(media.getThumbnail());
-//        Glide.with(holder.thumbnail.getContext()).load(media.getThumbnail()).into(holder.thumbnail);
-
         setVisibilities(holder);
+
+        if (isSelectionMode) {
+            holder.moreB.setEnabled(false);
+            if (media.isSelected) {
+                holder.itemView.setSelected(true);
+                holder.moreB.setImageDrawable(icon_check);
+            }
+            else {
+                holder.itemView.setSelected(false);
+                holder.moreB.setImageDrawable(icon_uncheck);
+            }
+        }
+        else {
+            holder.itemView.setSelected(false);
+            holder.moreB.setEnabled(true);
+            holder.moreB.setImageDrawable(icon_more);
+        }
 
         if (media.getDuration() == null || media.getSize() == null) {
             new FFmpegMetadataRetriever(media.getPath(), retriever -> {
@@ -131,11 +176,6 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
         else {
             Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
 
-            // MediaExtractor Thread
-//            holder.duration1.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-//            holder.duration2.setText(MicrosToTime(Long.parseLong(media.getDuration())));
-
-            // MediaMetadataRetriever Thread
             holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
             holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
 
@@ -179,45 +219,67 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
         Log.d("Audio Added", "Added");
 
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
                 Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
 
-                Intent intent = new Intent(context, PlayerActivity.class);
-                intent.putExtra("Name", media.getName());
-                intent.putExtra("Path", media.getPath());
-                intent.putExtra("isVideo", media.isVideo());
-                intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
-                Log.d("isVideoFile", "onClick: " + media.isVideo());
-                context.startActivity(intent);
+                if (isSelectionMode) {
+                    toggleSelection(holder.getBindingAdapterPosition());
+                }
+                else {
+                    Intent intent = new Intent(context, PlayerActivity.class);
+                    intent.putExtra("Name", media.getName());
+                    intent.putExtra("Path", media.getPath());
+                    intent.putExtra("isVideo", media.isVideo());
+                    intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
+                    Log.d("isVideoFile", "onClick: " + media.isVideo());
+                    context.startActivity(intent);
+                }
             }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            int p = holder.getBindingAdapterPosition();
+            if (!isSelectionMode) {
+                isSelectionMode = true;
+                listener.onSelectionStarts();
+                notifyDataSetChanged();
+            }
+            toggleSelection(p);
+            return true;
+        });
+
+        holder.moreB.setOnClickListener(v -> {
+            int p = holder.getBindingAdapterPosition();
+            MyBottomSheet sheet = new MyBottomSheet(p);
+            sheet.show(fragmentManager, sheet.getTag());
         });
     }
 
 
-    public static class AudioViewHolder extends RecyclerView.ViewHolder {
-        ImageView thumbnail;
-        TextView name;
-        TextView path;
-        TextView dateAdded;
-        TextView duration1;
-        TextView duration2;
-        TextView resolutionFrame;
-        TextView size;
+    private void toggleSelection(int position) {
+        Audio item = mediaList.get(position);
+        item.isSelected = !item.isSelected;
+        notifyItemChanged(position);
+        selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
+        listener.onCountChanged(selectionCounts);
 
-        public AudioViewHolder(View item_layout) {
-            super(item_layout);
-            thumbnail = item_layout.findViewById(R.id.thumbnail);
-            name = item_layout.findViewById(R.id.name);
-            path = item_layout.findViewById(R.id.path);
-            dateAdded = item_layout.findViewById(R.id.t4_date);
-            duration1 = item_layout.findViewById(R.id.duration);
-            duration2 = item_layout.findViewById(R.id.t1_duration);
-            resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
-            size = item_layout.findViewById(R.id.t3_size);
+        if (selectionCounts == 0) {
+            isSelectionMode = false;
+            listener.onSelectionEnds();
+            notifyDataSetChanged();
         }
+    }
+
+    public void addSelectionListener(SelectionListener listener) {
+        this.listener = listener;
+    }
+
+    public boolean isAllSelected() {
+        return selectionCounts == mediaList.size();
     }
 
 
@@ -290,6 +352,31 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
             return mediaList.size();
         }
         return 0;
+    }
+
+    public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {
+        path = isPath;
+        size = isSize;
+        date = isDate;
+        dur = isDur;
+        dur_onThumbnail = isDur_onThumb;
+        notifyDataSetChanged();
+    }
+
+    private void setVisibilities(AudioAdapter.AudioViewHolder holder) {
+        holder.resolutionFrame.setVisibility(View.GONE);
+
+        if (path) holder.path.setVisibility(View.VISIBLE);
+        else holder.path.setVisibility(View.GONE);
+
+        if (size) holder.size.setVisibility(View.VISIBLE);
+        else holder.size.setVisibility(View.GONE);
+
+        if (date) holder.dateAdded.setVisibility(View.VISIBLE);
+        else holder.dateAdded.setVisibility(View.GONE);
+
+        holder.duration1.setVisibility((dur && dur_onThumbnail) ? View.VISIBLE : View.GONE);
+        holder.duration2.setVisibility((dur && !dur_onThumbnail) ? View.VISIBLE : View.GONE);
     }
 
 

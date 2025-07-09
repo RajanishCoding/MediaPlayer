@@ -287,6 +287,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         });
     }
 
+
     private void toggleSelection(int position) {
         Video item = mediaList.get(position);
         item.isSelected = !item.isSelected;
@@ -299,6 +300,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             listener.onSelectionEnds();
             notifyDataSetChanged();
         }
+    }
+
+    public void addSelectionListener(SelectionListener listener) {
+        this.listener = listener;
+    }
+
+    public boolean isAllSelected() {
+        return selectionCounts == mediaList.size();
     }
 
 
@@ -356,14 +365,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             return mediaList.size();
         }
         return 0;
-    }
-
-    public void addSelectionListener(SelectionListener listener) {
-        this.listener = listener;
-    }
-
-    public boolean isAllSelected() {
-        return selectionCounts == mediaList.size();
     }
 
     public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {

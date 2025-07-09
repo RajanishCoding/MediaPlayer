@@ -6,9 +6,11 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.MediaItem;
@@ -34,6 +36,9 @@ import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyMediaItem;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
+import com.example.mediaplayer.Video.Video;
+import com.example.mediaplayer.Video.VideoAdapter;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -56,9 +61,14 @@ public class AudioFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private AudioAdapter adapter;
-    private List<Audio> mediaList;
+
+    private Toolbar toolbar_main;
+    private Toolbar toolbar_selection;
+    private View bottomBar_selection;
 
     private TextView foundText;
+
+    private List<Audio> mediaList;
 
     private ArrayList<String> FilesName;
     private static ArrayList<String> FilesPath;
@@ -112,6 +122,12 @@ public class AudioFragment extends Fragment {
 
     private ImageButton lastPlay_Button;
 
+    private ImageButton toolbarSel_back;
+    private ImageButton toolbarSel_play;
+    private ImageButton toolbarSel_sel;
+    private TextView toolbarSel_text;
+    private boolean isAllSelected;
+
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsPrefsEditor;
 
@@ -134,6 +150,10 @@ public class AudioFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.recyclerViewAudio);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        toolbar_main = view.findViewById(R.id.toolbar);
+        toolbar_selection = view.findViewById(R.id.toolbar_sel);
+        bottomBar_selection = view.findViewById(R.id.bottomBar_sel);
 
         foundText = view.findViewById(R.id.found_text_audio);
 
@@ -170,6 +190,11 @@ public class AudioFragment extends Fragment {
         apply_Button = view.findViewById(R.id.buttonApply);
         cancel_Button = view.findViewById(R.id.buttonCancel);
 
+        toolbarSel_back = view.findViewById(R.id.toolbarSel_backB);
+        toolbarSel_play = view.findViewById(R.id.toolbarSel_playB);
+        toolbarSel_sel = view.findViewById(R.id.toolbarSel_selB);
+        toolbarSel_text = view.findViewById(R.id.toolbarSel_title);
+
         executorService = Executors.newSingleThreadExecutor();
 
         settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
@@ -194,8 +219,9 @@ public class AudioFragment extends Fragment {
             }
         });
 
-        adapter = new AudioAdapter(requireContext(), mediaList);
+        adapter = new AudioAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
+        recyclerView.setItemAnimator(null);
 
         menu_Button.setOnClickListener(v -> {
             if (switch_isEnd) {
@@ -212,6 +238,8 @@ public class AudioFragment extends Fragment {
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
         isList = settingsPrefs.getBoolean("isList", true);
+
+//        Loading at Start
         loadDetailsButtonVisibility();
 
 //        Notify Adapter at Start
@@ -223,41 +251,62 @@ public class AudioFragment extends Fragment {
         setBackground_AscDesc_Buttons(isAscending);
         setBackground_DetailsButtons();
 
+        adapter.addSelectionListener(new AudioAdapter.SelectionListener() {
+            @Override
+            public void onSelectionStarts() {
+                toolbar_selection.setAlpha(0f);
+                toolbar_selection.setVisibility(View.VISIBLE);
+                toolbar_selection.animate()
+                        .alpha(1f)
+                        .setDuration(350)
+                        .start();
 
-        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
-        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+                bottomBar_selection.setAlpha(0f);
+                bottomBar_selection.setVisibility(View.VISIBLE);
+                bottomBar_selection.animate()
+                        .alpha(1f)
+                        .setDuration(350)
+                        .start();
+            }
 
-        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
-        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
-        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
-        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+            @Override
+            public void onSelectionEnds() {
+                toolbar_selection.animate()
+                        .alpha(0f)
+                        .setDuration(350)
+                        .withEndAction(() -> toolbar_selection.setVisibility(View.GONE))
+                        .start();
 
-        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
-        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+                bottomBar_selection.animate()
+                        .alpha(0f)
+                        .setDuration(350)
+                        .withEndAction(() -> bottomBar_selection.setVisibility(View.GONE))
+                        .start();
+            }
 
-        path_Details.setOnClickListener(v -> {
-            isPath_Visible = !isPath_Visible;
-            setBackground(path_Details, isPath_Visible);
+            @Override
+            public void onCountChanged(int counts) {
+                toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+            }
         });
 
-        date_Details.setOnClickListener(v -> {
-            isDate_Visible = !isDate_Visible;
-            setBackground(date_Details, isDate_Visible);
+        toolbarSel_back.setOnClickListener(v -> {
+            clearSelection();
         });
 
-        size_Details.setOnClickListener(v -> {
-            isSize_Visible = !isSize_Visible;
-            setBackground(size_Details, isSize_Visible);
+        toolbarSel_sel.setOnClickListener(v -> {
+            if (!adapter.isAllSelected()) {
+                selectAllItems();
+            }
+            else {
+                deselectAllItems();
+            }
+            isAllSelected = !isAllSelected;
         });
 
-        dur_Details.setOnClickListener(v -> {
-            isDur_Visible = !isDur_Visible;
-            setBackground(dur_Details, isDur_Visible);
-        });
-
-        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            isDur_OnThumbnail = isChecked;
-        });
+        layoutB_Listeners();
+        sortB_Listeners();
+        detailsB_Listeners();
 
         apply_Button.setOnClickListener(v -> {
             setDetailsVisibility();
@@ -285,6 +334,87 @@ public class AudioFragment extends Fragment {
             }
         });
 
+        requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter.isSelectionMode) {
+                    clearSelection();
+                }
+                else {
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+    }
+
+
+    private void selectAllItems() {
+        for (Audio v : mediaList) {
+            v.isSelected = true;
+        }
+        adapter.notifyDataSetChanged();
+        adapter.selectionCounts = mediaList.size();
+        adapter.listener.onCountChanged(mediaList.size());
+    }
+
+    private void deselectAllItems() {
+        for (Audio v : mediaList) {
+            v.isSelected = false;
+        }
+        adapter.notifyDataSetChanged();
+        adapter.selectionCounts = 0;
+        adapter.listener.onCountChanged(0);
+    }
+
+    private void clearSelection() {
+        for (Audio v : mediaList) {
+            v.isSelected = false;
+        }
+        adapter.isSelectionMode = false;
+        adapter.notifyDataSetChanged();
+        adapter.listener.onSelectionEnds();
+    }
+
+
+    private void layoutB_Listeners() {
+        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
+        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+    }
+
+    private void sortB_Listeners() {
+        ByName_sort.setOnClickListener(v -> setBackground_SortButtons("Name"));
+        ByDate_sort.setOnClickListener(v -> setBackground_SortButtons("Date"));
+        ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
+        BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
+
+        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
+        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+    }
+
+    private void detailsB_Listeners() {
+        path_Details.setOnClickListener(v -> {
+            isPath_Visible = !isPath_Visible;
+            setBackground(path_Details, isPath_Visible);
+        });
+
+        date_Details.setOnClickListener(v -> {
+            isDate_Visible = !isDate_Visible;
+            setBackground(date_Details, isDate_Visible);
+        });
+
+        size_Details.setOnClickListener(v -> {
+            isSize_Visible = !isSize_Visible;
+            setBackground(size_Details, isSize_Visible);
+        });
+
+        dur_Details.setOnClickListener(v -> {
+            isDur_Visible = !isDur_Visible;
+            setBackground(dur_Details, isDur_Visible);
+        });
+
+        durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isDur_OnThumbnail = isChecked;
+        });
     }
 
 

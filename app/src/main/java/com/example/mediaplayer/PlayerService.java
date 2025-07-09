@@ -23,7 +23,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -37,16 +36,15 @@ import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.session.CommandButton;
-import androidx.media3.session.MediaNotification;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
+import androidx.media3.session.MediaStyleNotificationHelper;
 import androidx.media3.session.SessionCommand;
 import androidx.media3.session.SessionResult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.List;
 
 @UnstableApi
 public class PlayerService extends MediaSessionService {
@@ -81,6 +79,9 @@ public class PlayerService extends MediaSessionService {
 
     private static final String TAG = "tag_service";
 
+    private static final SessionCommand CUSTOM_COMMAND_FAVORITES =
+            new SessionCommand("ACTION_FAVORITES", Bundle.EMPTY);
+
 
     @Override
     public void onCreate() {
@@ -96,7 +97,16 @@ public class PlayerService extends MediaSessionService {
 //                .setRenderersFactory(renderersFactory)
                 .build();
 
-        mediaSession = new MediaSession.Builder(this, player).build();
+        CommandButton favoriteButton =
+                new CommandButton.Builder(CommandButton.ICON_HEART_UNFILLED)
+                        .setDisplayName("Save to favorites")
+                        .setSessionCommand(CUSTOM_COMMAND_FAVORITES)
+                        .build();
+
+        mediaSession = new MediaSession.Builder(this, player)
+                .setCallback(new MyCallback())
+                .setCustomLayout(ImmutableList.of(favoriteButton))
+                .build();
 
         playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
@@ -145,6 +155,48 @@ public class PlayerService extends MediaSessionService {
         });
 
         LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS"));
+    }
+
+
+    private static class MyCallback implements MediaSession.Callback {
+        @NonNull
+        @Override
+        public MediaSession.ConnectionResult onConnect(
+                MediaSession session, MediaSession.ControllerInfo controller) {
+            // Set available player and session commands.
+            Log.d("customCommands", "onConnect: YeS");
+            return new MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                    .setAvailableSessionCommands(
+                            MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                                    .add(CUSTOM_COMMAND_FAVORITES)
+                                    .build())
+                    .build();
+        }
+
+
+        @NonNull
+        @Override
+        public ListenableFuture<SessionResult> onCustomCommand(
+                MediaSession session,
+                MediaSession.ControllerInfo controller,
+                SessionCommand customCommand, Bundle args) {
+            Log.d("customCommands", "onConnect: 1");
+            if (customCommand.customAction.equals(CUSTOM_COMMAND_FAVORITES.customAction)) {
+                // Do custom logic here
+                Log.d("customCommands", "onConnect: 2");
+                saveToFavorites(session.getPlayer().getCurrentMediaItem());
+                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+            }
+            return MediaSession.Callback.super.onCustomCommand(
+                    session, controller, customCommand, args);
+
+        }
+
+        private void saveToFavorites(MediaItem currentMediaItem) {
+            ;
+        }
+
+
     }
 
 
@@ -205,6 +257,7 @@ public class PlayerService extends MediaSessionService {
                         loopValue = 0;
                         player.setRepeatMode(loopValue);
                     }
+                    break;
 
                 case ACTION_SHUFFLE:
                     isShuffled = !player.getShuffleModeEnabled();
@@ -212,6 +265,7 @@ public class PlayerService extends MediaSessionService {
                     break;
             }
         }
+        updateNotification();
 
         return START_STICKY;
     }
@@ -247,18 +301,17 @@ public class PlayerService extends MediaSessionService {
                 .setContentText(artist)
                 .setContentIntent(createContentPendingIntent()); // This is optional if you have a specific action on clicking the notification
 
-        builder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getPlatformToken()))
-                .setShowActionsInCompactView(0, 1, 2));
-
-        builder.addAction(generateAction(R.drawable.baseline_skip_previous_24, "Previous", ACTION_PREVIOUS));
-        builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_24 : R.drawable.baseline_play_arrow_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
-        builder.addAction(generateAction(R.drawable.baseline_skip_next_24, "Next", ACTION_NEXT));
+        builder.setStyle(new MediaStyleNotificationHelper.MediaStyle(mediaSession)
+                .setShowActionsInCompactView(1, 2, 3));
 
         builder.addAction(
                 (loopValue == 0) ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_off, "Shuffle Off", ACTION_LOOP_MODE) :
                         (loopValue == 1)  ? generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_one, "Shuffle One", ACTION_LOOP_MODE) :
                                 generateAction(androidx.media3.session.R.drawable.media3_icon_repeat_all, "Shuffle All", ACTION_LOOP_MODE));
+
+        builder.addAction(generateAction(R.drawable.baseline_skip_previous_24, "Previous", ACTION_PREVIOUS));
+        builder.addAction(generateAction(isPlaying ? R.drawable.baseline_pause_24 : R.drawable.baseline_play_arrow_24, isPlaying ? "Pause" : "Play", ACTION_PLAY_PAUSE));
+        builder.addAction(generateAction(R.drawable.baseline_skip_next_24, "Next", ACTION_NEXT));
 
         builder.addAction(
                 (isShuffled) ? generateAction(androidx.media3.session.R.drawable.media3_icon_shuffle_on, "Shuffle Enable", ACTION_SHUFFLE) :

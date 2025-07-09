@@ -13,6 +13,8 @@ public class Audio {
     private String lastPlayedTime;
     private Bitmap thumbnailUrl;
     private boolean isVideo;
+    public boolean isSelected;
+
 
     public Audio(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
         this.name = name;
@@ -51,6 +53,10 @@ public class Audio {
 
     public String getSize() {
         return size;
+    }
+
+    public void setIsSelected(boolean isSelected) {
+        this.isSelected = isSelected;
     }
 
 
