@@ -9,5 +9,6 @@
         android:angle="270"
         android:centerY=".20"
         />
+    <corners android:radius="30dp" />
 
 </shape>

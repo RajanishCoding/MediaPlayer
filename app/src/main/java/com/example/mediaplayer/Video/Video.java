@@ -1,9 +1,11 @@
 package com.example.mediaplayer.Video;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
 
 public class Video {
+    private String uri;
     private String name;
     private String path;
     private String dateAdded;
@@ -18,7 +20,8 @@ public class Video {
     private boolean isVideo;
     public boolean isSelected;
 
-    public Video(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
+    public Video(String uri, String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
+        this.uri = uri;
         this.name = name;
         this.path = path;
         this.dateAdded = date;
@@ -43,6 +46,10 @@ public class Video {
         this.size = size;
     }
 
+
+    public Uri getUri() {
+        return Uri.parse(uri);
+    }
 
     public String getName() {
         return name;

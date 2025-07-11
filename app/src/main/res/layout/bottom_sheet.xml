@@ -1,45 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@color/transparent">
+    
 
-    <LinearLayout
-        android:orientation="vertical"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        style="@style/NavBarStyle">
+        android:layout_margin="13dp"
+        app:cardBackgroundColor="@color/bottomBar"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="10dp">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:src="@drawable/media3_icon_previous"
-            android:layout_weight="1"/>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:divider="@drawable/shape_bottom_divider"
+            android:showDividers="middle">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:src="@drawable/media3_icon_previous"
-            android:layout_weight="1"/>
+            <TextView
+                android:id="@+id/title"
+                style="@style/TextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:minHeight="50dp"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:text="Media Player  hdinei sijjovvvv kuhvoooooooohh kigcocgouc kbivohuuo hh ivcuguoc hucucibiu seohi sjuf"
+                android:textSize="16sp"
+                android:gravity="center"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:src="@drawable/media3_icon_previous"
-            android:layout_weight="1"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/playB"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/transparent"
+                android:text="Play"
+                android:textAllCaps="false"
+                android:textAlignment="textStart"
+                android:drawablePadding="20dp"
+                android:drawableStart="@drawable/round_play_arrow"
+                android:drawableTint="@color/bottomBarButtonTint"
+                android:paddingHorizontal="20dp"
+                android:layout_weight="1"/>
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:src="@drawable/media3_icon_previous"
-            android:layout_weight="1"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/infoB"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/transparent"
+                android:text="Information"
+                android:textAllCaps="false"
+                android:textAlignment="textStart"
+                android:drawablePadding="20dp"
+                android:drawableStart="@drawable/round_info_outline"
+                android:drawableTint="@color/bottomBarButtonTint"
+                android:paddingHorizontal="20dp"
+                android:layout_weight="1"/>
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:src="@drawable/media3_icon_previous"
-            android:layout_weight="1"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/renameB"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/transparent"
+                android:text="Rename"
+                android:textAllCaps="false"
+                android:textAlignment="textStart"
+                android:drawablePadding="20dp"
+                android:drawableStart="@drawable/round_rename_outline_24"
+                android:drawableTint="@color/bottomBarButtonTint"
+                android:paddingHorizontal="20dp"
+                android:layout_weight="1"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/deleteB"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/transparent"
+                android:text="Delete"
+                android:textAllCaps="false"
+                android:textAlignment="textStart"
+                android:drawablePadding="20dp"
+                android:drawableStart="@drawable/round_delete_forever"
+                android:drawableTint="@color/bottomBarButtonTint"
+                android:paddingHorizontal="20dp"
+                android:layout_weight="1"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/shareB"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/transparent"
+                android:text="Share"
+                android:textAllCaps="false"
+                android:textAlignment="textStart"
+                android:drawablePadding="20dp"
+                android:drawableStart="@drawable/round_share"
+                android:drawableTint="@color/bottomBarButtonTint"
+                android:paddingHorizontal="20dp"
+                android:layout_weight="1"/>
 
     </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+
 </FrameLayout>

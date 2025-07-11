@@ -107,8 +107,6 @@
 
 
 
-
-
     <!-- Base application theme. -->
     <style name="Base.Base.Theme.MediaPlayer" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->

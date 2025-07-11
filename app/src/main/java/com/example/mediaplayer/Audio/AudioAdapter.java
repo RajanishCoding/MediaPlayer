@@ -254,7 +254,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            MyBottomSheet sheet = new MyBottomSheet(p);
+            MyBottomSheet sheet = new MyBottomSheet(p, mediaList.get(p).getName());
             sheet.show(fragmentManager, sheet.getTag());
         });
     }

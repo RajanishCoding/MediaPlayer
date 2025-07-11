@@ -1,5 +1,7 @@
 package com.example.mediaplayer.Video;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +18,11 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -29,6 +36,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
 import com.example.mediaplayer.Extra.MyBottomSheet;
+import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.google.gson.Gson;
@@ -45,10 +53,11 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         void onSelectionStarts();
         void onSelectionEnds();
         void onCountChanged(int counts);
+        void onOptionButtonClicked(int position, String name);
     }
 
     private List<Video> mediaList;
-    private Context context;
+    private static Context context;
 
     private boolean dur;
     private boolean dur_onThumbnail;
@@ -114,6 +123,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
             size = item_layout.findViewById(R.id.t3_size);
             moreB = item_layout.findViewById(R.id.moreB_item);
+
         }
     }
 
@@ -282,8 +292,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            MyBottomSheet sheet = new MyBottomSheet(p);
-            sheet.show(fragmentManager, sheet.getTag());
+            listener.onOptionButtonClicked(p, mediaList.get(p).getName());
         });
     }
 

@@ -1,14 +1,15 @@
 package com.example.mediaplayer.Video;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -36,8 +37,9 @@ import android.widget.TextView;
 
 
 import com.example.mediaplayer.Extra.MediaRepository;
+import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
-import com.example.mediaplayer.FilesListActivity;
+import com.example.mediaplayer.Extra.ConsentDialog;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -149,7 +151,7 @@ public class VideoFragment extends Fragment {
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
 
-
+    private ActivityResultLauncher<IntentSenderRequest> deleteLauncher;
 
     public VideoFragment() {}
 
@@ -159,8 +161,7 @@ public class VideoFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_video, container, false);
 
@@ -226,7 +227,6 @@ public class VideoFragment extends Fragment {
 
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
-
 
         return view;
     }
@@ -321,6 +321,40 @@ public class VideoFragment extends Fragment {
             @Override
             public void onCountChanged(int counts) {
                 toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+            }
+
+            @Override
+            public void onOptionButtonClicked(int p, String name) {
+                MyBottomSheet sheet = new MyBottomSheet(p, name);
+                sheet.show(getChildFragmentManager(), sheet.getTag());
+
+                sheet.addBottomSheetDialogListeners(new MyBottomSheet.BottomSheetDialogListeners() {
+                    @Override
+                    public void onPlayCLickListener(int position) {
+
+                    }
+
+                    @Override
+                    public void onInfoClickListener(int position) {
+
+                    }
+
+                    @Override
+                    public void onRenameClickListener(int position) {
+
+                    }
+
+                    @Override
+                    public void onDeleteClickListener(int p) {
+                        ConsentDialog consent = new ConsentDialog(mediaList.get(p).getUri());
+                        consent.show(getChildFragmentManager(), sheet.getTag());
+                    }
+
+                    @Override
+                    public void onShareClickListener(int position) {
+
+                    }
+                });
             }
         });
 
@@ -655,9 +689,9 @@ public class VideoFragment extends Fragment {
     public void onStart() {
         super.onStart();
 
-        Log.d("Hello", "Before Load: Yes");
+        Log.d("Hello", "Before Load: Yes " + mediaList.size());
         Load_Or_Query_MediaList();
-        Log.d("Hello", "After Load: Yes");
+        Log.d("Hello", "After Load: Yes " + mediaList.size());
     }
 
     @Override
@@ -669,14 +703,16 @@ public class VideoFragment extends Fragment {
 
 
     private void Load_Or_Query_MediaList() {
+        Log.d("filesstored", "Load_Or_Query_MediaList0: ");
+
         executorService.submit(() -> {
+            Log.d("filesstored", "Load_Or_Query_MediaList0: ");
             storedMediaList = loadMediaListFromPreferences();
-            Log.d("Hello", "Stored: " + storedMediaList);
+            Log.d("Hello55", "Stored: " + storedMediaList);
+
 
             if (storedMediaList == null || storedMediaList.isEmpty()) {
                 isFilesStored = false;
-
-                Log.d("video", "Load_Or_Query_MediaList: ");
 
                 // If no media files in preferences, query media files
                 mediaList.clear();
@@ -708,11 +744,7 @@ public class VideoFragment extends Fragment {
                         adapter.notifyDataSetChanged();
 
                         Check_And_Update_Files();
-
-
                     }
-
-
 
                     Log.d("Hello", "UIThread: " + storedMediaList);
                     Log.d("Hello", "UIThread: " + mediaList);
@@ -779,15 +811,21 @@ public class VideoFragment extends Fragment {
     private List<Video> processCursor(Cursor cursor, Set<String> parentFolders) {
         List<Video> mediaList = new ArrayList<>();
 
+        int idInd = cursor.getColumnIndex(MediaStore.Video.Media._ID);
         int filePathInd = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
         int displayNameInd = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
         int dateAddedInd = cursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED);
 
-        if (filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
+        Log.d("wowoid", " 0 : " + mediaList.size());
+
+        if (idInd != -1 && filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
             while (cursor.moveToNext()) {
+                long id = cursor.getLong(idInd);
                 String filePath = cursor.getString(filePathInd);
                 String displayName = cursor.getString(displayNameInd);
                 String date = cursor.getString(dateAddedInd);
+
+                String videoUri = String.valueOf(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
 
                 // Add parent folder path to the set
                 String parentFolder = new File(filePath).getParent();
@@ -799,7 +837,9 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Video media = new Video(displayName, filePath, date, null, true);
+                Log.d("wowoid", " 1 : " +String.valueOf(videoUri));
+
+                Video media = new Video(videoUri, displayName, filePath, date, null, true);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {
@@ -812,9 +852,12 @@ public class VideoFragment extends Fragment {
                 Log.d(TAG, "processCursor: ");
 
                 Log.d("wowo", displayName);
-                Log.d("wowo", date);
+                Log.d("wowoid", " 2 : " + String.valueOf(videoUri));
             }
         }
+
+        Log.d("wowoid", " 3 : " + mediaList.size());
+
         return mediaList;
     }
 
@@ -939,11 +982,20 @@ public class VideoFragment extends Fragment {
     }
 
     private List<Video> loadMediaListFromPreferences() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = prefs.getString("videoList", null);
-        Type type = new TypeToken<ArrayList<Video>>() {}.getType();
-        return gson.fromJson(json, type);
+        try {
+            SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
+            Gson gson = new Gson();
+            String json = prefs.getString("videoList", null);
+            Type type = new TypeToken<ArrayList<Video>>() {
+            }.getType();
+//            if (json == null) return new ArrayList<>();
+            return gson.fromJson(json, type);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.d("loadmedia", "loadMediaListFromPreferences: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
 

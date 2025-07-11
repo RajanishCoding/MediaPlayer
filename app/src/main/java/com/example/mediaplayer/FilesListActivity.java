@@ -119,7 +119,7 @@ public class FilesListActivity extends AppCompatActivity {
 //            }
 //        });
 
-        CheckAndAsk_StorageAccess();
+//        CheckAndAsk_StorageAccess();
 
         bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
@@ -235,9 +235,20 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
 
-    private static final String[] REQUIRED_PERMISSIONS = {
+    private static final String[] REQUIRED_PERMISSIONS_A9B = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    private static final String[] REQUIRED_PERMISSIONS_A1012 = {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
+
+    private static final String[] REQUIRED_PERMISSIONS_A13A = {
+            Manifest.permission.READ_MEDIA_AUDIO,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.POST_NOTIFICATIONS
     };
 
     ActivityResultLauncher<String> requestPermissionLauncher_Notification =
@@ -248,15 +259,28 @@ public class FilesListActivity extends AppCompatActivity {
                 }
             });
 
-    ActivityResultLauncher<String[]> requestPermissionsLauncher_StorageA10 =
+    ActivityResultLauncher<String[]> requestPermissionsLauncher_Storage =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
                 @Override
                 public void onActivityResult(Map<String, Boolean> permissions) {
-                    Boolean readPermission = permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE);
-                    Boolean writePermission = permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    boolean permission1, permission2, isAllowed;
 
-                    if (readPermission != null && readPermission && writePermission != null && writePermission) {
-                        // Both permissions are granted
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE));
+                        permission2 = Boolean.TRUE.equals(permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE));
+                        isAllowed = permission1 && permission2;
+                    }
+                    else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE));
+                        isAllowed = Boolean.TRUE.equals(permission1);
+                    }
+                    else {
+                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_MEDIA_AUDIO));
+                        permission2 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_MEDIA_VIDEO));
+                        isAllowed = Boolean.TRUE.equals(permission1) && Boolean.TRUE.equals(permission2);
+                    }
+
+                    if (isAllowed) {
                         isStorageAccessed = true;
                         StorageRationaleLayout.setVisibility(View.GONE);
                         loadFragment(new VideoFragment(), true);
@@ -279,82 +303,107 @@ public class FilesListActivity extends AppCompatActivity {
 
     // Only check if permission is Allowed or not
     private boolean checkStorageAccess() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.isExternalStorageManager();
-        }
-        else {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+        else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+        else {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
         }
     }
 
     // Check and Decide for, which permission is needed
     private void CheckAndAsk_StorageAccess() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-            CheckAndAsk_StorageAccessA11();
-        else
-            CheckAndAsk_StorageAccessA10();
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
+            CheckAndAsk_StorageAccessA9B();
+        else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
+            CheckAndAsk_StorageAccessA1012();
+        else {
+            CheckAndAsk_StorageAccessA13A();
+            CheckAndAsk_NotificationAccess();
+        }
     }
 
-    // Check and Asks the permission for android 11 and above
-    private void CheckAndAsk_StorageAccessA10() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-//            NotificationEnabled = true;
+    // Check and Asks the permission for android 13 and above
+    private void CheckAndAsk_StorageAccessA13A() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
             loadFragment(new VideoFragment(), true);
         }
 
         else {
             isStorageAccessed = false;
-            requestPermissionsLauncher_StorageA10.launch(REQUIRED_PERMISSIONS);
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A13A);
         }
     }
 
-    // Check and Asks the permission for android 10 and below
-    private void CheckAndAsk_StorageAccessA11() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()) {
-                isStorageAccessed = true;
-                loadFragment(new VideoFragment(), true);
-//                queryMediaFiles(false);
-                Log.d(TAG, "onCreate: YES");
-            }
-            else {
-                isStorageAccessed = false;
-                CheckAndAsk_NotificationAccess();
-                StorageRationaleLayout.setVisibility(View.VISIBLE);
-                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        showPermissionDialog_StorageAccessA11();
-                    }
-                });
-            }
+    // Check and Asks the permission for android 10 to 12
+    private void CheckAndAsk_StorageAccessA1012() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            isStorageAccessed = true;
+            loadFragment(new VideoFragment(), true);
         }
 
+        else {
+            isStorageAccessed = false;
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A1012);
+        }
+    }
 
+    // Check and Asks the permission for android 9 and below
+    private void CheckAndAsk_StorageAccessA9B() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            isStorageAccessed = true;
+            loadFragment(new VideoFragment(), true);
+        }
+
+        else {
+            isStorageAccessed = false;
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A9B);
+        }
+
+//        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+//            if (Environment.isExternalStorageManager()) {
+//                isStorageAccessed = true;
+//                loadFragment(new VideoFragment(), true);
+////                queryMediaFiles(false);
+//                Log.d(TAG, "onCreate: YES");
+//            }
+//            else {
+//                isStorageAccessed = false;
+//                CheckAndAsk_NotificationAccess();
+//                StorageRationaleLayout.setVisibility(View.VISIBLE);
+//                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        showPermissionDialog_StorageAccessA11();
+//                    }
+//                });
+//            }
+//        }
     }
 
     // Check and Asks the permission for Notification for Android 13 and above
     private void CheckAndAsk_NotificationAccess() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // Check if the permission is granted
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS) ==
-                    PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 NotificationEnabled = true;
             }
 
-            else if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, Manifest.permission.POST_NOTIFICATIONS)) {
+            else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
                 NotificationEnabled = false;
                 showRationaleDialog_Notification();
             }
 
             else {
                 NotificationEnabled = false;
-                requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
     }
