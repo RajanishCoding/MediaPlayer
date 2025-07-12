@@ -1,8 +1,10 @@
 package com.example.mediaplayer.Audio;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 
 public class Audio {
+    private String uri;
     private String name;
     private String path;
     private String dateAdded;
@@ -16,7 +18,8 @@ public class Audio {
     public boolean isSelected;
 
 
-    public Audio(String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
+    public Audio(String uri, String name, String path, String date, Bitmap thumbnailUrl, boolean isVideo) {
+        this.uri = uri;
         this.name = name;
         this.path = path;
         this.dateAdded = date;
@@ -33,6 +36,10 @@ public class Audio {
         this.size = size;
     }
 
+
+    public Uri getUri() {
+        return Uri.parse(uri);
+    }
 
     public String getName() {
         return name;

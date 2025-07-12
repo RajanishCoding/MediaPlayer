@@ -54,9 +54,7 @@ public class MyBottomSheet extends BottomSheetDialogFragment {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
 
         dialog.setOnShowListener(dialogInterface -> {
-            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialogInterface;
-
-            FrameLayout bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
 
             if (bottomSheet != null) {
                 bottomSheet.setBackgroundColor(Color.TRANSPARENT);

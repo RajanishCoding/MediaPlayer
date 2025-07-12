@@ -4,7 +4,9 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -22,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -257,6 +261,7 @@ public class VideoFragment extends Fragment {
         adapter = new VideoAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
+        Load_Or_Query_MediaList();
 
         menu_Button.setOnClickListener(v -> {
             if (switch_isEnd) {
@@ -341,12 +346,17 @@ public class VideoFragment extends Fragment {
 
                     @Override
                     public void onRenameClickListener(int position) {
-
+                        List<Uri> uris = new ArrayList<>();
+                        uris.add(mediaList.get(p).getUri());
+                        ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName(), mediaList.get(p).getPath());
+                        consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
                     @Override
                     public void onDeleteClickListener(int p) {
-                        ConsentDialog consent = new ConsentDialog(mediaList.get(p).getUri());
+                        List<Uri> uris = new ArrayList<>();
+                        uris.add(mediaList.get(p).getUri());
+                        ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName(), mediaList.get(p).getPath());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
@@ -402,6 +412,18 @@ public class VideoFragment extends Fragment {
                 }
             }
         });
+
+        requireContext().getContentResolver().registerContentObserver(
+                MediaStore.Video.Media.getContentUri("external"), true, // notify for descendant paths too
+                new ContentObserver(new Handler(Looper.getMainLooper())) {
+                    @Override
+                    public void onChange(boolean selfChange, @Nullable Uri uri) {
+                        super.onChange(selfChange, uri);
+                        Log.d("MediaChange", "Change detected: " + uri.getPath());
+                        Load_Or_Query_MediaList();
+                    }
+                }
+        );
 
         requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
             @Override
@@ -690,7 +712,7 @@ public class VideoFragment extends Fragment {
         super.onStart();
 
         Log.d("Hello", "Before Load: Yes " + mediaList.size());
-        Load_Or_Query_MediaList();
+//        Load_Or_Query_MediaList();
         Log.d("Hello", "After Load: Yes " + mediaList.size());
     }
 
@@ -704,6 +726,10 @@ public class VideoFragment extends Fragment {
 
     private void Load_Or_Query_MediaList() {
         Log.d("filesstored", "Load_Or_Query_MediaList0: ");
+
+        if (executorService.isShutdown() || executorService.isTerminated()) {
+            executorService = Executors.newSingleThreadExecutor();
+        }
 
         executorService.submit(() -> {
             Log.d("filesstored", "Load_Or_Query_MediaList0: ");
@@ -816,8 +842,6 @@ public class VideoFragment extends Fragment {
         int displayNameInd = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
         int dateAddedInd = cursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED);
 
-        Log.d("wowoid", " 0 : " + mediaList.size());
-
         if (idInd != -1 && filePathInd != -1 && displayNameInd != -1 && dateAddedInd != -1) {
             while (cursor.moveToNext()) {
                 long id = cursor.getLong(idInd);
@@ -837,8 +861,6 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Log.d("wowoid", " 1 : " +String.valueOf(videoUri));
-
                 Video media = new Video(videoUri, displayName, filePath, date, null, true);
                 mediaList.add(media);
 
@@ -849,14 +871,10 @@ public class VideoFragment extends Fragment {
 //                    }
 //                }
 
-                Log.d(TAG, "processCursor: ");
-
                 Log.d("wowo", displayName);
                 Log.d("wowoid", " 2 : " + String.valueOf(videoUri));
             }
         }
-
-        Log.d("wowoid", " 3 : " + mediaList.size());
 
         return mediaList;
     }

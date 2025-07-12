@@ -47,6 +47,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
         void onSelectionStarts();
         void onSelectionEnds();
         void onCountChanged(int counts);
+        void onOptionButtonClicked(int position, String name);
     }
 
     private List<Audio> mediaList;
@@ -254,8 +255,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            MyBottomSheet sheet = new MyBottomSheet(p, mediaList.get(p).getName());
-            sheet.show(fragmentManager, sheet.getTag());
+            listener.onOptionButtonClicked(p, mediaList.get(p).getName());
         });
     }
 

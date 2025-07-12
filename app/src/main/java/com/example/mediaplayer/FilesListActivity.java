@@ -235,12 +235,12 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
 
-    private static final String[] REQUIRED_PERMISSIONS_A9B = {
+    private static final String[] REQUIRED_PERMISSIONS_A10B = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private static final String[] REQUIRED_PERMISSIONS_A1012 = {
+    private static final String[] REQUIRED_PERMISSIONS_A1112 = {
             Manifest.permission.READ_EXTERNAL_STORAGE
     };
 
@@ -303,7 +303,7 @@ public class FilesListActivity extends AppCompatActivity {
 
     // Only check if permission is Allowed or not
     private boolean checkStorageAccess() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         }
@@ -318,10 +318,10 @@ public class FilesListActivity extends AppCompatActivity {
 
     // Check and Decide for, which permission is needed
     private void CheckAndAsk_StorageAccess() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
-            CheckAndAsk_StorageAccessA9B();
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q)
+            CheckAndAsk_StorageAccessA10B();
         else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
-            CheckAndAsk_StorageAccessA1012();
+            CheckAndAsk_StorageAccessA1112();
         else {
             CheckAndAsk_StorageAccessA13A();
             CheckAndAsk_NotificationAccess();
@@ -343,7 +343,7 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
     // Check and Asks the permission for android 10 to 12
-    private void CheckAndAsk_StorageAccessA1012() {
+    private void CheckAndAsk_StorageAccessA1112() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
             loadFragment(new VideoFragment(), true);
@@ -351,12 +351,12 @@ public class FilesListActivity extends AppCompatActivity {
 
         else {
             isStorageAccessed = false;
-            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A1012);
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A1112);
         }
     }
 
     // Check and Asks the permission for android 9 and below
-    private void CheckAndAsk_StorageAccessA9B() {
+    private void CheckAndAsk_StorageAccessA10B() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
@@ -365,7 +365,7 @@ public class FilesListActivity extends AppCompatActivity {
 
         else {
             isStorageAccessed = false;
-            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A9B);
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A10B);
         }
 
 //        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
