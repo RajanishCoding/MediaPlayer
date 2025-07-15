@@ -8,7 +8,7 @@
     tools:context=".Video.VideoFragment"
     style="@style/FilesListBG">
 
-<!--     Custom Toolbar-->
+    <!-- Custom Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         style="@style/ToolbarStyle"
@@ -185,24 +185,32 @@
         android:visibility="gone">
 
         <ImageButton
+            android:id="@+id/renameB_sel"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_weight="1"
             android:contentDescription="TODO"
-            android:src="@drawable/media3_icon_previous"/>
+            android:src="@drawable/round_rename_outline_24"
+            app:tint="@color/bottomBarButtonTint" />
 
         <ImageButton
+            android:id="@+id/deleteB_sel"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_weight="1"
-            android:src="@drawable/media3_icon_play"/>
+            android:contentDescription="TODO"
+            android:src="@drawable/round_delete_forever"
+            app:tint="@color/bottomBarButtonTint" />
 
         <ImageButton
+            android:id="@+id/shareB_sel"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_weight="1"
-            android:src="@drawable/media3_icon_next"/>
-        
+            android:contentDescription="TODO"
+            android:src="@drawable/round_share"
+            app:tint="@color/bottomBarButtonTint" />
+
     </LinearLayout>
 
 
