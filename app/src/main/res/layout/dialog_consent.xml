@@ -4,7 +4,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="30dp"
     android:orientation="vertical"
     android:padding="24dp"
     android:background="@drawable/shape_bottom_bar"
@@ -43,13 +42,14 @@
         android:id="@+id/rename_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:orientation="vertical">
+        android:layout_marginBottom="20dp">
 
         <EditText
             android:id="@+id/editText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autofillHints=""
             android:hint="Enter new file name"
             android:textSize="19sp"
             android:inputType="text"
@@ -64,7 +64,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/decline_button"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/shape_dialog_button"
             android:text="No"
@@ -73,7 +73,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/accept_button"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/shape_dialog_button"
             android:text="yes"

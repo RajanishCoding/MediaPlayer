@@ -3,8 +3,10 @@ package com.example.mediaplayer.Extra;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +18,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,10 +32,10 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class ConsentDialog extends DialogFragment {
 
@@ -42,6 +43,10 @@ public class ConsentDialog extends DialogFragment {
     private String name;
     private String path;
     private List<Uri> mediaUris;
+
+    private String mediaName;
+    private String mediaExtension;
+    private String newName;
 
     private AppCompatButton acceptB;
     private Button cancelB;
@@ -53,13 +58,15 @@ public class ConsentDialog extends DialogFragment {
     private TextView contentText;
     private EditText editText;
 
-    private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
+    private final ActivityResultLauncher<IntentSenderRequest> consentLauncher =
         registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
             if (result.getResultCode() == FilesListActivity.RESULT_OK) {
-                Toast.makeText(requireContext(), "File deleted successfully!", Toast.LENGTH_SHORT).show();
+                if (mode == 1) Toast.makeText(requireContext(), "File Deleted successfully!", Toast.LENGTH_SHORT).show();
+                else doRename_A11A();
             }
             else {
-                Toast.makeText(requireContext(), "Delete permission denied", Toast.LENGTH_SHORT).show();
+                if (mode == 1){ Toast.makeText(requireContext(), "Delete permission denied", Toast.LENGTH_SHORT).show();}
+                else Toast.makeText(requireContext(), "Rename permission denied", Toast.LENGTH_SHORT).show();
             }
             dismiss();
         });
@@ -121,7 +128,7 @@ public class ConsentDialog extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         if (mediaUris.contains(null)) {
-            Toast.makeText(requireContext(), "Invalid media URI, Refresh this List", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Invalid media, Refresh this List", Toast.LENGTH_LONG).show();
             dismiss();
         }
 
@@ -130,7 +137,7 @@ public class ConsentDialog extends DialogFragment {
                 view.setVisibility(View.VISIBLE);
 
                 acceptB.setOnClickListener(v -> {
-                    deleteMediaFiles_A10B();
+                    deleteMedia_A10B();
                     dismiss();
                 });
 
@@ -142,13 +149,23 @@ public class ConsentDialog extends DialogFragment {
             else {
                 // Android 11A -> hide UI and launch consent
                 view.setVisibility(View.GONE);
-                deleteMediaFiles_A11A();
+                deleteMedia_A11A();
             }
         }
 
         else {
             acceptB.setOnClickListener(v -> {
-                dismiss();
+                mediaExtension = getFileExtension(name);
+                mediaName = String.valueOf(editText.getText());
+                newName = mediaName.concat(mediaExtension);
+
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    renameMedia_A10B();
+                    dismiss();
+                }
+                else {
+                    renameMedia_A11A();
+                }
             });
 
             cancelB.setOnClickListener(v -> {
@@ -165,10 +182,15 @@ public class ConsentDialog extends DialogFragment {
         Dialog dialog = getDialog();
         if (dialog != null && dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.85), // 85% screen width
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
         }
     }
 
-    public void deleteMediaFiles_A10B() {
+
+    public void deleteMedia_A10B() {
         ContentResolver contentResolver = requireContext().getContentResolver();
         try {
             int totalDel = 0;
@@ -193,13 +215,13 @@ public class ConsentDialog extends DialogFragment {
         }
     }
 
-    public void deleteMediaFiles_A11A() {
+    private void deleteMedia_A11A() {
         ContentResolver contentResolver = requireContext().getContentResolver();
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 PendingIntent pendingIntent = MediaStore.createDeleteRequest(contentResolver, mediaUris);
                 IntentSenderRequest intentSenderRequest = new IntentSenderRequest.Builder(pendingIntent.getIntentSender()).build();
-                deleteLauncher.launch(intentSenderRequest);
+                consentLauncher.launch(intentSenderRequest);
             }
         }
         catch (Exception e) {
@@ -208,7 +230,63 @@ public class ConsentDialog extends DialogFragment {
         }
     }
 
-    public String getFileExtension(String fileName) {
+
+    private void renameMedia_A10B() {
+        File oldFile = new File(path);
+        File newFile = new File(oldFile.getParent(), newName);
+        boolean r = oldFile.renameTo(newFile);
+
+        if (r) {
+            try {
+                Log.d("renamehello", "renameMedia_A10B1: " + mediaUris.get(0));
+                requireContext().getContentResolver().delete(mediaUris.get(0), null, null);
+            }
+            catch (Exception e) {
+                ;
+            }
+            MediaScannerConnection.scanFile(requireContext(), new String[]{newFile.getAbsolutePath()}, null, (path, newUri) -> {
+                // 🔥 This is the new URI for the renamed file
+                Log.d("renamehello", "renameMedia_A10B0: " + newUri);
+            });
+            Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void renameMedia_A11A() {
+        ContentResolver contentResolver = requireContext().getContentResolver();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                PendingIntent pendingIntent = MediaStore.createWriteRequest(contentResolver, mediaUris);
+                IntentSenderRequest intentSenderRequest = new IntentSenderRequest.Builder(pendingIntent.getIntentSender()).build();
+                consentLauncher.launch(intentSenderRequest);
+            }
+        }
+        catch (Exception e) {
+            Toast.makeText(requireContext(), "Error renaming file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.d("renameerror", "renameMediaFile: " + e.getMessage());
+        }
+    }
+
+    private void doRename_A11A() {
+        ContentResolver contentResolver = requireContext().getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, newName);
+
+        int rows = contentResolver.update(mediaUris.get(0), values, null, null);
+        if (rows > 0) {
+            Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+
+
+    private String getFileExtension(String fileName) {
         int lastDot = fileName.lastIndexOf('.');
         if (lastDot != -1) {
             return fileName.substring(lastDot);
@@ -217,26 +295,12 @@ public class ConsentDialog extends DialogFragment {
         }
     }
 
-    public String getFileNameWithoutExtension(String fileName) {
+    private String getFileNameWithoutExtension(String fileName) {
         int lastDot = fileName.lastIndexOf('.');
         if (lastDot != -1) {
             return fileName.substring(0, lastDot);
         } else {
             return fileName;
-        }
-    }
-
-    private void performDelete(Uri uriToDelete) {
-        ContentResolver contentResolver = requireContext().getContentResolver();
-        try {
-            int deletedRows = contentResolver.delete(uriToDelete, null, null);
-            if (deletedRows > 0) {
-                Toast.makeText(requireContext(), "File deleted successfully!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(requireContext(), "Deletion failed after permission: File not found or other issue.", Toast.LENGTH_LONG).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(requireContext(), "Error re-attempting delete: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
