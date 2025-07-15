@@ -6,7 +6,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,15 +26,14 @@ import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
 
-import java.io.File;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ConsentDialog extends DialogFragment {
 
@@ -48,11 +46,13 @@ public class ConsentDialog extends DialogFragment {
     private String mediaExtension;
     private String newName;
 
-    private AppCompatButton acceptB;
+    private Button acceptB;
     private Button cancelB;
 
     private LinearLayout deleteLayout;
     private LinearLayout renameLayout;
+    private LinearLayout loadingLayout;
+    private LinearLayout buttonsLayout;
 
     private TextView titleText;
     private TextView contentText;
@@ -61,14 +61,17 @@ public class ConsentDialog extends DialogFragment {
     private final ActivityResultLauncher<IntentSenderRequest> consentLauncher =
         registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
             if (result.getResultCode() == FilesListActivity.RESULT_OK) {
-                if (mode == 1) Toast.makeText(requireContext(), "File Deleted successfully!", Toast.LENGTH_SHORT).show();
+                if (mode == 1) {
+                    Toast.makeText(requireContext(), "File Deleted successfully!", Toast.LENGTH_SHORT).show();
+                    dismiss();
+                }
                 else doRename_A11A();
             }
             else {
                 if (mode == 1){ Toast.makeText(requireContext(), "Delete permission denied", Toast.LENGTH_SHORT).show();}
                 else Toast.makeText(requireContext(), "Rename permission denied", Toast.LENGTH_SHORT).show();
+                dismiss();
             }
-            dismiss();
         });
 
     public ConsentDialog(int mode, List<Uri> uri, String name, String path) {
@@ -100,11 +103,16 @@ public class ConsentDialog extends DialogFragment {
 
         deleteLayout = view.findViewById(R.id.delete_layout);
         renameLayout = view.findViewById(R.id.rename_layout);
+        loadingLayout = view.findViewById(R.id.loadingLayout);
+        buttonsLayout = view.findViewById(R.id.buttonsLayout);
         titleText = view.findViewById(R.id.titleText);
         contentText = view.findViewById(R.id.filesText);
         editText = view.findViewById(R.id.editText);
         acceptB = view.findViewById(R.id.accept_button);
         cancelB = view.findViewById(R.id.decline_button);
+
+        loadingLayout.setVisibility(View.GONE);
+        buttonsLayout.setVisibility(View.VISIBLE);
 
         if (mode == 1 && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             String title = mediaUris.size() > 1 ? "Delete these files permanently?" : "Delete this file permanently?";
@@ -138,7 +146,6 @@ public class ConsentDialog extends DialogFragment {
 
                 acceptB.setOnClickListener(v -> {
                     deleteMedia_A10B();
-                    dismiss();
                 });
 
                 cancelB.setOnClickListener(v -> {
@@ -161,7 +168,6 @@ public class ConsentDialog extends DialogFragment {
 
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
                     renameMedia_A10B();
-                    dismiss();
                 }
                 else {
                     renameMedia_A11A();
@@ -191,8 +197,10 @@ public class ConsentDialog extends DialogFragment {
 
 
     public void deleteMedia_A10B() {
-        ContentResolver contentResolver = requireContext().getContentResolver();
-        try {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        showLoading();
+        executorService.execute(() -> {
+            ContentResolver contentResolver = requireContext().getContentResolver();
             int totalDel = 0;
             for (Uri uri : mediaUris) {
                 try {
@@ -200,19 +208,19 @@ public class ConsentDialog extends DialogFragment {
                     if (deleted > 0) totalDel++;
                 }
                 catch (SecurityException e) {
-                    Toast.makeText(requireContext(), "Missing permission to delete this file", Toast.LENGTH_LONG).show();
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Missing permission to delete this file", Toast.LENGTH_LONG).show();
+                    });
                 }
             }
             if (totalDel > 0) {
-                Toast.makeText(requireContext(), "Files deleted successfully!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(requireContext(), "Failed to delete files.", Toast.LENGTH_SHORT).show();
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Files deleted successfully!", Toast.LENGTH_SHORT).show();
+                });
             }
-        }
-        catch (Exception e) {
-            Toast.makeText(requireContext(), "Error deleting file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            Log.d("deleteerror", "deleteMediaFile: " + e.getMessage());
-        }
+
+            requireActivity().runOnUiThread(this::dismiss);
+        });
     }
 
     private void deleteMedia_A11A() {
@@ -232,26 +240,33 @@ public class ConsentDialog extends DialogFragment {
 
 
     private void renameMedia_A10B() {
-        File oldFile = new File(path);
-        File newFile = new File(oldFile.getParent(), newName);
-        boolean r = oldFile.renameTo(newFile);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        showLoading();
+        executorService.execute(() -> {
+            ContentResolver contentResolver = requireContext().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, newName);
 
-        if (r) {
             try {
-                Log.d("renamehello", "renameMedia_A10B1: " + mediaUris.get(0));
-                requireContext().getContentResolver().delete(mediaUris.get(0), null, null);
+                int r = contentResolver.update(mediaUris.get(0), values, null, null);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (r > 0) {
+                        Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
             catch (Exception e) {
-                ;
+                Log.e("renamehello", "Error renaming file", e);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Error Renaming file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
             }
-            MediaScannerConnection.scanFile(requireContext(), new String[]{newFile.getAbsolutePath()}, null, (path, newUri) -> {
-                // 🔥 This is the new URI for the renamed file
-                Log.d("renamehello", "renameMedia_A10B0: " + newUri);
-            });
-            Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
-        }
+
+            requireActivity().runOnUiThread(this::dismiss);
+        });
     }
 
     private void renameMedia_A11A() {
@@ -270,21 +285,46 @@ public class ConsentDialog extends DialogFragment {
     }
 
     private void doRename_A11A() {
-        ContentResolver contentResolver = requireContext().getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.DISPLAY_NAME, newName);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            ContentResolver contentResolver = requireContext().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, newName);
 
-        int rows = contentResolver.update(mediaUris.get(0), values, null, null);
-        if (rows > 0) {
-            Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
-        }
+            try {
+                int r = contentResolver.update(mediaUris.get(0), values, null, null);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (r > 0) {
+                        Toast.makeText(requireContext(), "File Renamed successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Rename failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            catch (Exception e) {
+                Log.e("renamehello", "Error renaming file", e);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Error Renaming file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            requireActivity().runOnUiThread(this::dismiss);
+        });
     }
 
+    private void showLoading() {
+        String text;
+        if (mode == 1) text = mediaUris.size() > 1 ? "Deleting files..." : "Deleting file...";
+        else text = "Renaming file...";
 
-
-
+        setCancelable(false);
+        titleText.setText(text);
+        renameLayout.setVisibility(View.GONE);
+        deleteLayout.setVisibility(View.GONE);
+        buttonsLayout.setVisibility(View.GONE);
+        loadingLayout.setVisibility(View.VISIBLE);
+    }
 
     private String getFileExtension(String fileName) {
         int lastDot = fileName.lastIndexOf('.');

@@ -19,6 +19,7 @@
         style="@style/TextViewStyle"
         android:textSize="24sp" />
 
+    <!-- Delete Layout -->
     <LinearLayout
         android:id="@+id/delete_layout"
         android:layout_width="match_parent"
@@ -38,11 +39,13 @@
             android:ellipsize="end"/>
     </LinearLayout>
 
+    <!-- Rename Layout -->
     <LinearLayout
         android:id="@+id/rename_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp">
+        android:layout_marginBottom="20dp"
+        android:visibility="visible">
 
         <EditText
             android:id="@+id/editText"
@@ -56,11 +59,13 @@
             android:selectAllOnFocus="true" />
     </LinearLayout>
 
-
+    <!-- Buttons Layout -->
     <LinearLayout
+        android:id="@+id/buttonsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="visible">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/decline_button"
@@ -79,4 +84,20 @@
             android:text="yes"
             android:layout_weight="1"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/loadingLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"/>
+
+    </LinearLayout>
+
 </LinearLayout>
