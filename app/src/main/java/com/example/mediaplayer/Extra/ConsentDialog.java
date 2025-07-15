@@ -27,6 +27,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
 
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
@@ -116,7 +117,7 @@ public class ConsentDialog extends DialogFragment {
 
         if (mode == 1 && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             String title = mediaUris.size() > 1 ? "Delete these files permanently?" : "Delete this file permanently?";
-            String file = mediaUris.size() == 1 ? name : mediaUris.size() + " files";
+            String file = mediaUris.size() > 1 ? mediaUris.size() + " files" : name;
             titleText.setText(title);
             contentText.setText(file);
             renameLayout.setVisibility(View.GONE);
@@ -209,7 +210,7 @@ public class ConsentDialog extends DialogFragment {
                 }
                 catch (SecurityException e) {
                     requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(requireContext(), "Missing permission to delete this file", Toast.LENGTH_LONG).show();
+                        Toast.makeText(requireContext(), "Missing permission to delete a file", Toast.LENGTH_LONG).show();
                     });
                 }
             }
@@ -235,6 +236,7 @@ public class ConsentDialog extends DialogFragment {
         catch (Exception e) {
             Toast.makeText(requireContext(), "Error deleting file: " + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.d("deleteerror", "deleteMediaFile: " + e.getMessage());
+            dismiss();
         }
     }
 
@@ -281,6 +283,7 @@ public class ConsentDialog extends DialogFragment {
         catch (Exception e) {
             Toast.makeText(requireContext(), "Error renaming file: " + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.d("renameerror", "renameMediaFile: " + e.getMessage());
+            dismiss();
         }
     }
 
