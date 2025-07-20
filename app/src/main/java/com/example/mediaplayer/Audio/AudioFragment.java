@@ -34,15 +34,13 @@ import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.ConsentDialog;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
-import com.example.mediaplayer.Video.Video;
-import com.example.mediaplayer.Video.VideoAdapter;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -132,6 +130,12 @@ public class AudioFragment extends Fragment {
     private TextView toolbarSel_text;
     private boolean isAllSelected;
 
+    private ImageButton bottomSel_ren;
+    private ImageButton bottomSel_del;
+    private ImageButton bottomSel_share;
+
+    private AnimationLibs animationLibs;
+
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsPrefsEditor;
 
@@ -199,6 +203,10 @@ public class AudioFragment extends Fragment {
         toolbarSel_sel = view.findViewById(R.id.toolbarSel_selB);
         toolbarSel_text = view.findViewById(R.id.toolbarSel_title);
 
+        bottomSel_ren = view.findViewById(R.id.renameB_sel);
+        bottomSel_del = view.findViewById(R.id.deleteB_sel);
+        bottomSel_share = view.findViewById(R.id.shareB_sel);
+
         executorService = Executors.newSingleThreadExecutor();
 
         settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
@@ -223,20 +231,11 @@ public class AudioFragment extends Fragment {
             }
         });
 
+        animationLibs = new AnimationLibs();
+
         adapter = new AudioAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
-
-        menu_Button.setOnClickListener(v -> {
-            if (switch_isEnd) {
-                if (switch_frag) {
-                    hideMenuLayout();
-                } else {
-                    showMenuLayout();
-                }
-            }
-        });
-
 
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -258,39 +257,20 @@ public class AudioFragment extends Fragment {
         adapter.addSelectionListener(new AudioAdapter.SelectionListener() {
             @Override
             public void onSelectionStarts() {
-                toolbar_selection.setAlpha(0f);
-                toolbar_selection.setVisibility(View.VISIBLE);
-                toolbar_selection.animate()
-                        .alpha(1f)
-                        .setDuration(350)
-                        .start();
-
-                bottomBar_selection.setAlpha(0f);
-                bottomBar_selection.setVisibility(View.VISIBLE);
-                bottomBar_selection.animate()
-                        .alpha(1f)
-                        .setDuration(350)
-                        .start();
+                animationLibs.fadeIn(toolbar_selection, 350, null, null);
+                animationLibs.fadeIn(bottomBar_selection, 350, null, null);
             }
 
             @Override
             public void onSelectionEnds() {
-                toolbar_selection.animate()
-                        .alpha(0f)
-                        .setDuration(350)
-                        .withEndAction(() -> toolbar_selection.setVisibility(View.GONE))
-                        .start();
-
-                bottomBar_selection.animate()
-                        .alpha(0f)
-                        .setDuration(350)
-                        .withEndAction(() -> bottomBar_selection.setVisibility(View.GONE))
-                        .start();
+                animationLibs.fadeOut(toolbar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
+                animationLibs.fadeOut(bottomBar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
             }
 
             @Override
             public void onCountChanged(int counts) {
                 toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+                bottomSel_ren.setEnabled(counts == 1);
             }
 
             @Override
@@ -310,10 +290,10 @@ public class AudioFragment extends Fragment {
                     }
 
                     @Override
-                    public void onRenameClickListener(int position) {
+                    public void onRenameClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
                         uris.add(mediaList.get(p).getUri());
-                        ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName(), mediaList.get(p).getPath());
+                        ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
@@ -321,7 +301,7 @@ public class AudioFragment extends Fragment {
                     public void onDeleteClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
                         uris.add(mediaList.get(p).getUri());
-                        ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName(), mediaList.get(p).getPath());
+                        ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
@@ -348,6 +328,17 @@ public class AudioFragment extends Fragment {
             isAllSelected = !isAllSelected;
         });
 
+        menu_Button.setOnClickListener(v -> {
+            if (switch_isEnd) {
+                if (switch_frag) {
+                    hideMenuLayout();
+                    resetMoreContainerViews();
+                } else {
+                    showMenuLayout();
+                }
+            }
+        });
+
         layoutB_Listeners();
         sortB_Listeners();
         detailsB_Listeners();
@@ -358,7 +349,10 @@ public class AudioFragment extends Fragment {
             hideMenuLayout();
         });
 
-        cancel_Button.setOnClickListener(v -> hideMenuLayout());
+        cancel_Button.setOnClickListener(v -> {
+            hideMenuLayout();
+            resetMoreContainerViews();
+        });
 
         lastPlay_Button.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
@@ -398,7 +392,8 @@ public class AudioFragment extends Fragment {
         }
         adapter.notifyDataSetChanged();
         adapter.selectionCounts = mediaList.size();
-        adapter.listener.onCountChanged(mediaList.size());
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
+//        adapter.listener.onCountChanged(mediaList.size());
     }
 
     private void deselectAllItems() {
@@ -407,7 +402,8 @@ public class AudioFragment extends Fragment {
         }
         adapter.notifyDataSetChanged();
         adapter.selectionCounts = 0;
-        adapter.listener.onCountChanged(0);
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, mediaList.size()));
+//        adapter.listener.onCountChanged(0);
     }
 
     private void clearSelection() {
@@ -579,26 +575,12 @@ public class AudioFragment extends Fragment {
 
     private void showMenuLayout() {
         Log.d("showMenuLayout", "showMenuLayout: YES");
-        Animation slideInRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_in_right);
-        menu_Container.startAnimation(slideInRight);
-
-        slideInRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){
-                menu_Container.setVisibility(View.VISIBLE);
-                switch_frag = true;
-                switch_isEnd = false;
-//                isMenuContainerShowing = true;
-            }
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-                switch_isEnd = true;
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
+        animationLibs.slideInRight(menu_Container, 250,
+                () -> {
+                    switch_frag = true;
+                    switch_isEnd = false;
+                },
+                () -> switch_isEnd = true);
     }
 
     private void hideMenuLayout() {
@@ -618,18 +600,20 @@ public class AudioFragment extends Fragment {
             public void onAnimationEnd (Animation animation){
                 menu_Container.setVisibility(View.GONE);
                 switch_isEnd = true;
-
-                loadDetailsButtonVisibility();
-                sortBy = settingsPrefs.getString("sortBy", "Name");
-                isAscending = settingsPrefs.getBoolean("isAscending", true);
-                setBackground_SortButtons(sortBy);
-                setBackground_AscDesc_Buttons(isAscending);
-                setBackground_DetailsButtons();
             }
 
             @Override
             public void onAnimationRepeat (Animation animation){}
         });
+    }
+
+    private void resetMoreContainerViews() {
+        loadDetailsButtonVisibility();
+        sortBy = settingsPrefs.getString("sortBy", "Name");
+        isAscending = settingsPrefs.getBoolean("isAscending", true);
+        setBackground_SortButtons(sortBy);
+        setBackground_AscDesc_Buttons(isAscending);
+        setBackground_DetailsButtons();
     }
 
 

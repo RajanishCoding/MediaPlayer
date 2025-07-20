@@ -40,7 +40,6 @@ public class ConsentDialog extends DialogFragment {
 
     private int mode;
     private String name;
-    private String path;
     private List<Uri> mediaUris;
 
     private String mediaName;
@@ -75,11 +74,10 @@ public class ConsentDialog extends DialogFragment {
             }
         });
 
-    public ConsentDialog(int mode, List<Uri> uri, String name, String path) {
+    public ConsentDialog(int mode, List<Uri> uri, String name) {
         this.mode = mode;
         this.mediaUris = uri;
         this.name = name;
-        this.path = path;
     }
 
     @NonNull

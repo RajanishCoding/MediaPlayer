@@ -69,6 +69,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.PlaylistManager;
 import com.example.mediaplayer.Tracks.AudioTracks;
@@ -283,7 +284,6 @@ public class PlayerActivity extends AppCompatActivity {
     private LinearLayout popupExpandB;
 
 
-
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
     private GestureDirection gestureDirection = GestureDirection.NONE;
@@ -317,7 +317,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     private long lastPlayedTime;
     private float lastPlayedFile;
-    
+
+    private AnimationLibs animationLibs;
+
     private Player.Listener listener;
     private Player.Listener listener_size;
 
@@ -403,6 +405,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         notFullscreen();
         updateScreenDimension();
+
+        animationLibs = new AnimationLibs();
 
         playButton = findViewById(R.id.play);
         prevButton = findViewById(R.id.prev);
@@ -1714,90 +1718,41 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void showExpandViewsLayout(long delayBetween, long duration) {
-        LinearLayout linearLayout = expandView;
-        ScrollView scrollView = expandScrollView;
+        expandScrollView.animate().cancel();
+        animationLibs.fadeSlideInRight(expandScrollView, 200, null, null);
 
-        scrollView.setVisibility(View.VISIBLE);
-        scrollView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                speedLayout.getViewTreeObserver().removeOnPreDrawListener(this);
-
-                scrollView.setTranslationX(scrollView.getWidth());
-
-                scrollView.animate().cancel();
-                scrollView.animate()
-                        .translationX(0f)
-                        .alpha(1f)
-                        .setDuration(200)
-                        .start();
-
-                return true;
-            }
-        });
-
-        int count = linearLayout.getChildCount();
-        linearLayout.setVisibility(View.VISIBLE);
+        int count = expandView.getChildCount();
+        expandView.setVisibility(View.VISIBLE);
 
         for (int i = 0; i < count; i++) {
-            final View view = linearLayout.getChildAt(i);
+            final View view = expandView.getChildAt(i);
             view.animate().cancel();
             view.setAlpha(0f);
             view.setVisibility(View.VISIBLE);
 
-            view.animate()
-                    .alpha(1f)
-                    .setDuration(duration)
-                    .setStartDelay(i * delayBetween)
-                    .start();
+            int j = i;
+            view.post(() -> {
+                view.animate()
+                        .alpha(1f)
+                        .setDuration(duration)
+                        .setStartDelay(j * delayBetween)
+                        .start();
+                });
         }
     }
 
     private void hideExpandViewsLayout() {
-        ScrollView scrollView = expandScrollView;
-
-        scrollView.animate().cancel();
-        scrollView.animate()
-                .translationX(scrollView.getWidth())
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction(() -> {
-                    scrollView.setVisibility(View.GONE);
-                })
-                .start();
+        expandScrollView.animate().cancel();
+        animationLibs.fadeSlideOutRight(expandScrollView, 200, null, () -> expandScrollView.setVisibility(View.GONE));
     }
 
     private void showSpeedLayout() {
-        speedLayout.setVisibility(View.VISIBLE);
-        speedLayout.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                speedLayout.getViewTreeObserver().removeOnPreDrawListener(this);
-
-                speedLayout.setTranslationY(speedLayout.getHeight());
-
-                speedLayout.animate().cancel();
-                speedLayout.animate()
-                        .translationY(0)
-                        .alpha(1)
-                        .setDuration(300)
-                        .start();
-
-                return true;
-            }
-        });
+        animationLibs.fadeSlideInBottom(speedLayout, 300, null, null);
     }
 
     private void hideSpeedLayout() {
         speedText_Expand.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
-        speedLayout.setVisibility(View.VISIBLE);
-
-        speedLayout.animate().cancel();
-        speedLayout.animate()
-                .translationY(speedLayout.getHeight())
-                .alpha(0)
-                .setDuration(200)
-                .start();
+        animationLibs.fadeSlideOutBottom(speedLayout, 200, null, null);
     }
 
 
@@ -1805,66 +1760,37 @@ public class PlayerActivity extends AppCompatActivity {
         isControlsHidden = false;
         isControlsShowing = true;
 
-        Animation slideInBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_bottom);
-        Animation slideInTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_top);
-        PlaybackControls_Container.startAnimation(slideInBottom);
-        toolbar.startAnimation(slideInTop);
+        animationLibs.slideInBottom(PlaybackControls_Container, 150,
+                () -> {
+                    isInAnimation = true;
+                    surface_click_frag = false;
+                    notFullscreen();
+                },
+                () -> {
+                    isInAnimation = false;
+                    controlsToast();
+                });
 
-        slideInBottom.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                isInAnimation = true;
-                toolbar.setVisibility(View.VISIBLE);
-                PlaybackControls_Container.setVisibility(View.VISIBLE);
-                surface_click_frag = false;
-                notFullscreen();
-                Log.d("Bottom", "onAnimationStart: Yes");
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isInAnimation = false;
-                controlsToast();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
+        animationLibs.slideInTop(toolbar, 150, null, null);
     }
 
     private void hideControls() {
         isControlsShowing = false;
         isControlsHidden = true;
 
-        Animation slideOutBottom = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_bottom);
-        Animation slideOutTop = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_top);
-        PlaybackControls_Container.startAnimation(slideOutBottom);
+        animationLibs.slideOutBottom(PlaybackControls_Container, 150,
+                () -> {
+                    isOutAnimation = true;
+                    Fullscreen();
+                },
+                () -> {
+                    isOutAnimation = false;
+                    toolbar.setVisibility(View.GONE);
+                    PlaybackControls_Container.setVisibility(View.GONE);
+                    surface_click_frag = true;
+                });
 
-        toolbar.startAnimation(slideOutTop);
-
-        slideOutBottom.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                isOutAnimation = true;
-                Fullscreen();
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isOutAnimation = false;
-                toolbar.setVisibility(View.GONE);
-                PlaybackControls_Container.setVisibility(View.GONE);
-                surface_click_frag = true;
-                Log.d("Top", "onAnimationEnd: Yes");
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
+        animationLibs.slideOutTop(toolbar, 150, null, null);
     }
 
     private void showLockButton() {
@@ -1971,85 +1897,31 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isSubTracksShowing;
 
     private void showAudioTracks() {
-        Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
         hideControls();
         removeControlsRunnable();
-        audioTracksContainer.startAnimation(slideInRight);
-
-        slideInRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){
-                audioTracksContainer.setVisibility(View.VISIBLE);
-                isAudioTracksShowing = true;
-            }
-    
-            @Override
-            public void onAnimationEnd (Animation animation){
-            }
-    
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-    });
+        animationLibs.slideInRight(audioTracksContainer, 250, () -> isAudioTracksShowing = true, null);
     }
 
     private void hideAudioTracks() {
-        Animation slideOutRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_right);
-        audioTracksContainer.startAnimation(slideOutRight);
-
-        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){}
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-                isAudioTracksShowing = false;
-                audioTracksContainer.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
+        animationLibs.slideOutRight(audioTracksContainer, 250, null,
+                () -> {
+                    isAudioTracksShowing = false;
+                    audioTracksContainer.setVisibility(View.INVISIBLE);
+                });
     }
 
     private void showSubTracks() {
-        Animation slideInRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_in_right);
         hideControls();
         removeControlsRunnable();
-        subTracksContainer.startAnimation(slideInRight);
-
-        slideInRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){
-                subTracksContainer.setVisibility(View.VISIBLE);
-                isSubTracksShowing = true;
-            }
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
+        animationLibs.slideInRight(subTracksContainer, 250, () -> isSubTracksShowing = true, null);
     }
 
     private void hideSubTracks() {
-        Animation slideOutRight = AnimationUtils.loadAnimation(PlayerActivity.this, R.anim.slide_out_right);
-        subTracksContainer.startAnimation(slideOutRight);
-
-        slideOutRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){}
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-                isSubTracksShowing = false;
-                subTracksContainer.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
+        animationLibs.slideOutRight(subTracksContainer, 250, null,
+                () -> {
+                    isSubTracksShowing = false;
+                    subTracksContainer.setVisibility(View.INVISIBLE);
+                });
     }
 
 

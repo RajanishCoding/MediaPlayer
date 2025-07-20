@@ -42,6 +42,7 @@ import com.example.mediaplayer.R;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -72,6 +73,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
     public boolean isSelectionMode;
     public int selectionCounts = 0;
+    private List<Uri> selectedList;
 
     public SelectionListener listener;
 
@@ -84,10 +86,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         this.context = context;
         this.mediaList = mediaList;
         this.fragmentManager = fragmentManager;
-
-        icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
-        icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
-        icon_uncheck = ContextCompat.getDrawable(context, R.drawable.round_check_circle_outline);
     }
 
     @NonNull
@@ -97,6 +95,12 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                 .inflate(R.layout.item_layout, parent, false);
 
         VideoViewHolder holder = new VideoViewHolder(view);
+
+        icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
+        icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
+        icon_uncheck = ContextCompat.getDrawable(context, R.drawable.round_check_circle_outline);
+
+        selectedList = new ArrayList<>();
 
         return holder;
     }
@@ -133,6 +137,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
+        holder.itemView.setTag(media.getPath());
 
         setVisibilities(holder);
 
@@ -156,9 +161,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
         if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
                 new FFmpegMetadataRetriever(media.getPath(), retriever -> {
                     try {
-
                         String sizeInBytes = String.valueOf(retriever.getFileSize());
-    //                    String size = getFormattedFileSize(sizeInBytes);
+                        //                    String size = getFormattedFileSize(sizeInBytes);
 
                         String duration = String.valueOf(retriever.getDuration());
                         String width = String.valueOf(retriever.getResolution());
@@ -171,27 +175,26 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                         media.setResolution(height);
                         media.setFrameRate(fps);
 
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + VideoAdapter.this.MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
 
                         if (holder.getBindingAdapterPosition() == mediaList.size() - 1) {
-                            saveMediaListToPreferences(mediaList);
+                            VideoAdapter.this.saveMediaListToPreferences(mediaList);
                         }
-                    }
-
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
                     holder.itemView.post(() -> {
-                        holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                        holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                        if (!holder.itemView.getTag().equals(media.getPath())) return;
+
+                        holder.duration1.setText(VideoAdapter.this.SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
+                        holder.duration2.setText(VideoAdapter.this.SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
 
                         if (resol || fps) {
                             holder.resolutionFrame.setText(
                                     resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
                                             resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
-                        }
-                        else {
+                        } else {
                             holder.resolutionFrame.setVisibility(View.GONE);
                         }
 
@@ -297,10 +300,11 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     }
 
 
-    private void toggleSelection(int position) {
-        Video item = mediaList.get(position);
+    private void toggleSelection(int pos) {
+        Video item = mediaList.get(pos);
         item.isSelected = !item.isSelected;
-        notifyItemChanged(position);
+        notifyItemChanged(pos);
+        selectedList.add(mediaList.get(pos).getUri());
         selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
         listener.onCountChanged(selectionCounts);
 
