@@ -69,6 +69,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import com.example.mediaplayer.Audio.AudioAdapter;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.PlaylistManager;
@@ -85,6 +86,12 @@ import java.util.Locale;
 
 @UnstableApi
 public class PlayerActivity extends AppCompatActivity {
+
+    public interface PlayerListener {
+        void onMediaSessionFLagChange(boolean flag);
+        void onBackgroundPlayChange(boolean isBGPlay);
+    }
+
     private static final String TAG = "tag";
     private ExoPlayer player;  // Make the player instance static
 
@@ -293,6 +300,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isMediaReady;
 
     private boolean isFirstTimeForCurrentMedia;
+    private boolean isFirstFetchTracksForCurrentMedia;
     private boolean isBuffuringForCurrentMedia;
     private boolean isOnStateReadyCalled;
 
@@ -320,8 +328,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     private AnimationLibs animationLibs;
 
+    public static PlayerListener playerListener;
+
     private Player.Listener listener;
     private Player.Listener listener_size;
+
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -530,6 +541,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         loopValue = playerPrefs.getInt("loopValue", 0);
         isShuffled = playerPrefs.getBoolean("isShuffle", false);
+
 
 
         Intent intent = getIntent();
@@ -1055,9 +1067,11 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void onStateReady() {
-        Log.d("heibeibvi", "isfirst: " + isFirstTimeForCurrentMedia);
+        Log.d("heibeibvvvi", "isfirst: " + isFirstTimeForCurrentMedia);
 
         if (isFirstTimeForCurrentMedia) {
+            isFirstTimeForCurrentMedia = false;
+            
             lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
             player.seekTo(lastPlayedTime);
 
@@ -1068,9 +1082,25 @@ public class PlayerActivity extends AppCompatActivity {
             seekbar.setProgress((int) player.getCurrentPosition());
             time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
             time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
-            isFirstTimeForCurrentMedia = false;
             controlsToast();
+
+            audioTracksList.clear();
+            audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+            audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
+            audioTracksRecyclerView.setAdapter(audioTracksAdapter);
+
+            subTracksList.clear();
+            subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
+            subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
+            subTracksRecyclerView.setAdapter(subTracksAdapter);
+
+            Log.d("tracksLoad", "onTracksLoad: ");
+
+            loadAudioTracks();
+            loadSubTracks();
         }
+
+
     }
 
     private void updatePlayerUI(boolean isNamePresent) {
@@ -1080,6 +1110,7 @@ public class PlayerActivity extends AppCompatActivity {
         buffer_view.setVisibility(View.VISIBLE);
         isBuffuringForCurrentMedia = true;
         isFirstTimeForCurrentMedia = true;
+        isFirstFetchTracksForCurrentMedia = true;
 
         Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
         Log.d("heibeibvi", "updatePlayerUI: ");
@@ -1096,18 +1127,7 @@ public class PlayerActivity extends AppCompatActivity {
         intent.putExtra("isBGPlay", isBackgroundPlay);
         LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
 
-        audioTracksList.clear();
-        audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
-        audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
-        audioTracksRecyclerView.setAdapter(audioTracksAdapter);
 
-        subTracksList.clear();
-        subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
-        subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
-        subTracksRecyclerView.setAdapter(subTracksAdapter);
-
-        loadAudioTracks();
-        loadSubTracks();
     }
 
     private void updateExpandViews() {
@@ -1135,8 +1155,10 @@ public class PlayerActivity extends AppCompatActivity {
     @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
-
+        isFirstFetchTracksForCurrentMedia = true;
+        
         List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
+
         mediaItem = mediaItemList.get(currentIndex);
         player.setMediaItems(mediaItemList, currentIndex, 0);
         player.prepare();
@@ -1215,6 +1237,11 @@ public class PlayerActivity extends AppCompatActivity {
                 if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
                     onStateReady();
                 }
+            }
+
+            @Override
+            public void onTracksChanged(@NonNull Tracks tracks) {
+                ;
             }
 
             @Override
@@ -2213,7 +2240,11 @@ public class PlayerActivity extends AppCompatActivity {
         constraintSet.connect(StartView.getId(), StartSide, EndView.getId(), EndSide);
         constraintSet.applyTo(layout);
     }
-    
+
+
+    public static void addPlayerListener(PlayerListener listener) {
+        playerListener = listener;
+    }
 
     @Override
     protected void onPause() {
@@ -2229,6 +2260,12 @@ public class PlayerActivity extends AppCompatActivity {
                 isPlay = true;
             }
         }
+
+        Log.d("mediddass", "onPause: ");
+
+        if (playerListener != null) {
+            playerListener.onMediaSessionFLagChange(false);
+        }
     }
 
     @Override
@@ -2241,6 +2278,13 @@ public class PlayerActivity extends AppCompatActivity {
                 playMedia();
                 isPlay = false;
             }
+        }
+
+        Log.d("mediddass", "onResume: ");
+
+        if (playerListener != null) {
+            Log.d("mediass", "onResume: ");
+            playerListener.onMediaSessionFLagChange(true);
         }
     }
 

@@ -74,13 +74,12 @@ public class PlayerService extends MediaSessionService {
     private int loopValue;
     private boolean isShuffled;
 
+    private boolean isMediaSessionEnabled = true;
 
+    private PlayerActivity.PlayerListener playerListener;
     private PlayerActivity playerActivity;
 
     private static final String TAG = "tag_service";
-
-    private static final SessionCommand CUSTOM_COMMAND_FAVORITES =
-            new SessionCommand("ACTION_FAVORITES", Bundle.EMPTY);
 
 
     @Override
@@ -97,16 +96,7 @@ public class PlayerService extends MediaSessionService {
 //                .setRenderersFactory(renderersFactory)
                 .build();
 
-        CommandButton favoriteButton =
-                new CommandButton.Builder(CommandButton.ICON_HEART_UNFILLED)
-                        .setDisplayName("Save to favorites")
-                        .setSessionCommand(CUSTOM_COMMAND_FAVORITES)
-                        .build();
-
-        mediaSession = new MediaSession.Builder(this, player)
-                .setCallback(new MyCallback())
-                .setCustomLayout(ImmutableList.of(favoriteButton))
-                .build();
+        mediaSession = new MediaSession.Builder(this, player).build();
 
         playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
@@ -154,49 +144,28 @@ public class PlayerService extends MediaSessionService {
             }
         });
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS"));
-    }
 
-
-    private static class MyCallback implements MediaSession.Callback {
-        @NonNull
-        @Override
-        public MediaSession.ConnectionResult onConnect(
-                MediaSession session, MediaSession.ControllerInfo controller) {
-            // Set available player and session commands.
-            Log.d("customCommands", "onConnect: YeS");
-            return new MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                    .setAvailableSessionCommands(
-                            MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-                                    .add(CUSTOM_COMMAND_FAVORITES)
-                                    .build())
-                    .build();
-        }
-
-
-        @NonNull
-        @Override
-        public ListenableFuture<SessionResult> onCustomCommand(
-                MediaSession session,
-                MediaSession.ControllerInfo controller,
-                SessionCommand customCommand, Bundle args) {
-            Log.d("customCommands", "onConnect: 1");
-            if (customCommand.customAction.equals(CUSTOM_COMMAND_FAVORITES.customAction)) {
-                // Do custom logic here
-                Log.d("customCommands", "onConnect: 2");
-                saveToFavorites(session.getPlayer().getCurrentMediaItem());
-                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+        PlayerActivity.addPlayerListener(new PlayerActivity.PlayerListener() {
+            @Override
+            public void onMediaSessionFLagChange(boolean flag) {
+                if (flag){
+                    isMediaSessionEnabled = true;
+                    startMediaSession();
+                }
+                else {
+                    isMediaSessionEnabled = false;
+                    stopMediaSession();
+                }
+                Log.d("mediass1", "onMediaSessionFLagChange: " + flag);
             }
-            return MediaSession.Callback.super.onCustomCommand(
-                    session, controller, customCommand, args);
 
-        }
+            @Override
+            public void onBackgroundPlayChange(boolean isBGPlay) {
+                ;
+            }
+        });
 
-        private void saveToFavorites(MediaItem currentMediaItem) {
-            ;
-        }
-
-
+        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS"));
     }
 
 
@@ -341,10 +310,7 @@ public class PlayerService extends MediaSessionService {
     }
 
     private void startForegroundNotification() {
-        if (mediaSession == null) {
-            mediaSession = new MediaSession.Builder(this, player).build();
-        }
-
+        startMediaSession();
         Notification notification = createNotification();
 
         if (notification == null) {
@@ -360,8 +326,18 @@ public class PlayerService extends MediaSessionService {
     private void stopForegroundNotification() {
         isForeground = false;
         stopForeground(Service.STOP_FOREGROUND_REMOVE);
+        stopMediaSession();
+    }
 
-        if (mediaSession != null) {
+    private void startMediaSession() {
+        if (mediaSession == null) {
+            mediaSession = new MediaSession.Builder(this, player).build();
+            Log.d("mediass", "startMediaSession: ");
+        }
+    }
+
+    private void stopMediaSession() {
+        if (mediaSession != null && !isMediaSessionEnabled) {
             mediaSession.release();
             mediaSession = null;
         }

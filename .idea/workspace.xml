@@ -110,17 +110,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="Latest Commit (write|selection)">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/AnimationLibs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" afterDir="false" />
+    <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="Latest Commit (Animation Updated)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/ConsentDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/ConsentDialog.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/shape_sidebar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/shape_sidebar.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_audio.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_audio.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -436,14 +428,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1721030140346</updated>
-    </task>
-    <task id="LOCAL-00018" summary="Thumbnail Commit">
-      <option name="closed" value="true" />
-      <created>1723965828557</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1723965828557</updated>
     </task>
     <task id="LOCAL-00019" summary="New Thumbnail Commit">
       <option name="closed" value="true" />
@@ -829,7 +813,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752565931721</updated>
     </task>
-    <option name="localTasksCounter" value="67" />
+    <task id="LOCAL-00067" summary="Latest Commit (Animation Updated)">
+      <option name="closed" value="true" />
+      <created>1752999082241</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1752999082241</updated>
+    </task>
+    <option name="localTasksCounter" value="68" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -864,6 +856,7 @@
     <MESSAGE value="Latest Commit" />
     <MESSAGE value="Latest Commit (Selection Logic)" />
     <MESSAGE value="Latest Commit (write file)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Latest Commit (write file)" />
+    <MESSAGE value="Latest Commit (Animation Updated)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Latest Commit (Animation Updated)" />
   </component>
 </project>
