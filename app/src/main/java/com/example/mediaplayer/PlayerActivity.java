@@ -543,7 +543,6 @@ public class PlayerActivity extends AppCompatActivity {
         isShuffled = playerPrefs.getBoolean("isShuffle", false);
 
 
-
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
@@ -1098,9 +1097,12 @@ public class PlayerActivity extends AppCompatActivity {
 
             loadAudioTracks();
             loadSubTracks();
+
+            playerPrefsEditor.putString("lastPlayedFileName", media_name);
+            playerPrefsEditor.putString("lastPlayedFilePath", media_path);
+            playerPrefsEditor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
+            playerPrefsEditor.apply();
         }
-
-
     }
 
     private void updatePlayerUI(boolean isNamePresent) {

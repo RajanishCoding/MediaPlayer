@@ -29,11 +29,14 @@ import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.util.UnstableApi;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.mediaplayer.Audio.Audio;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.FilesListActivity;
@@ -48,7 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHolder> {
+public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolder> {
 
     public interface SelectionListener {
         void onSelectionStarts();
@@ -82,7 +85,21 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private Drawable icon_uncheck;
 
 
+    public static final DiffUtil.ItemCallback<Video> DIFF_CALLBACK = new DiffUtil.ItemCallback<Video>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Video oldItem, @NonNull Video newItem) {
+            return oldItem.getId() == (newItem.getId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Video oldItem, @NonNull Video newItem) {
+            return oldItem.equals(newItem);
+        }
+    };
+    
+    
     public VideoAdapter(Context context, List<Video> mediaList, FragmentManager fragmentManager) {
+        super(DIFF_CALLBACK);
         this.context = context;
         this.mediaList = mediaList;
         this.fragmentManager = fragmentManager;
@@ -133,7 +150,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
     @Override
     public void onBindViewHolder(VideoViewHolder holder, int position) {
-        Video media = mediaList.get(holder.getBindingAdapterPosition());
+        Video media = getItem(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
@@ -194,7 +211,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
                             holder.resolutionFrame.setText(
                                     resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
                                             resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
-                        } else {
+                        }
+                        else {
                             holder.resolutionFrame.setVisibility(View.GONE);
                         }
 
@@ -374,10 +392,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
 
     @Override
     public int getItemCount() {
-        if (mediaList != null) {
-            return mediaList.size();
-        }
-        return 0;
+        return getCurrentList().size();
     }
 
     public void setDetailsVisibility(boolean isPath, boolean isResol, boolean isFps, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {

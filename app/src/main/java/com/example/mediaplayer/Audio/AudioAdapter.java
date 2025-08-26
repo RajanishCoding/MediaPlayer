@@ -22,6 +22,8 @@ import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.media3.common.util.UnstableApi;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -41,7 +43,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHolder> {
+public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolder> {
 
     public interface SelectionListener {
         void onSelectionStarts();
@@ -72,7 +74,21 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
     private Drawable icon_uncheck;
 
 
+    public static final DiffUtil.ItemCallback<Audio> DIFF_CALLBACK = new DiffUtil.ItemCallback<Audio>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Audio oldItem, @NonNull Audio newItem) {
+            return oldItem.getId() == (newItem.getId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Audio oldItem, @NonNull Audio newItem) {
+            return oldItem.equals(newItem);
+        }
+    };
+
+
     public AudioAdapter(Context context, List<Audio> mediaList, FragmentManager fragmentManager) {
+        super(DIFF_CALLBACK);
         this.context = context;
         this.mediaList = mediaList;
         this.fragmentManager = fragmentManager;
@@ -119,7 +135,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
     @Override
     public void onBindViewHolder(AudioViewHolder holder, int position) {
-        Audio media = mediaList.get(holder.getBindingAdapterPosition());
+        Audio media = getItem(position);
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
@@ -348,10 +364,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
 
     @Override
     public int getItemCount() {
-        if (mediaList != null) {
-            return mediaList.size();
-        }
-        return 0;
+        return getCurrentList().size();
     }
 
     public void setDetailsVisibility(boolean isPath, boolean isSize, boolean isDate, boolean isDur, boolean isDur_onThumb) {

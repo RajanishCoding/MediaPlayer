@@ -5,8 +5,8 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.arthenica.ffmpegkit.FFprobeKit;
-import com.arthenica.ffmpegkit.ReturnCode;
+import com.antonkarpenko.ffmpegkit.FFprobeKit;
+import com.antonkarpenko.ffmpegkit.ReturnCode;
 
 
 public class FFmpegMetadataRetriever {

@@ -121,30 +121,27 @@ public class FilesListActivity extends AppCompatActivity {
 
 //        CheckAndAsk_StorageAccess();
 
-        bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.nav_video) {
-                    if (!isStorageAccessed) {
-                        return false;
-                    }
-
-                    loadFragment(new VideoFragment(), false);
-                    return true;
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_video) {
+                if (!isStorageAccessed) {
+                    return false;
                 }
 
-                else if (item.getItemId() == R.id.nav_audio) {
-                    if (!isStorageAccessed) {
-                        return false;
-                    }
-                    loadFragment(new AudioFragment(), false);
-                    return true;
-                }
+                loadFragment(new VideoFragment(), false);
+                return true;
+            }
 
-                else {
-                    loadFragment(new SettingsFragment(), false);
-                    return true;
+            else if (item.getItemId() == R.id.nav_audio) {
+                if (!isStorageAccessed) {
+                    return false;
                 }
+                loadFragment(new AudioFragment(), false);
+                return true;
+            }
+
+            else {
+                loadFragment(new SettingsFragment(), false);
+                return true;
             }
         });
 
