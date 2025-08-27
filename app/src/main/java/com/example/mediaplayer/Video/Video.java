@@ -27,21 +27,27 @@ public class Video {
     private String frameRate;
     private String size;
 
-    private String lastPlayedTime;
+//    private String lastPlayedTime;
 
-    //    @Ignore
+    @Ignore
     private Bitmap thumbnailUrl;
 
     private boolean isVideo;
+    
+    @Ignore
     public boolean isSelected;
 
-    public Video(String uri, String name, String path, String date, Bitmap thumbnailUrl) {
+
+    public Video(String uri, String name, String path, String dateAdded, String duration, String resolution, String frameRate, String size, boolean isVideo) {
         this.uri = uri;
         this.name = name;
         this.path = path;
-        this.dateAdded = date;
-        this.thumbnailUrl = thumbnailUrl;
-        this.isVideo = true;
+        this.dateAdded = dateAdded;
+        this.duration = duration;
+        this.resolution = resolution;
+        this.frameRate = frameRate;
+        this.size = size;
+        this.isVideo = false;
     }
 
 
@@ -53,8 +59,8 @@ public class Video {
         this.id = id;
     }
 
-    public Uri getUri() {
-        return Uri.parse(uri);
+    public String getUri() {
+        return uri;
     }
 
     public void setUri(String uri) {

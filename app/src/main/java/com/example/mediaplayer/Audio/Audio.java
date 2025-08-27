@@ -28,19 +28,22 @@ public class Audio {
 
 //    private String lastPlayedTime;
 
-//    @Ignore
+    @Ignore
     private Bitmap thumbnailUrl;
 
     private boolean isVideo;
+
+    @Ignore
     public boolean isSelected;
 
 
-    public Audio(String uri, String name, String path, String date, Bitmap thumbnailUrl) {
+    public Audio(String uri, String name, String path, String dateAdded, String duration, String size, boolean isVideo) {
         this.uri = uri;
         this.name = name;
         this.path = path;
-        this.dateAdded = date;
-        this.thumbnailUrl = thumbnailUrl;
+        this.dateAdded = dateAdded;
+        this.duration = duration;
+        this.size = size;
         this.isVideo = false;
     }
 
@@ -53,8 +56,8 @@ public class Audio {
         this.id = id;
     }
 
-    public Uri getUri() {
-        return Uri.parse(uri);
+    public String getUri() {
+        return uri;
     }
 
     public void setUri(String uri) {

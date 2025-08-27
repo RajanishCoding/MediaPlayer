@@ -18,6 +18,8 @@ import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModel;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -47,6 +49,8 @@ import com.example.mediaplayer.Extra.MyMediaItem;
 import com.example.mediaplayer.Extra.ConsentDialog;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
+import com.example.mediaplayer.Room.RoomDB;
+import com.example.mediaplayer.Room.VideoDao;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -60,6 +64,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,6 +72,7 @@ import java.util.concurrent.Executors;
 
 public class VideoFragment extends Fragment {
 
+    private Context context;
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private VideoAdapter adapter;
@@ -91,8 +97,6 @@ public class VideoFragment extends Fragment {
 
     private List<Video> storedMediaList;
     private boolean isFilesStored;
-
-    private VideoAdapter mediaAdapter;
 
     private Thread thread;
 
@@ -161,6 +165,7 @@ public class VideoFragment extends Fragment {
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
+    private VideoDao videoDao;
 
     private ActivityResultLauncher<IntentSenderRequest> deleteLauncher;
 
@@ -235,13 +240,16 @@ public class VideoFragment extends Fragment {
         bottomSheet = view.findViewById(R.id.bottomsheet);
         behavior = BottomSheetBehavior.from(bottomSheet);
 
-        executorService = Executors.newSingleThreadExecutor();
+        context = requireContext();
+        executorService = Executors.newFixedThreadPool(1);
 
         settingsPrefs = requireContext().getSharedPreferences("VideoSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
 
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
+
+        executorService.execute(() -> videoDao = RoomDB.getDatabase(context).videoDao());
 
         return view;
     }
@@ -269,10 +277,19 @@ public class VideoFragment extends Fragment {
 
         animationLibs = new AnimationLibs();
 
-//        mediaList.add(new Video("Name", "Path", "Size", null));
         adapter = new VideoAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
+
+        videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+            @Override
+            public void onChanged(List<Video> videos) {
+                adapter.submitList(videos);
+                mediaList.clear();
+                mediaList.addAll(videos);
+            }
+        });
+
         Load_Or_Query_MediaList();
 
 //        Load at Start
@@ -411,7 +428,7 @@ public class VideoFragment extends Fragment {
         });
 
         requireContext().getContentResolver().registerContentObserver(
-                MediaStore.Video.Media.getContentUri("external"), true, // notify for descendant paths too
+                MediaStore.Video.Media.getContentUri("external"), true,
                 new ContentObserver(new Handler(Looper.getMainLooper())) {
                     @Override
                     public void onChange(boolean selfChange, @Nullable Uri uri) {
@@ -421,7 +438,6 @@ public class VideoFragment extends Fragment {
                     }
                 }
         );
-
 
 
         requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
@@ -707,13 +723,9 @@ public class VideoFragment extends Fragment {
     private void Load_Or_Query_MediaList() {
         Log.d("filesstored", "Load_Or_Query_MediaList0: ");
 
-        if (executorService.isShutdown() || executorService.isTerminated()) {
-            executorService = Executors.newSingleThreadExecutor();
-        }
-
         executorService.submit(() -> {
             Log.d("filesstored", "Load_Or_Query_MediaList0: ");
-            storedMediaList = loadMediaListFromPreferences();
+            storedMediaList = mediaList;
             Log.d("Hello55", "Stored: " + storedMediaList);
 
 
@@ -747,7 +759,6 @@ public class VideoFragment extends Fragment {
                         foundText.setVisibility(View.GONE);
                         mediaList.clear();
                         mediaList.addAll(storedMediaList);
-                        adapter.notifyDataSetChanged();
 
                         Check_And_Update_Files();
                     }
@@ -841,9 +852,9 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Video media = new Video(videoUri, displayName, filePath, date, null, true);
+                Video media = new Video(videoUri, displayName, filePath, date);
                 mediaList.add(media);
-
+                executorService.execute(() -> videoDao.insert(media));
 //                if (storedMediaList != null) {
 //                    if (!isInsert) {
 //                        isInsert = isInsertFiles(storedMediaList, media);

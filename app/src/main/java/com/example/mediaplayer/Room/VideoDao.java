@@ -2,8 +2,9 @@ package com.example.mediaplayer.Room;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
-import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.Delete;
+import androidx.room.Update;
 import androidx.room.Query;
 
 import com.example.mediaplayer.Video.Video;
@@ -15,9 +16,12 @@ public interface VideoDao {
     @Insert
     void insert(Video video);
 
+    @Update
+    void update(Video video);
+
     @Delete
     void delete(Video video);
 
-    @Query("select * from video")
+    @Query("select * from video order by name")
     LiveData<List<Video>> getList();
 }
