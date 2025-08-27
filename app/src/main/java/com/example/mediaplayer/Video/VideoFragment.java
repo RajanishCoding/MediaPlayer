@@ -249,7 +249,7 @@ public class VideoFragment extends Fragment {
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
 
-        executorService.execute(() -> videoDao = RoomDB.getDatabase(context).videoDao());
+        videoDao = RoomDB.getDatabase(context).videoDao();
 
         return view;
     }
@@ -281,16 +281,17 @@ public class VideoFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
-        videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
-            @Override
-            public void onChanged(List<Video> videos) {
-                adapter.submitList(videos);
-                mediaList.clear();
-                mediaList.addAll(videos);
-            }
-        });
 
-        Load_Or_Query_MediaList();
+            videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+                @Override
+                public void onChanged(List<Video> videos) {
+                    adapter.submitList(videos);
+                    mediaList.clear();
+                    mediaList.addAll(videos);
+                }
+            });
+            Load_Or_Query_MediaList();
+
 
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -347,7 +348,7 @@ public class VideoFragment extends Fragment {
                     @Override
                     public void onRenameClickListener(int position) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(mediaList.get(p).getUri());
+                        uris.add(Uri.parse(mediaList.get(p).getUri()));
                         ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
@@ -355,7 +356,7 @@ public class VideoFragment extends Fragment {
                     @Override
                     public void onDeleteClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(mediaList.get(p).getUri());
+                        uris.add(Uri.parse(mediaList.get(p).getUri()));
                         ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
@@ -852,7 +853,7 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Video media = new Video(videoUri, displayName, filePath, date);
+                Video media = new Video(videoUri, displayName, filePath, date, "", "", "", "", true);
                 mediaList.add(media);
                 executorService.execute(() -> videoDao.insert(media));
 //                if (storedMediaList != null) {

@@ -292,7 +292,7 @@ public class AudioFragment extends Fragment {
                     @Override
                     public void onRenameClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(mediaList.get(p).getUri());
+                        uris.add(Uri.parse(mediaList.get(p).getUri()));
                         ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
@@ -300,7 +300,7 @@ public class AudioFragment extends Fragment {
                     @Override
                     public void onDeleteClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(mediaList.get(p).getUri());
+                        uris.add(Uri.parse(mediaList.get(p).getUri()));
                         ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
@@ -768,7 +768,7 @@ public class AudioFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Audio media = new Audio(audioUri, displayName, filePath, date, null, false);
+                Audio media = new Audio(audioUri, displayName, filePath, date, null, null, false);
                 mediaList.add(media);
 
 //                if (storedMediaList != null) {

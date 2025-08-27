@@ -322,7 +322,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         Video item = mediaList.get(pos);
         item.isSelected = !item.isSelected;
         notifyItemChanged(pos);
-        selectedList.add(mediaList.get(pos).getUri());
+        selectedList.add(Uri.parse(mediaList.get(pos).getUri()));
         selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
         listener.onCountChanged(selectionCounts);
 

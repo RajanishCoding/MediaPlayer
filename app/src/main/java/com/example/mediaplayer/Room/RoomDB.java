@@ -19,9 +19,9 @@ public abstract class RoomDB extends RoomDatabase {
     private static volatile RoomDB instance;
 
     public static RoomDB getDatabase(Context context) {
-        if (instance != null) {
+        if (instance == null) {
             synchronized (RoomDB.class) {
-                if (instance != null) {
+                if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(),
                                     RoomDB.class, "MediaDB")
                             .build();

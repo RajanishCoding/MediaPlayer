@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.Ignore;
@@ -14,10 +15,13 @@ import java.util.Objects;
 @Entity
 public class Video {
 
-    @PrimaryKey (autoGenerate = true)
+    @Ignore
     private int id;
 
+    @NonNull
+    @PrimaryKey
     private String uri;
+    
     private String name;
     private String path;
     private String dateAdded;
@@ -92,7 +96,7 @@ public class Video {
     }
 
     public String getDuration() {
-        return duration != null ? duration : "0";
+        return !duration.isEmpty() ? duration : "0";
     }
 
     public void setDuration(String duration) {
@@ -109,7 +113,7 @@ public class Video {
 
     public String getFrameRate() {
         Log.d("frameRate", "getFrameRate: " + frameRate);
-        return frameRate != null ? String.format("%.2f", Double.parseDouble(frameRate)): "0";
+        return !frameRate.isEmpty() ? String.format("%.2f", Double.parseDouble(frameRate)): "0";
     }
 
     public void setFrameRate(String fps) {
@@ -117,19 +121,19 @@ public class Video {
     }
 
     public String getSize() {
-        return size != null ? size : "0";
+        return !size.isEmpty() ? size : "0";
     }
     
     public void setSize(String size) {
         this.size = size;
     }
 
-    public String getLastPlayedTime() {
-        return lastPlayedTime;
-    }
+//    public String getLastPlayedTime() {
+//        return lastPlayedTime;
+//    }
 
     public void setLastPlayedTime(String lastPlayedTime) {
-        this.lastPlayedTime = lastPlayedTime;
+//        this.lastPlayedTime = lastPlayedTime;
     }
     
     public Bitmap getThumbnailUrl() {
@@ -176,7 +180,7 @@ public class Video {
                 Objects.equals(resolution, video.resolution) &&
                 Objects.equals(frameRate, video.frameRate) &&
                 Objects.equals(size, video.size) &&
-                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
+//                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
                 isVideo == video.isVideo;
     }
 }
