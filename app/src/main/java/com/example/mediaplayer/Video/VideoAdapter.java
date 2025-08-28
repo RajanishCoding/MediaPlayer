@@ -175,57 +175,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
             holder.moreB.setImageDrawable(icon_more);
         }
 
-        if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
-                new FFmpegMetadataRetriever(media.getPath(), retriever -> {
-                    try {
-                        String sizeInBytes = String.valueOf(retriever.getFileSize());
-                        //                    String size = getFormattedFileSize(sizeInBytes);
-
-                        String duration = String.valueOf(retriever.getDuration());
-                        String width = String.valueOf(retriever.getResolution());
-                        String height = String.valueOf(retriever.getResolution());
-                        String fps = String.valueOf(retriever.getFps());
-
-                        // Setting all Values
-                        media.setSize(sizeInBytes);
-                        media.setDuration(duration);
-                        media.setResolution(height);
-                        media.setFrameRate(fps);
-
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + VideoAdapter.this.MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
-
-                        if (holder.getBindingAdapterPosition() == mediaList.size() - 1) {
-                            VideoAdapter.this.saveMediaListToPreferences(mediaList);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    holder.itemView.post(() -> {
-                        if (!holder.itemView.getTag().equals(media.getPath())) return;
-
-                        holder.duration1.setText(VideoAdapter.this.SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                        holder.duration2.setText(VideoAdapter.this.SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-
-                        if (resol || fps) {
-                            holder.resolutionFrame.setText(
-                                    resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
-                                            resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
-                        }
-                        else {
-                            holder.resolutionFrame.setVisibility(View.GONE);
-                        }
-
-                        holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
-                    });
-                });
-
-        }
-
-        else {
-            Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
-
-            // MediaMetadataRetriever Thread
+        if (!media.getDuration().isEmpty() || !media.getResolution().isEmpty() || !media.getSize().isEmpty()) {
             holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
             holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
 
@@ -233,12 +183,12 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
                 holder.resolutionFrame.setText(
                         resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
                                 resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
-            }
-            else {
+            } else {
                 holder.resolutionFrame.setVisibility(View.GONE);
             }
 
             holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
+
         }
 
         try {

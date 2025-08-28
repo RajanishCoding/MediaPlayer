@@ -32,7 +32,7 @@ public class FFmpegMetadataRetriever {
             if (ReturnCode.isSuccess(session.getReturnCode())) {
                 try {
 
-                    String output = session.getOutput(); // ✅ FIX: Use session.getOutput() in v6.0.2
+                    String output = session.getOutput();
 //                    Log.d("djkfhkd", output);
 
                     JSONObject json = new JSONObject(output);
@@ -71,7 +71,7 @@ public class FFmpegMetadataRetriever {
                         Log.d("Metafdata", "Frame Rate: " + frameRate + " fps");
                     }
 
-                    // Notify when metadata is ready
+                    // Now metadata is ready
                     callback.onMetadataReady(this);
 
                 } catch (Exception e) {

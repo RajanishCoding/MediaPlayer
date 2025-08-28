@@ -19,7 +19,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModel;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,8 +32,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -43,6 +40,7 @@ import android.widget.TextView;
 
 
 import com.example.mediaplayer.Extra.AnimationLibs;
+import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
@@ -64,7 +62,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -281,17 +278,14 @@ public class VideoFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
-
-            videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
-                @Override
-                public void onChanged(List<Video> videos) {
-                    adapter.submitList(videos);
-                    mediaList.clear();
-                    mediaList.addAll(videos);
-                }
-            });
-            Load_Or_Query_MediaList();
-
+        videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+            @Override
+            public void onChanged(List<Video> videos) {
+                adapter.submitList(videos);
+                storedMediaList = new ArrayList<>(videos);
+                Load_Or_Query_MediaList();
+            }
+        });
 
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -724,67 +718,61 @@ public class VideoFragment extends Fragment {
     private void Load_Or_Query_MediaList() {
         Log.d("filesstored", "Load_Or_Query_MediaList0: ");
 
-        executorService.submit(() -> {
-            Log.d("filesstored", "Load_Or_Query_MediaList0: ");
-            storedMediaList = mediaList;
-            Log.d("Hello55", "Stored: " + storedMediaList);
-
+        executorService.execute(() -> {
+            mediaList = new ArrayList<>(queryMediaFiles());
 
             if (storedMediaList == null || storedMediaList.isEmpty()) {
                 isFilesStored = false;
 
                 // If no media files in preferences, query media files
-                mediaList.clear();
-                mediaList.addAll(queryMediaFiles(false));
+                videoDao.insertAll(mediaList);
             }
             else {
                 isFilesStored = true;
+                Check_And_Update_Files();
+            }
+
+            for (Video v : storedMediaList) {
+                getMediaDetails(v);
             }
 
             setVideoPlaylist();
-
-            requireActivity().runOnUiThread(() -> {
-                if (isAdded()) {
-                    if (!isFilesStored) {
-                        if (mediaList.isEmpty())
-                            foundText.setVisibility(View.VISIBLE);
-                        else
-                            foundText.setVisibility(View.GONE);
-
-                        sortMediaList(isAscending);
-//                        adapter.notifyDataSetChanged();
-//                        saveMediaListToPreferences(mediaList);
-                    }
-
-                    else {
-                        foundText.setVisibility(View.GONE);
-                        mediaList.clear();
-                        mediaList.addAll(storedMediaList);
-
-                        Check_And_Update_Files();
-                    }
-
-                    Log.d("Hello", "UIThread: " + storedMediaList);
-                    Log.d("Hello", "UIThread: " + mediaList);
-
-//                    if (!refresh) {
-//                        adapter = new VideoAdapter(requireContext(), mediaList);
-//                        recyclerView.setAdapter(adapter);
-//                        Log.d(TAG, "Refresh: Yes");
-//                    }
-//                    else if (isInsert) {
-//                        saveMediaListToPreferences(mediaList);
-//                        adapter = new VideoAdapter(requireContext(), mediaList);
-//                        recyclerView.setAdapter(adapter);
-//                        isInsert = false;
-//                        Log.d(TAG, "isInsert: " + isInsert);
-//                    }
-                }
-            });
         });
     }
 
-    private List<Video> queryMediaFiles(boolean refresh) {
+    private void getMediaDetails(Video media) {
+        if (media.getDuration().isEmpty() || media.getResolution().isEmpty() || media.getSize().isEmpty()) {
+            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
+                @Override
+                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
+                    try {
+                        String sizeInBytes = String.valueOf(retriever.getFileSize());
+                        //                    String size = getFormattedFileSize(sizeInBytes);
+
+                        String duration = String.valueOf(retriever.getDuration());
+                        String width = String.valueOf(retriever.getResolution());
+                        String height = String.valueOf(retriever.getResolution());
+                        String fps = String.valueOf(retriever.getFps());
+
+                        // Setting all Values
+                        media.setSize(sizeInBytes);
+                        media.setDuration(duration);
+                        media.setResolution(height);
+                        media.setFrameRate(fps);
+
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
+
+                        executorService.execute(() -> videoDao.update(media));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    private List<Video> queryMediaFiles() {
         List<Video> mediaList = new ArrayList<>();
 
         String[] videoProjection = new String[]{
@@ -804,29 +792,18 @@ public class VideoFragment extends Fragment {
                 sortOrder
         );
 
-        Set<String> parentFolders = new HashSet<>();
-
-        // Process video files
         if (videoCursor != null) {
-            mediaList.addAll(processCursor(videoCursor, parentFolders));
+            mediaList.addAll(processCursor(videoCursor));
             Log.d(TAG, "Video list Count: " + videoCursor.getColumnCount());
             videoCursor.close();
         }
 
-        // Retrieve and display files in each parent folder
-        for (String folderPath : parentFolders) {
-            Log.d(TAG, "queryMediaFiles: " + folderPath);
-        }
-
-        Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
-        Log.d("queryMediaFiles", String.valueOf(FilesPath));
-
-        Log.d(TAG, "Video list: " + mediaList);
+//        Log.d(TAG, "Video list: " + mediaList);
 
         return mediaList;
     }
 
-    private List<Video> processCursor(Cursor cursor, Set<String> parentFolders) {
+    private List<Video> processCursor(Cursor cursor) {
         List<Video> mediaList = new ArrayList<>();
 
         int idInd = cursor.getColumnIndex(MediaStore.Video.Media._ID);
@@ -843,10 +820,6 @@ public class VideoFragment extends Fragment {
 
                 String videoUri = String.valueOf(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
 
-                // Add parent folder path to the set
-                String parentFolder = new File(filePath).getParent();
-                parentFolders.add(parentFolder);
-
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
                 FilesDateAdded.add(date);
@@ -855,13 +828,6 @@ public class VideoFragment extends Fragment {
 
                 Video media = new Video(videoUri, displayName, filePath, date, "", "", "", "", true);
                 mediaList.add(media);
-                executorService.execute(() -> videoDao.insert(media));
-//                if (storedMediaList != null) {
-//                    if (!isInsert) {
-//                        isInsert = isInsertFiles(storedMediaList, media);
-////                        Log.d(TAG, "processCursor: " + isInsert + " : " + media.getName());
-//                    }
-//                }
 
                 Log.d("wowo", displayName);
                 Log.d("wowoid", " 2 : " + String.valueOf(videoUri));
@@ -873,83 +839,24 @@ public class VideoFragment extends Fragment {
 
 
     private void Check_And_Update_Files() {
-        new Thread(() -> {
-            // For Deletion
-            List<Video> removingMediaList = new ArrayList<>();
-            List<Video> newMediaList = new ArrayList<>(queryMediaFiles(false));
-            Set<String> newListNames = new HashSet<>();
+        // For Deletion
+        List<String> newListUris = new ArrayList<>();
 
-            for (Video m : newMediaList) {
-                newListNames.add(m.getName());
-            }
+        for (Video m : mediaList) {
+            newListUris.add(m.getUri());
+        }
 
-            for (Video m : storedMediaList) {
-                if (!newListNames.contains(m.getName())) {
-                    removingMediaList.add(m);
-                }
-            }
+        videoDao.deleteAllByUris(newListUris);
 
-            // For Insertion
-            List<Video> addingMediaList = new ArrayList<>();
-            Set<String> storedListNames = new HashSet<>();
-
-            for (Video m : storedMediaList) {
-                storedListNames.add(m.getName());
-            }
-
-            for (Video m : newMediaList) {
-                if (!storedListNames.contains(m.getName())) {
-                    addingMediaList.add(m);
-                }
-            }
-
-//            for (int i = 0; i < newMediaList.size(); i++) {
-//                boolean found = false;
-//                for (int j = 0; j < storedMediaList.size(); j++) {
-//                    if (newMediaList.get(i).getName().equals(storedMediaList.get(j).getName())) {
-//                        found = true;
-//                        break;
-//                    }
-//                    else {
-//                        found = false;
-//                    }
-//                }
-//
-//                if (!found) {
-//                    newMediaList.add(newMediaList.get(i));
-//                    adapter.notifyItemInserted(newMediaList.size() - 1);
-//                }
-//            }
-
-            requireActivity().runOnUiThread(() -> {
-//                mediaList.removeAll(removingMediaList);
-
-                for (Video m : removingMediaList) {
-                    int index = mediaList.indexOf(m);
-                    if (index >= 0) {
-                        mediaList.remove(index);
-                        adapter.notifyItemRemoved(index);
-                    }
-                }
-
-                mediaList.addAll(addingMediaList);
-
-                setVideoPlaylist();
-
-                sortMediaList(isAscending);
-
-//                adapter.notifyDataSetChanged();
-//                saveMediaListToPreferences(mediaList);
-            });
-
-        }).start();
+        // For Insertion
+        videoDao.insertAll(mediaList);
     }
 
     public void setVideoPlaylist() {
-        if (mediaList != null) {
+        if (storedMediaList != null) {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
-            for (Video v : mediaList) {
+            for (Video v : storedMediaList) {
                 MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }

@@ -23,6 +23,21 @@ public interface VideoDao {
     @Delete
     void delete(Video video);
 
+
+    @Insert (onConflict = OnConflictStrategy.IGNORE)
+    void insertAll(List<Video> videos);
+
+    @Query("delete from video where uri not in (:uris)")
+    void deleteAllByUris(List<String> uris);
+
+    @Query("delete from video where uri = :uri")
+    void deleteByUri(String uri);
+
+    @Query("select * from video order by name")
+    List<Video> getDirectList();
+
+
+
     @Query("select * from video order by name")
     LiveData<List<Video>> getList();
 }
