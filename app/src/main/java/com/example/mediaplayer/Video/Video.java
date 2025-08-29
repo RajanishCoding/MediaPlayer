@@ -15,9 +15,6 @@ import java.util.Objects;
 @Entity
 public class Video {
 
-    @Ignore
-    private int id;
-
     @NonNull
     @PrimaryKey
     private String uri;
@@ -51,17 +48,9 @@ public class Video {
         this.resolution = resolution;
         this.frameRate = frameRate;
         this.size = size;
-        this.isVideo = false;
+        this.isVideo = true;
     }
 
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public String getUri() {
         return uri;

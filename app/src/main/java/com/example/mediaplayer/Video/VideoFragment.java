@@ -162,9 +162,8 @@ public class VideoFragment extends Fragment {
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
-    private VideoDao videoDao;
 
-    private ActivityResultLauncher<IntentSenderRequest> deleteLauncher;
+    private VideoDao videoDao;
 
     public VideoFragment() {}
 
@@ -284,6 +283,7 @@ public class VideoFragment extends Fragment {
                 adapter.submitList(videos);
                 storedMediaList = new ArrayList<>(videos);
                 Load_Or_Query_MediaList();
+                setVideoPlaylist();
             }
         });
 
@@ -716,8 +716,6 @@ public class VideoFragment extends Fragment {
 
 
     private void Load_Or_Query_MediaList() {
-        Log.d("filesstored", "Load_Or_Query_MediaList0: ");
-
         executorService.execute(() -> {
             mediaList = new ArrayList<>(queryMediaFiles());
 
@@ -735,41 +733,7 @@ public class VideoFragment extends Fragment {
             for (Video v : storedMediaList) {
                 getMediaDetails(v);
             }
-
-            setVideoPlaylist();
         });
-    }
-
-    private void getMediaDetails(Video media) {
-        if (media.getDuration().isEmpty() || media.getResolution().isEmpty() || media.getSize().isEmpty()) {
-            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
-                @Override
-                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
-                    try {
-                        String sizeInBytes = String.valueOf(retriever.getFileSize());
-                        //                    String size = getFormattedFileSize(sizeInBytes);
-
-                        String duration = String.valueOf(retriever.getDuration());
-                        String width = String.valueOf(retriever.getResolution());
-                        String height = String.valueOf(retriever.getResolution());
-                        String fps = String.valueOf(retriever.getFps());
-
-                        // Setting all Values
-                        media.setSize(sizeInBytes);
-                        media.setDuration(duration);
-                        media.setResolution(height);
-                        media.setFrameRate(fps);
-
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
-
-                        executorService.execute(() -> videoDao.update(media));
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
     }
 
     private List<Video> queryMediaFiles() {
@@ -828,15 +792,11 @@ public class VideoFragment extends Fragment {
 
                 Video media = new Video(videoUri, displayName, filePath, date, "", "", "", "", true);
                 mediaList.add(media);
-
-                Log.d("wowo", displayName);
-                Log.d("wowoid", " 2 : " + String.valueOf(videoUri));
             }
         }
 
         return mediaList;
     }
-
 
     private void Check_And_Update_Files() {
         // For Deletion
@@ -852,6 +812,37 @@ public class VideoFragment extends Fragment {
         videoDao.insertAll(mediaList);
     }
 
+    private void getMediaDetails(Video media) {
+        if (media.getDuration().isEmpty() || media.getResolution().isEmpty() || media.getSize().isEmpty()) {
+            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
+                @Override
+                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
+                    try {
+                        String sizeInBytes = String.valueOf(retriever.getFileSize());
+
+                        String duration = String.valueOf(retriever.getDuration());
+                        String width = String.valueOf(retriever.getResolution());
+                        String height = String.valueOf(retriever.getResolution());
+                        String fps = String.valueOf(retriever.getFps());
+
+                        // Setting all Values
+                        media.setSize(sizeInBytes);
+                        media.setDuration(duration);
+                        media.setResolution(height);
+                        media.setFrameRate(fps);
+
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
+
+                        executorService.execute(() -> videoDao.update(media));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
     public void setVideoPlaylist() {
         if (storedMediaList != null) {
             List<MediaItem> mediaItemList = new ArrayList<>();
@@ -861,25 +852,7 @@ public class VideoFragment extends Fragment {
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setVideoPlaylist(mediaItemList);
-//            PlaylistManager manager = new PlaylistManager(mediaItemList);
-//            MediaRepository.getInstance().setVideoPlaylistManager(manager);
         }
-    }
-
-    public boolean isInsertFiles(List<Video> storedList, Video media) {
-        boolean f = false;
-        for (Video m: storedList) {
-            if (Objects.equals(m.getName(), media.getName())) {
-                f = true;
-                break;
-            }
-        }
-        if (!f) {
-            Log.d(TAG, "isInsertFiles: YES");
-            return true;
-        }
-        Log.d(TAG, "isInsertFiles: NO");
-        return false;
     }
 
 

@@ -15,6 +15,7 @@ import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -36,11 +37,16 @@ import android.widget.TextView;
 
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.ConsentDialog;
+import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
 import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
+import com.example.mediaplayer.Room.AudioDao;
+import com.example.mediaplayer.Room.RoomDB;
+import com.example.mediaplayer.Room.VideoDao;
+import com.example.mediaplayer.Video.Video;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -80,6 +86,7 @@ public class AudioFragment extends Fragment {
     private String TAG = "AudioTag";
     private boolean isInsert;
 
+    private Context context;
     private ExecutorService executorService;
 
     private List<Audio> storedMediaList;
@@ -142,6 +149,8 @@ public class AudioFragment extends Fragment {
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
 
+    private AudioDao audioDao;
+
     public AudioFragment() {}
 
     @Override
@@ -150,8 +159,7 @@ public class AudioFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_audio, container, false);
 
@@ -207,13 +215,16 @@ public class AudioFragment extends Fragment {
         bottomSel_del = view.findViewById(R.id.deleteB_sel);
         bottomSel_share = view.findViewById(R.id.shareB_sel);
 
-        executorService = Executors.newSingleThreadExecutor();
+        context = requireContext();
+        executorService = Executors.newFixedThreadPool(1);
 
         settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
 
         playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
+
+        audioDao = RoomDB.getDatabase(context).audioDao();
 
         return view;
     }
@@ -236,6 +247,16 @@ public class AudioFragment extends Fragment {
         adapter = new AudioAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
+
+        audioDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
+            @Override
+            public void onChanged(List<Audio> audios) {
+                adapter.submitList(audios);
+                storedMediaList = new ArrayList<>(audios);
+                Load_Or_Query_MediaList();
+                setAudioPlaylist();
+            }
+        });
 
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -487,7 +508,7 @@ public class AudioFragment extends Fragment {
 
         if (comparator != null) {
             if (!isAsc) {
-                comparator = comparator.reversed(); // Reverse order for descending
+                comparator = comparator.reversed();
             }
             mediaList.sort(comparator);
         }
@@ -635,71 +656,27 @@ public class AudioFragment extends Fragment {
 
 
     private void Load_Or_Query_MediaList() {
-        if (executorService.isShutdown() || executorService.isTerminated()) {
-            executorService = Executors.newSingleThreadExecutor();
-        }
-
         executorService.submit(() -> {
-            storedMediaList = loadMediaListFromPreferences();
-            Log.d("Hello", "Stored: " + storedMediaList);
+            mediaList = new ArrayList<>(queryMediaFiles());
 
             if (storedMediaList == null || storedMediaList.isEmpty()) {
                 isFilesStored = false;
 
-                Log.d("audio", "Load_Or_Query_MediaList: ");
-
                 // If no media files in preferences, query media files
-                mediaList.clear();
-                mediaList.addAll(queryMediaFiles(false));
+                audioDao.insertAll(mediaList);
             }
             else {
                 isFilesStored = true;
+                Check_And_Update_Files();
             }
 
-            setAudioPlaylist();
-
-            requireActivity().runOnUiThread(() -> {
-                if (isAdded()) {
-                    if (!isFilesStored) {
-                        if (mediaList.isEmpty())
-                            foundText.setVisibility(View.VISIBLE);
-                        else
-                            foundText.setVisibility(View.GONE);
-
-                        adapter.notifyDataSetChanged();
-                        saveMediaListToPreferences(mediaList);
-                    }
-
-                    else {
-                        foundText.setVisibility(View.GONE);
-                        mediaList.clear();
-                        mediaList.addAll(storedMediaList);
-                        adapter.notifyDataSetChanged();
-
-                        Check_And_Update_Files();
-                    }
-
-                    Log.d("Hello", "UIThread-Stored: " + storedMediaList);
-                    Log.d("Hello", "UIThread: " + mediaList);
-
-//                    if (!refresh) {
-//                        adapter = new VideoAdapter(requireContext(), mediaList);
-//                        recyclerView.setAdapter(adapter);
-//                        Log.d(TAG, "Refresh: Yes");
-//                    }
-//                    else if (isInsert) {
-//                        saveMediaListToPreferences(mediaList);
-//                        adapter = new VideoAdapter(requireContext(), mediaList);
-//                        recyclerView.setAdapter(adapter);
-//                        isInsert = false;
-//                        Log.d(TAG, "isInsert: " + isInsert);
-//                    }
-                }
-            });
+            for (Audio v : storedMediaList) {
+                getMediaDetails(v);
+            }
         });
     }
 
-    private List<Audio> queryMediaFiles(boolean refresh) {
+    private List<Audio> queryMediaFiles() {
         List<Audio> mediaList = new ArrayList<>();
         
         String[] audioProjection = new String[]{
@@ -719,29 +696,18 @@ public class AudioFragment extends Fragment {
                 sortOrder
         );
 
-        Set<String> parentFolders = new HashSet<>();
-
-        // Process video files
         if (audioCursor != null) {
-            mediaList.addAll(processCursor(audioCursor, parentFolders));
+            mediaList.addAll(processCursor(audioCursor));
             Log.d(TAG, "Audio list Count: " + audioCursor.getCount());
             audioCursor.close();
         }
 
-        // Retrieve and display files in each parent folder
-        for (String folderPath : parentFolders) {
-            Log.d(TAG, "queryMediaFiles: " + folderPath);
-        }
-
-        Log.d("queryMediaFiles", String.valueOf(FilesPath.size()));
-        Log.d("queryMediaFiles", String.valueOf(FilesPath));
-
-        Log.d(TAG, "Audio list: " + mediaList);
+//        Log.d(TAG, "Audio list: " + mediaList);
 
         return mediaList;
     }
 
-    private List<Audio> processCursor(Cursor cursor, Set<String> parentFolders) {
+    private List<Audio> processCursor(Cursor cursor) {
         List<Audio> mediaList = new ArrayList<>();
 
         int idInd = cursor.getColumnIndex(MediaStore.Audio.Media._ID);
@@ -758,28 +724,14 @@ public class AudioFragment extends Fragment {
 
                 String audioUri = String.valueOf(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
 
-                // Add parent folder path to the set
-                String parentFolder = new File(filePath).getParent();
-                parentFolders.add(parentFolder);
-
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
                 FilesDateAdded.add(date);
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Audio media = new Audio(audioUri, displayName, filePath, date, null, null, false);
+                Audio media = new Audio(audioUri, displayName, filePath, date, "", "", false);
                 mediaList.add(media);
-
-//                if (storedMediaList != null) {
-//                    if (!isInsert) {
-//                        isInsert = isInsertFiles(storedMediaList, media);
-////                        Log.d(TAG, "processCursor: " + isInsert + " : " + media.getName());
-//                    }
-//                }
-
-                Log.d("wowo", displayName);
-                Log.d("wowo", date);
             }
         }
 
@@ -788,114 +740,54 @@ public class AudioFragment extends Fragment {
 
 
     private void Check_And_Update_Files() {
-        new Thread(() -> {
-            // For Deletion
-            List<Audio> removingMediaList = new ArrayList<>();
-            List<Audio> newMediaList = new ArrayList<>(queryMediaFiles(false));
-            Set<String> newListNames = new HashSet<>();
+        // For Deletion
+        List<String> newListUris = new ArrayList<>();
 
-            for (Audio m : newMediaList) {
-                newListNames.add(m.getName());
-            }
+        for (Audio m : mediaList) {
+            newListUris.add(m.getUri());
+        }
 
-            for (Audio m : storedMediaList) {
-                if (!newListNames.contains(m.getName())) {
-                    removingMediaList.add(m);
-                }
-            }
+        audioDao.deleteAllByUris(newListUris);
 
-
-            // For Insertion
-            List<Audio> addingMediaList = new ArrayList<>();
-            Set<String> storedListNames = new HashSet<>();
-
-            for (Audio m : storedMediaList) {
-                storedListNames.add(m.getName());
-            }
-
-            for (Audio m : newMediaList) {
-                if (!storedListNames.contains(m.getName())) {
-                    addingMediaList.add(m);
-                }
-            }
-
-//            for (int i = 0; i < newMediaList.size(); i++) {
-//                boolean found = false;
-//                for (int j = 0; j < storedMediaList.size(); j++) {
-//                    if (newMediaList.get(i).getName().equals(storedMediaList.get(j).getName())) {
-//                        found = true;
-//                        break;
-//                    }
-//                    else {
-//                        found = false;
-//                    }
-//                }
-//
-//                if (!found) {
-//                    newMediaList.add(newMediaList.get(i));
-//                    adapter.notifyItemInserted(newMediaList.size() - 1);
-//                }
-//            }
-
-            requireActivity().runOnUiThread(() -> {
-//                mediaList.removeAll(removingMediaList);
-
-                for (Audio m : removingMediaList) {
-                    int index = mediaList.indexOf(m);
-                    if (index >= 0) {
-                        mediaList.remove(index);
-                        adapter.notifyItemRemoved(index);
-                    }
-                }
-
-                mediaList.addAll(addingMediaList);
-
-                setAudioPlaylist();
-
-                adapter.notifyDataSetChanged();
-                saveMediaListToPreferences(mediaList);
-            });
-
-        }).start();
+        // For Insertion
+        audioDao.insertAll(mediaList);
     }
 
+    private void getMediaDetails(Audio media) {
+        if (media.getDuration().isEmpty() || media.getSize().isEmpty()) {
+            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
+                @Override
+                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
+                    try {
+                        String sizeInBytes = String.valueOf(retriever.getFileSize());
+                        String duration = String.valueOf(retriever.getDuration());
+
+                        // Setting all Values
+                        media.setSize(sizeInBytes);
+                        media.setDuration(duration);
+
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
+
+                        executorService.execute(() -> audioDao.update(media));
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
 
     public void setAudioPlaylist() {
-        if (mediaList != null) {
+        if (storedMediaList != null) {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
-            for (Audio v : mediaList) {
+            for (Audio v : storedMediaList) {
                 MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setAudioPlaylist(mediaItemList);
-//            PlaylistManager manager = new PlaylistManager(mediaItemList);
-//            MediaRepository.getInstance().setAudioPlaylistManager(manager);
         }
-    }
-
-
-    public static ArrayList<String> getSongList() {
-        if (FilesPath != null) {
-            return FilesPath;
-        }
-        return null;
-    }
-
-    public boolean isInsertFiles(List<Audio> storedList, Audio media) {
-        boolean f = false;
-        for (Audio m: storedList) {
-            if (Objects.equals(m.getName(), media.getName())) {
-                f = true;
-                break;
-            }
-        }
-        if (!f) {
-            Log.d(TAG, "isInsertFiles: YES");
-            return true;
-        }
-        Log.d(TAG, "isInsertFiles: NO");
-        return false;
     }
 
 
@@ -913,7 +805,6 @@ public class AudioFragment extends Fragment {
             }
         }).start();
     }
-
 
     public List<Audio> loadMediaListFromPreferences() {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);

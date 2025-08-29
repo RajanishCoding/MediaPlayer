@@ -77,7 +77,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
     public static final DiffUtil.ItemCallback<Audio> DIFF_CALLBACK = new DiffUtil.ItemCallback<Audio>() {
         @Override
         public boolean areItemsTheSame(@NonNull Audio oldItem, @NonNull Audio newItem) {
-            return oldItem.getId() == (newItem.getId());
+            return oldItem.getUri().equals(newItem.getUri());
         }
 
         @Override
@@ -101,8 +101,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
     @NonNull
     @Override
     public AudioViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_layout, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
         AudioViewHolder holder = new AudioViewHolder(view);
 
         return holder;
@@ -139,6 +138,8 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
+        holder.thumbnail.setImageResource(R.drawable.music1);
+        holder.itemView.setTag(media.getPath());
 
         setVisibilities(holder);
 
@@ -159,50 +160,16 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
             holder.moreB.setImageDrawable(icon_more);
         }
 
-        if (media.getDuration() == null || media.getSize() == null) {
-            new FFmpegMetadataRetriever(media.getPath(), retriever -> {
-                try {
-                    String sizeInBytes = String.valueOf(retriever.getFileSize());
-//                    String size = getFormattedFileSize(sizeInBytes);
-
-                    String duration = String.valueOf(retriever.getDuration()); // in s
-
-                    // Setting all Values
-                    media.setSize(sizeInBytes);
-                    media.setDuration(duration);
-
-                    Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
-
-                    if (position == mediaList.size() - 1) {
-                        saveMediaListToPreferences(mediaList);
-                    }
-                }
-
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                holder.itemView.post(() -> {
-                    holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                    holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration() != null ? media.getDuration() : "0")));
-                    holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
-                });
-            });
-
-        }
-        else {
-            Log.d("MediaExtractor", "onBindViewHolder: " + media.getDuration());
-
+        if (!media.getDuration().isEmpty() || !media.getSize().isEmpty()) {
             holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
             holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
-
             holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
         }
 
         try {
             Glide.with(holder.thumbnail.getContext())
             .asBitmap()
-            .load(media.getPath()) // Unique identifier, ensures correct thumbnail
+            .load(media.getUri()) // Unique identifier, ensures correct thumbnail
             .placeholder(R.drawable.music1)
             .override(420)
             .centerCrop()

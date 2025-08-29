@@ -1160,7 +1160,8 @@ public class PlayerActivity extends AppCompatActivity {
         isFirstFetchTracksForCurrentMedia = true;
         
         List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
-
+        Log.d("dbjjbbdjb", "initializePlayer: " + (mediaItemList == null) + isVideoFile);
+        
         mediaItem = mediaItemList.get(currentIndex);
         player.setMediaItems(mediaItemList, currentIndex, 0);
         player.prepare();

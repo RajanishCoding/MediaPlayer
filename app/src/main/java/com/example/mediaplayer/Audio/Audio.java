@@ -3,6 +3,7 @@ package com.example.mediaplayer.Audio;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.Ignore;
@@ -14,11 +15,11 @@ import java.util.Objects;
 
 @Entity (tableName = "audio")
 public class Audio {
-
-    @PrimaryKey(autoGenerate = true)
-    private int id;
-
+    
+    @NonNull
+    @PrimaryKey
     private String uri;
+    
     private String name;
     private String path;
     private String dateAdded;
@@ -47,14 +48,6 @@ public class Audio {
         this.isVideo = false;
     }
 
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public String getUri() {
         return uri;
@@ -146,6 +139,7 @@ public class Audio {
                 Objects.equals(dateAdded, audio.dateAdded) &&
                 Objects.equals(duration, audio.duration) &&
                 Objects.equals(size, audio.size) &&
+//                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
                 isVideo == audio.isVideo;
     }
 }

@@ -88,7 +88,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     public static final DiffUtil.ItemCallback<Video> DIFF_CALLBACK = new DiffUtil.ItemCallback<Video>() {
         @Override
         public boolean areItemsTheSame(@NonNull Video oldItem, @NonNull Video newItem) {
-            return oldItem.getId() == (newItem.getId());
+            return oldItem.getUri().equals(newItem.getUri());
         }
 
         @Override
@@ -108,9 +108,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     @NonNull
     @Override
     public VideoViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_layout, parent, false);
-
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
         VideoViewHolder holder = new VideoViewHolder(view);
 
         icon_more = ContextCompat.getDrawable(context, R.drawable.baseline_more_vert_24);
@@ -154,6 +152,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         holder.name.setText(media.getName());
         holder.path.setText(media.getPath());
         holder.dateAdded.setText(getFormattedDate(Long.parseLong(media.getDateAdded())));
+        holder.thumbnail.setImageResource(R.drawable.video2);
         holder.itemView.setTag(media.getPath());
 
         setVisibilities(holder);
@@ -183,19 +182,19 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
                 holder.resolutionFrame.setText(
                         resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
                                 resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
-            } else {
+            }
+            else {
                 holder.resolutionFrame.setVisibility(View.GONE);
             }
 
             holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
-
         }
 
         try {
             Glide.with(holder.thumbnail.getContext())
             .asBitmap()
             .load(media.getPath()) // Unique identifier, ensures correct thumbnail
-            .placeholder(R.drawable.music1)
+            .placeholder(R.drawable.video2)
             .override(420)
             .centerCrop()
             .into(new CustomTarget<Bitmap>() {
@@ -269,7 +268,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
 
     private void toggleSelection(int pos) {
-        Video item = mediaList.get(pos);
+        Video item = getCurrentList().get(pos);
         item.isSelected = !item.isSelected;
         notifyItemChanged(pos);
         selectedList.add(Uri.parse(mediaList.get(pos).getUri()));
