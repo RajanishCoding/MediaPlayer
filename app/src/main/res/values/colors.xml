@@ -119,4 +119,7 @@
 
     <attr name="overlayColor" format="reference|color" />
 
+    <color name="text_color">#000000</color>
+    <color name="text_color_rev">#FFFFFF</color>
+
 </resources>

@@ -54,6 +54,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +67,7 @@ import java.util.concurrent.Executors;
 
 public class AudioFragment extends Fragment {
 
+    private Context context;
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private AudioAdapter adapter;
@@ -86,7 +88,6 @@ public class AudioFragment extends Fragment {
     private String TAG = "AudioTag";
     private boolean isInsert;
 
-    private Context context;
     private ExecutorService executorService;
 
     private List<Audio> storedMediaList;
@@ -750,7 +751,21 @@ public class AudioFragment extends Fragment {
         audioDao.deleteAllByUris(newListUris);
 
         // For Insertion
-        audioDao.insertAll(mediaList);
+        for (Audio audio : mediaList) {
+            Audio existing = audioDao.getByUri(audio.getUri());
+
+            if (existing == null) {
+                // New file → insert
+                audioDao.insertAll(Collections.singletonList(audio));
+            }
+            else {
+//                // File exists → check if changed
+                if (!existing.getPath().equals(audio.getPath()) ||
+                        !existing.getName().equals(audio.getName())) {
+                    audioDao.update(audio); // rename/update case
+                }
+            }
+        }
     }
 
     private void getMediaDetails(Audio media) {

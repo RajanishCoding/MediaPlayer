@@ -37,6 +37,10 @@ public interface AudioDao {
     @Query("select * from audio order by name")
     List<Audio> getDirectList();
 
+    @Query("SELECT * FROM audio WHERE uri = :uri")
+    Audio getByUri(String uri);
+
+
 
     @Query("select * from audio order by name")
     LiveData<List<Audio>> getList();

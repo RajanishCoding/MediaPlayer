@@ -36,6 +36,9 @@ public interface VideoDao {
     @Query("select * from video order by name")
     List<Video> getDirectList();
 
+    @Query("SELECT * FROM video WHERE uri = :uri")
+    Video getByUri(String uri);
+
 
 
     @Query("select * from video order by name")

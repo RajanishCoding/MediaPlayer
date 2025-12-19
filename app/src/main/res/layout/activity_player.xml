@@ -376,7 +376,7 @@
                 android:text="Media Player"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/decoder_button"
+                app:layout_constraintEnd_toStartOf="@+id/expandB"
                 app:layout_constraintStart_toEndOf="@+id/back_button"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -408,26 +408,26 @@
                 android:tooltipText="Subtitles"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/decoder_button"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="TouchTargetSizeCheck" />
-
-            <ImageButton
-                android:id="@+id/decoder_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="22dp"
-                android:background="@drawable/ripple_player_dark"
-                android:contentDescription="TODO"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="3dp"
-                android:src="@drawable/hw"
-                android:tooltipText="Acceleration"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/expandB"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="TouchTargetSizeCheck" />
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/decoder_button"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginEnd="22dp"-->
+<!--                android:background="@drawable/ripple_player_dark"-->
+<!--                android:contentDescription="TODO"-->
+<!--                android:minWidth="0dp"-->
+<!--                android:minHeight="0dp"-->
+<!--                android:padding="3dp"-->
+<!--                android:src="@drawable/hw"-->
+<!--                android:tooltipText="Acceleration"-->
+<!--                app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                app:layout_constraintEnd_toStartOf="@id/expandB"-->
+<!--                app:layout_constraintTop_toTopOf="parent"-->
+<!--                tools:ignore="TouchTargetSizeCheck" />-->
 
             <ImageButton
                 android:id="@+id/expandB"

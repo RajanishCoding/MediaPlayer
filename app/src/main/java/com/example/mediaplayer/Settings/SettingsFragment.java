@@ -15,8 +15,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
@@ -36,6 +38,8 @@ public class SettingsFragment extends Fragment {
     private ImageButton menu_Button;
     private ImageButton search_Button;
     private Switch mode_Switch;
+
+    private Button playerB, audioB, subtitleB, listB, storageB;
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -61,7 +65,15 @@ public class SettingsFragment extends Fragment {
         menu_Button = view.findViewById(R.id.menu_button);
         mode_Switch = view.findViewById(R.id.mode_switch);
 
+        playerB = view.findViewById(R.id.player_item);
+        audioB = view.findViewById(R.id.audio_item);
+        subtitleB = view.findViewById(R.id.subtitle_item);
+        listB = view.findViewById(R.id.list_item);
+        storageB = view.findViewById(R.id.storage_item);
+
         setModeSwitch();
+
+        setButtonsText();
 
         return view;
     }
@@ -88,12 +100,24 @@ public class SettingsFragment extends Fragment {
                 setThemeMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
         });
+
+        playerB.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Clicked Player", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void setModeSwitch() {
         sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
         mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", true));
+    }
+
+    private void setButtonsText() {
+        playerB.setText("Player");
+        audioB.setText("Audio");
+        subtitleB.setText("Subtitle");
+        listB.setText("List");
+        storageB.setText("Storage");
     }
 
     private void setThemeMode(int mode) {

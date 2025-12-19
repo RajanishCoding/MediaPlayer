@@ -57,6 +57,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -319,7 +320,7 @@ public class VideoFragment extends Fragment {
 
             @Override
             public void onCountChanged(int counts) {
-                toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+                toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, storedMediaList.size()));
                 bottomSel_ren.setEnabled(counts == 1);
             }
 
@@ -342,16 +343,16 @@ public class VideoFragment extends Fragment {
                     @Override
                     public void onRenameClickListener(int position) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(Uri.parse(mediaList.get(p).getUri()));
-                        ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName());
+                        uris.add(Uri.parse(storedMediaList.get(p).getUri()));
+                        ConsentDialog consent = new ConsentDialog(2, uris, storedMediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
                     @Override
                     public void onDeleteClickListener(int p) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(Uri.parse(mediaList.get(p).getUri()));
-                        ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName());
+                        uris.add(Uri.parse(storedMediaList.get(p).getUri()));
+                        ConsentDialog consent = new ConsentDialog(1, uris, storedMediaList.get(p).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
@@ -450,32 +451,36 @@ public class VideoFragment extends Fragment {
 
 
     private void selectAllItems() {
-        for (Video v : mediaList) {
+        for (Video v : storedMediaList) {
             v.isSelected = true;
         }
         adapter.notifyDataSetChanged();
-        adapter.selectionCounts = mediaList.size();
+
+        adapter.selectionCounts = storedMediaList.size();
         toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
-//        adapter.listener.onCountChanged(mediaList.size());
+//        adapter.listener.onCountChanged(storedMediaList.size());
     }
 
     private void deselectAllItems() {
-        for (Video v : mediaList) {
+        for (Video v : storedMediaList) {
             v.isSelected = false;
         }
         adapter.notifyDataSetChanged();
+
         adapter.selectionCounts = 0;
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, mediaList.size()));
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
 //        adapter.listener.onCountChanged(0);
     }
 
     private void clearSelection() {
-        for (Video v : mediaList) {
+        for (Video v : storedMediaList) {
+            Log.d("kklwi", "clearSelection: " + v.isSelected);
             v.isSelected = false;
         }
         adapter.isSelectionMode = false;
         adapter.selectionCounts = 0;
         adapter.notifyDataSetChanged();
+//        adapter.submitList(storedMediaList);
         adapter.listener.onSelectionEnds();
     }
 
@@ -702,9 +707,9 @@ public class VideoFragment extends Fragment {
     public void onStart() {
         super.onStart();
 
-        Log.d("Hello", "Before Load: Yes " + mediaList.size());
+        Log.d("Hello", "Before Load: Yes " + (storedMediaList != null ? storedMediaList.size() : 0));
 //        Load_Or_Query_MediaList();
-        Log.d("Hello", "After Load: Yes " + mediaList.size());
+        Log.d("Hello", "After Load: Yes " + (storedMediaList != null ? storedMediaList.size() : 0));
     }
 
     @Override
@@ -809,7 +814,21 @@ public class VideoFragment extends Fragment {
         videoDao.deleteAllByUris(newListUris);
 
         // For Insertion
-        videoDao.insertAll(mediaList);
+        for (Video video : mediaList) {
+            Video existing = videoDao.getByUri(video.getUri());
+
+            if (existing == null) {
+                // New file -> insert
+                videoDao.insertAll(Collections.singletonList(video));
+            }
+            else {
+                // File exists -> check if changed
+                if (!existing.getPath().equals(video.getPath()) ||
+                        !existing.getName().equals(video.getName())) {
+                    videoDao.update(video); // rename/update case
+                }
+            }
+        }
     }
 
     private void getMediaDetails(Video media) {

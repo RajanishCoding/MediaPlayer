@@ -33,6 +33,7 @@
 
     <color name="bottomBarButtonTint">#FFFFFF</color>
 
-
+    <color name="text_color">#FFFFFF</color>
+    <color name="text_color_rev">#000000</color>
 
 </resources>

@@ -262,16 +262,16 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            listener.onOptionButtonClicked(p, mediaList.get(p).getName());
+            listener.onOptionButtonClicked(p, getItem(p).getName());
         });
     }
 
 
     private void toggleSelection(int pos) {
-        Video item = getCurrentList().get(pos);
+        Video item = getItem(pos);
         item.isSelected = !item.isSelected;
         notifyItemChanged(pos);
-        selectedList.add(Uri.parse(mediaList.get(pos).getUri()));
+        selectedList.add(Uri.parse(getItem(pos).getUri()));
         selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
         listener.onCountChanged(selectionCounts);
 
@@ -287,7 +287,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     }
 
     public boolean isAllSelected() {
-        return selectionCounts == mediaList.size();
+        return selectionCounts == getItemCount();
     }
 
 

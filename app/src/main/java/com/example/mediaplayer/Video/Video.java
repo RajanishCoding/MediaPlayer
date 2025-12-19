@@ -152,14 +152,12 @@ public class Video {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (this == obj) {
-            return true;
-        }
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
 
         Video video = (Video) obj;
+        Log.d("kklwi", "equals:  " + isSelected + video.isSelected);
 
         return Objects.equals(uri, video.uri) &&
                 Objects.equals(name, video.name) &&
@@ -169,6 +167,7 @@ public class Video {
                 Objects.equals(resolution, video.resolution) &&
                 Objects.equals(frameRate, video.frameRate) &&
                 Objects.equals(size, video.size) &&
+                isSelected == video.isSelected &&
 //                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
                 isVideo == video.isVideo;
     }
