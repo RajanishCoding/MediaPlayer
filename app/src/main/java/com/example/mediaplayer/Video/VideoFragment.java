@@ -383,8 +383,11 @@ public class VideoFragment extends Fragment {
         detailsB_Listeners();
 
         apply_Button.setOnClickListener(v -> {
+            settingsPrefsEditor.putString("sortBy", sortBy);
+            settingsPrefsEditor.putBoolean("isAscending", isAscending);
+            settingsPrefsEditor.apply();
+
             setDetailsVisibility();
-            sortMediaList(isAscending);
             setListObserver();
             hideMenuLayout();
             Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
@@ -424,7 +427,6 @@ public class VideoFragment extends Fragment {
                     }
                 }
         );
-
 
         requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
             @Override
@@ -526,60 +528,14 @@ public class VideoFragment extends Fragment {
         durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> isDur_OnThumbnail = isChecked);
     }
 
-
-    private void sortMediaList(boolean isAsc) {
-        boolean isSorted = true;
-
-        Comparator<Video> comparator = null;
-
-        switch (sortBy) {
-            case "Name":
-                comparator = Comparator.comparing(Video::getName, String.CASE_INSENSITIVE_ORDER);
-                break;
-
-            case "Size":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getSize()));
-                break;
-
-            case "Length":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDuration()));
-                break;
-
-            case "Date":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded()));
-                break;
-
-            case "Resol":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getResolution()));
-                break;
-
-            case "Fps":
-                comparator = Comparator.comparingDouble(m -> Double.parseDouble(m.getFrameRate()));
-                break;
-
-            default:
-                isSorted = false;
-                break;
-        }
-
-        if (comparator != null) {
-            if (!isAsc) {
-                comparator = comparator.reversed(); // Reverse order for descending
-            }
-            mediaList.sort(comparator);
-        }
-
-        if (isSorted) {
-            adapter.notifyDataSetChanged();
-            settingsPrefsEditor.putString("sortBy", sortBy);
-            settingsPrefsEditor.putBoolean("isAscending", isAsc);
-            settingsPrefsEditor.apply();
-            saveMediaListToPreferences(mediaList);
-        }
-    }
-
     private void setListObserver() {
-        getSortedList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+        LiveData<List<Video>> livedataList = getSortedListLiveData();
+
+        if (livedataList != null) {
+            livedataList.removeObservers(getViewLifecycleOwner());
+        }
+
+        getSortedListLiveData().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
             @Override
             public void onChanged(List<Video> videos) {
                 adapter.submitList(videos);
@@ -588,16 +544,9 @@ public class VideoFragment extends Fragment {
                 setVideoPlaylist();
             }
         });
-
-
-//        List<Video> videos = getSortedList();
-//        adapter.submitList(videos);
-//        storedMediaList = new ArrayList<>(videos);
-//        Load_Or_Query_MediaList();
-//        setVideoPlaylist();
     }
 
-    private LiveData<List<Video>> getSortedList() {
+    private LiveData<List<Video>> getSortedListLiveData() {
         switch (sortBy) {
             case "Date":
                 return isAscending ? videoDao.getListByDate() : videoDao.getListByDateDesc();
