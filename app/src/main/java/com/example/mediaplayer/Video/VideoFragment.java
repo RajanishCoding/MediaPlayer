@@ -385,6 +385,7 @@ public class VideoFragment extends Fragment {
         apply_Button.setOnClickListener(v -> {
             setDetailsVisibility();
             sortMediaList(isAscending);
+            setListObserver();
             hideMenuLayout();
             Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
         });
@@ -578,22 +579,22 @@ public class VideoFragment extends Fragment {
     }
 
     private void setListObserver() {
-//        getSortedList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
-//            @Override
-//            public void onChanged(List<Video> videos) {
-//                adapter.submitList(videos);
-//                storedMediaList = new ArrayList<>(videos);
-//                Load_Or_Query_MediaList();
-//                setVideoPlaylist();
-//            }
-//        });
+        getSortedList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+            @Override
+            public void onChanged(List<Video> videos) {
+                adapter.submitList(videos);
+                storedMediaList = new ArrayList<>(videos);
+                Load_Or_Query_MediaList();
+                setVideoPlaylist();
+            }
+        });
 
 
-        List<Video> videos = getSortedList().getValue();
-        adapter.submitList(videos);
-        storedMediaList = new ArrayList<>(videos);
-        Load_Or_Query_MediaList();
-        setVideoPlaylist();
+//        List<Video> videos = getSortedList();
+//        adapter.submitList(videos);
+//        storedMediaList = new ArrayList<>(videos);
+//        Load_Or_Query_MediaList();
+//        setVideoPlaylist();
     }
 
     private LiveData<List<Video>> getSortedList() {
