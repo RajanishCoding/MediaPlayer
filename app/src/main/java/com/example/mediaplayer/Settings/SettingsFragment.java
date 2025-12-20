@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransition;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,10 +17,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Switch;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
@@ -39,7 +42,9 @@ public class SettingsFragment extends Fragment {
     private ImageButton search_Button;
     private Switch mode_Switch;
 
-    private Button playerB, audioB, subtitleB, listB, storageB;
+    private FrameLayout fragmentContainer;
+
+    private View playerSettings, audioSettings, subtitleSettings, listSettings, storageSettings;
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -51,12 +56,10 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
@@ -65,15 +68,17 @@ public class SettingsFragment extends Fragment {
         menu_Button = view.findViewById(R.id.menu_button);
         mode_Switch = view.findViewById(R.id.mode_switch);
 
-        playerB = view.findViewById(R.id.player_item);
-        audioB = view.findViewById(R.id.audio_item);
-        subtitleB = view.findViewById(R.id.subtitle_item);
-        listB = view.findViewById(R.id.list_item);
-        storageB = view.findViewById(R.id.storage_item);
+        fragmentContainer = view.findViewById(R.id.fragmentContainerSetting);
+
+        playerSettings = view.findViewById(R.id.playerSetting);
+        audioSettings = view.findViewById(R.id.audioSetting);
+        subtitleSettings = view.findViewById(R.id.subtitleSetting);
+        listSettings = view.findViewById(R.id.listSetting);
+        storageSettings = view.findViewById(R.id.systemSetting);
 
         setModeSwitch();
 
-        setButtonsText();
+        setSettingItemsViews();
 
         return view;
     }
@@ -101,10 +106,14 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        playerB.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Clicked Player", Toast.LENGTH_SHORT).show();
-        });
+        playerSettings.setOnClickListener(v -> createFragment(new SettingPlayerFragment()));
+        audioSettings.setOnClickListener(v -> createFragment(new SettingAudioFragment()));
+        subtitleSettings.setOnClickListener(v -> createFragment(new SettingSubtitleFragment()));
+        listSettings.setOnClickListener(v -> createFragment(new SettingListFragment()));
+        storageSettings.setOnClickListener(v -> createFragment(new SettingGeneralFragment()));
+
     }
+
 
     private void setModeSwitch() {
         sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
@@ -112,12 +121,28 @@ public class SettingsFragment extends Fragment {
         mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", true));
     }
 
-    private void setButtonsText() {
-        playerB.setText("Player");
-        audioB.setText("Audio");
-        subtitleB.setText("Subtitle");
-        listB.setText("List");
-        storageB.setText("Storage");
+    private void setSettingItemsViews() {
+        int drawable = R.drawable.round_arrow_forward_ios_24;
+
+        ((TextView) playerSettings.findViewById(R.id.itemText)).setText("Player");
+        ((ImageView) playerSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_smart_display_24);
+        ((ImageView) playerSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
+
+        ((TextView) audioSettings.findViewById(R.id.itemText)).setText("Audio");
+        ((ImageView) audioSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.round_music_video_24);
+        ((ImageView) audioSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
+
+        ((TextView) subtitleSettings.findViewById(R.id.itemText)).setText("Subtitle");
+        ((ImageView) subtitleSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_subtitles_24);
+        ((ImageView) subtitleSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
+
+        ((TextView) listSettings.findViewById(R.id.itemText)).setText("List");
+        ((ImageView) listSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_list_alt_24);
+        ((ImageView) listSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
+
+        ((TextView) storageSettings.findViewById(R.id.itemText)).setText("Storage");
+        ((ImageView) storageSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_info_24);
+        ((ImageView) storageSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
     }
 
     private void setThemeMode(int mode) {
@@ -163,6 +188,15 @@ public class SettingsFragment extends Fragment {
             public void onAnimationRepeat (Animation animation){}
         });
     }
+
+    private void createFragment(Fragment fragment) {
+                getChildFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragmentContainerSetting, fragment)
+                        .addToBackStack(null)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_OPEN)
+                        .commit();
+        }
 
     public void saveMediaListToPreferences(List<Video> mediaList) {
         SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);

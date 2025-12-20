@@ -1,13 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<Button xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="70dp"
-    android:background="@color/transparent"
-    android:text="Item Text"
-    android:textAllCaps="false"
-    android:textColor="@color/text_color"
-    android:textAlignment="textStart"
-    android:drawableEnd="@drawable/round_arrow_forward_ios_24"
-    android:drawableTint="@color/text_color" />
+    android:gravity="center_vertical"
+    android:paddingHorizontal="10dp">
+
+    <ImageView
+        android:id="@+id/itemIconStart"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:contentDescription="TODO"
+        android:src="@drawable/rounded_smart_display_24"
+        app:tint="@color/text_color" />
+
+    <TextView
+        android:id="@+id/itemText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Item"
+        android:textSize="17sp"
+        android:paddingStart="10dp"
+        android:textColor="@color/text_color" />
+
+    <ImageView
+        android:id="@+id/itemIconEnd"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:contentDescription="TODO"
+        android:src="@drawable/round_arrow_forward_ios_24"
+        app:tint="@color/text_color" />
+</LinearLayout>
 

@@ -43,5 +43,30 @@ public interface AudioDao {
 
 
     @Query("select * from audio order by name")
-    LiveData<List<Audio>> getList();
+    LiveData<List<Audio>> getListByName();
+
+    @Query("select * from audio order by name desc")
+    LiveData<List<Audio>> getListByNameDesc();
+
+
+    @Query("select * from audio order by dateAdded")
+    LiveData<List<Audio>> getListByDate();
+
+    @Query("select * from audio order by dateAdded desc")
+    LiveData<List<Audio>> getListByDateDesc();
+
+
+    @Query("select * from audio order by size")
+    LiveData<List<Audio>> getListBySize();
+
+    @Query("select * from audio order by size desc")
+    LiveData<List<Audio>> getListBySizeDesc();
+
+
+    @Query("select * from audio order by duration")
+    LiveData<List<Audio>> getListByDuration();
+
+    @Query("select * from audio order by duration desc")
+    LiveData<List<Audio>> getListByDurationDesc();
+
 }

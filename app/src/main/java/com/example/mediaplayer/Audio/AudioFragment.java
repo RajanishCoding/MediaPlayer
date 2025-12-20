@@ -45,22 +45,16 @@ import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.example.mediaplayer.Room.AudioDao;
 import com.example.mediaplayer.Room.RoomDB;
-import com.example.mediaplayer.Room.VideoDao;
-import com.example.mediaplayer.Video.Video;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -249,7 +243,7 @@ public class AudioFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
-        audioDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
+        audioDao.getListByName().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
             @Override
             public void onChanged(List<Audio> audios) {
                 adapter.submitList(audios);

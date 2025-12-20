@@ -164,26 +164,32 @@
             tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <include
-            layout="@layout/item_layout_settings"
-            android:id="@+id/player_item"/>
+            android:id="@+id/playerSetting"
+            layout="@layout/item_layout_settings"/>
 
         <include
-            layout="@layout/item_layout_settings"
-            android:id="@+id/audio_item"/>
+            android:id="@+id/audioSetting"
+            layout="@layout/item_layout_settings"/>
 
         <include
-            layout="@layout/item_layout_settings"
-            android:id="@+id/subtitle_item"/>
+            android:id="@+id/subtitleSetting"
+            layout="@layout/item_layout_settings"/>
 
         <include
-            layout="@layout/item_layout_settings"
-            android:id="@+id/list_item"/>
+            android:id="@+id/listSetting"
+            layout="@layout/item_layout_settings"/>
 
         <include
-            layout="@layout/item_layout_settings"
-            android:id="@+id/storage_item"/>
+            android:id="@+id/systemSetting"
+            layout="@layout/item_layout_settings"/>
 
     </LinearLayout>
+
+
+    <FrameLayout
+        android:id="@+id/fragmentContainerSetting"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

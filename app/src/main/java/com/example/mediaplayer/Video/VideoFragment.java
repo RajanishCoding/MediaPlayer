@@ -10,14 +10,13 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.IntentSenderRequest;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
@@ -53,17 +52,13 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -278,20 +273,14 @@ public class VideoFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
-        videoDao.getList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
-            @Override
-            public void onChanged(List<Video> videos) {
-                adapter.submitList(videos);
-                storedMediaList = new ArrayList<>(videos);
-                Load_Or_Query_MediaList();
-                setVideoPlaylist();
-            }
-        });
 
 //        Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
         isList = settingsPrefs.getBoolean("isList", true);
+
+//      Set at start
+        setListObserver();
 
 //        Loading at Start
         loadDetailsButtonVisibility();
@@ -587,6 +576,49 @@ public class VideoFragment extends Fragment {
             saveMediaListToPreferences(mediaList);
         }
     }
+
+    private void setListObserver() {
+//        getSortedList().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+//            @Override
+//            public void onChanged(List<Video> videos) {
+//                adapter.submitList(videos);
+//                storedMediaList = new ArrayList<>(videos);
+//                Load_Or_Query_MediaList();
+//                setVideoPlaylist();
+//            }
+//        });
+
+
+        List<Video> videos = getSortedList().getValue();
+        adapter.submitList(videos);
+        storedMediaList = new ArrayList<>(videos);
+        Load_Or_Query_MediaList();
+        setVideoPlaylist();
+    }
+
+    private LiveData<List<Video>> getSortedList() {
+        switch (sortBy) {
+            case "Date":
+                return isAscending ? videoDao.getListByDate() : videoDao.getListByDateDesc();
+
+            case "Size":
+                return isAscending ? videoDao.getListBySize() : videoDao.getListBySizeDesc();
+
+            case "Length":
+                return isAscending ? videoDao.getListByDuration() : videoDao.getListByDurationDesc();
+
+            case "Resol":
+                return isAscending ? videoDao.getListByResol() : videoDao.getListByResolDesc();
+
+            case "Fps":
+                return isAscending ? videoDao.getListByFrame() : videoDao.getListByFrameDesc();
+
+            case "Name":
+            default:
+                return isAscending ? videoDao.getListByName() : videoDao.getListByNameDesc();
+        }
+    }
+
 
     private void setDetailsVisibility() {
         adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isFps_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);

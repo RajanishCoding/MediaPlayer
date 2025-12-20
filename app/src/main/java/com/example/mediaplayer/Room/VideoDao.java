@@ -42,5 +42,43 @@ public interface VideoDao {
 
 
     @Query("select * from video order by name")
-    LiveData<List<Video>> getList();
+    LiveData<List<Video>> getListByName();
+
+    @Query("select * from video order by name desc")
+    LiveData<List<Video>> getListByNameDesc();
+
+
+    @Query("select * from video order by dateAdded")
+    LiveData<List<Video>> getListByDate();
+
+    @Query("select * from video order by dateAdded desc")
+    LiveData<List<Video>> getListByDateDesc();
+
+
+    @Query("select * from video order by size")
+    LiveData<List<Video>> getListBySize();
+
+    @Query("select * from video order by size desc")
+    LiveData<List<Video>> getListBySizeDesc();
+
+
+    @Query("select * from video order by duration")
+    LiveData<List<Video>> getListByDuration();
+
+    @Query("select * from video order by duration desc")
+    LiveData<List<Video>> getListByDurationDesc();
+
+
+    @Query("select * from video order by resolution")
+    LiveData<List<Video>> getListByResol();
+
+    @Query("select * from video order by resolution desc")
+    LiveData<List<Video>> getListByResolDesc();
+
+
+    @Query("select * from video order by frameRate")
+    LiveData<List<Video>> getListByFrame();
+
+    @Query("select * from video order by frameRate desc")
+    LiveData<List<Video>> getListByFrameDesc();
 }
