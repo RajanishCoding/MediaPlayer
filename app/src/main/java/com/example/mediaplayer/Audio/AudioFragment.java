@@ -213,10 +213,10 @@ public class AudioFragment extends Fragment {
         context = requireContext();
         executorService = Executors.newFixedThreadPool(1);
 
-        settingsPrefs = requireContext().getSharedPreferences("AudioSettings", Context.MODE_PRIVATE);
+        settingsPrefs = requireContext().getSharedPreferences("AudioListSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
 
-        playerPrefs = requireContext().getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefs = requireContext().getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
 
         audioDao = RoomDB.getDatabase(context).audioDao();

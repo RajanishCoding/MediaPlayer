@@ -432,7 +432,7 @@ public class PlayerActivity extends AppCompatActivity {
         rotateButton = findViewById(R.id.rotate);
         lockButton = findViewById(R.id.lock);
         unlockButton = findViewById(R.id.unlock);
-        decoderButton = findViewById(R.id.decoder_button);
+//        decoderButton = findViewById(R.id.decoder_button);
         audioTrackButton = findViewById(R.id.audio_tracks_button);
         subTrackButton = findViewById(R.id.sub_tracks_button);
 
@@ -533,7 +533,7 @@ public class PlayerActivity extends AppCompatActivity {
         Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
 
 
-        playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        playerPrefs = getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
 
         isTime1ButtonClicked = playerPrefs.getBoolean("isTime1Clicked", false);
@@ -1521,9 +1521,11 @@ public class PlayerActivity extends AppCompatActivity {
         muteExpandB.setOnClickListener(v -> {
             if (isMuted) {
                 setExpandViewColors(muteExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+                player.setVolume(1f);
             }
             else {
                 setExpandViewColors(muteExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+                player.setVolume(0f);
             }
             isMuted = !isMuted;
         });
@@ -2240,7 +2242,7 @@ public class PlayerActivity extends AppCompatActivity {
         ConstraintLayout layout = (ConstraintLayout) StartView.getParent();
         ConstraintSet constraintSet = new ConstraintSet();
         constraintSet.clone(layout);
-        constraintSet.connect(StartView.getId(), StartSide, EndView.getId(), EndSide);
+        if (EndView != null) constraintSet.connect(StartView.getId(), StartSide, EndView.getId(), EndSide);
         constraintSet.applyTo(layout);
     }
 
@@ -2258,10 +2260,12 @@ public class PlayerActivity extends AppCompatActivity {
             playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
 
-            if (player.isPlaying() && !isBackgroundPlay) {
+            if (!isBackgroundPlay) {
+                isPlay = player.getPlayWhenReady();
+                player.setPlayWhenReady(false);
                 player.pause();
-                isPlay = true;
             }
+
         }
 
         Log.d("mediddass", "onPause: ");
@@ -2278,6 +2282,7 @@ public class PlayerActivity extends AppCompatActivity {
             Log.d(TAG, "onPause: ");
 
             if (isPlay && !isBackgroundPlay) {
+                player.setPlayWhenReady(true);
                 playMedia();
                 isPlay = false;
             }
