@@ -4,6 +4,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.UnstableApi;
@@ -22,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,6 +49,7 @@ import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.example.mediaplayer.Room.AudioDao;
 import com.example.mediaplayer.Room.RoomDB;
+import com.example.mediaplayer.Video.Video;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -243,28 +248,22 @@ public class AudioFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
-        audioDao.getListByName().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
-            @Override
-            public void onChanged(List<Audio> audios) {
-                adapter.submitList(audios);
-                storedMediaList = new ArrayList<>(audios);
-                Load_Or_Query_MediaList();
-                setAudioPlaylist();
-            }
-        });
 
-//        Load at Start
+//      Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
         isList = settingsPrefs.getBoolean("isList", true);
 
-//        Loading at Start
+//      Setting at start
+        setListObserver();
+
+//      Loading at Start
         loadDetailsButtonVisibility();
 
-//        Notify Adapter at Start
+//      Notify Adapter at Start
         setDetailsVisibility();
 
-//        Set BG at Start
+//      Setting BG at Start
         setBackground_LayoutButtons(isList);
         setBackground_SortButtons(sortBy);
         setBackground_AscDesc_Buttons(isAscending);
@@ -360,8 +359,12 @@ public class AudioFragment extends Fragment {
         detailsB_Listeners();
 
         apply_Button.setOnClickListener(v -> {
+            settingsPrefsEditor.putString("sortBy", sortBy);
+            settingsPrefsEditor.putBoolean("isAscending", isAscending);
+            settingsPrefsEditor.apply();
+
             setDetailsVisibility();
-            sortMediaList(isAscending);
+            setListObserver();
             hideMenuLayout();
         });
 
@@ -387,6 +390,18 @@ public class AudioFragment extends Fragment {
                 }
             }
         });
+
+        requireContext().getContentResolver().registerContentObserver(
+                MediaStore.Audio.Media.getContentUri("external"), true,
+                new ContentObserver(new Handler(Looper.getMainLooper())) {
+                    @Override
+                    public void onChange(boolean selfChange, @Nullable Uri uri) {
+                        super.onChange(selfChange, uri);
+                        Log.d("MediaChange", "Change detected: " + uri.getPath());
+                        Load_Or_Query_MediaList();
+                    }
+                }
+        );
 
         requireActivity().getOnBackPressedDispatcher().addCallback(requireActivity(), new OnBackPressedCallback(true) {
             @Override
@@ -474,47 +489,34 @@ public class AudioFragment extends Fragment {
     }
 
 
-    private void sortMediaList(boolean isAsc) {
-        boolean isSorted = true;
+    private void setListObserver() {
+        LiveData<List<Audio>> livedataList = getSortedListLiveData();
 
-        Comparator<Audio> comparator = null;
-
-        switch (sortBy) {
-            case "Name":
-                comparator = Comparator.comparing(Audio::getName, String.CASE_INSENSITIVE_ORDER);
-                break;
-
-            case "Size":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getSize()));
-                break;
-
-            case "Length":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDuration()));
-                break;
-
-            case "Date":
-                comparator = Comparator.comparingLong(m -> Long.parseLong(m.getDateAdded()));
-                break;
-
-            default:
-                isSorted = false;
-                break;
+        if (livedataList != null) {
+            livedataList.removeObservers(getViewLifecycleOwner());
         }
 
-        if (comparator != null) {
-            if (!isAsc) {
-                comparator = comparator.reversed();
+        getSortedListLiveData().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
+            @Override
+            public void onChanged(List<Audio> audios) {
+                if (audios == null || audios.isEmpty()) foundText.setVisibility(View.VISIBLE);
+                else foundText.setVisibility(View.INVISIBLE);
+
+                adapter.submitList(audios);
+                storedMediaList = new ArrayList<>(audios);
+                Load_Or_Query_MediaList();
+                setAudioPlaylist();
             }
-            mediaList.sort(comparator);
-        }
+        });
+    }
 
-        if (isSorted) {
-            adapter.notifyDataSetChanged();
-            settingsPrefsEditor.putString("sortBy", sortBy);
-            settingsPrefsEditor.putBoolean("isAscending", isAsc);
-            settingsPrefsEditor.apply();
-            saveMediaListToPreferences(mediaList);
-        }
+    private LiveData<List<Audio>> getSortedListLiveData() {
+        return switch (sortBy) {
+            case "Date" -> isAscending ? audioDao.getListByDate() : audioDao.getListByDateDesc();
+            case "Size" -> isAscending ? audioDao.getListBySize() : audioDao.getListBySizeDesc();
+            case "Length" -> isAscending ? audioDao.getListByDuration() : audioDao.getListByDurationDesc();
+            default -> isAscending ? audioDao.getListByName() : audioDao.getListByNameDesc();
+        };
     }
 
     private void setDetailsVisibility() {
@@ -725,7 +727,7 @@ public class AudioFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Audio media = new Audio(audioUri, displayName, filePath, date, "", "", false);
+                Audio media = new Audio(audioUri, displayName, filePath, date,false);
                 mediaList.add(media);
             }
         }
@@ -763,19 +765,19 @@ public class AudioFragment extends Fragment {
     }
 
     private void getMediaDetails(Audio media) {
-        if (media.getDuration().isEmpty() || media.getSize().isEmpty()) {
+        if (media.getDuration() == null || media.getSize() == null) {
             new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
                 public void onMetadataReady(FFmpegMetadataRetriever retriever) {
                     try {
-                        String sizeInBytes = String.valueOf(retriever.getFileSize());
-                        String duration = String.valueOf(retriever.getDuration());
+                        Long sizeInBytes = retriever.getFileSize();
+                        Long duration = retriever.getDuration();
 
                         // Setting all Values
                         media.setSize(sizeInBytes);
                         media.setDuration(duration);
 
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)));
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(media.getSize()) + " MB, Duration: " + MillisToTime(duration));
 
                         executorService.execute(() -> audioDao.update(media));
                     }

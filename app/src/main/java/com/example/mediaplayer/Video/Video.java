@@ -23,10 +23,10 @@ public class Video {
     private String path;
     private String dateAdded;
 
-    private String duration;
-    private String resolution;
-    private String frameRate;
-    private String size;
+    private Long duration;
+    private Integer resolution;
+    private Double frameRate;
+    private Long size;
 
 //    private String lastPlayedTime;
 
@@ -39,15 +39,11 @@ public class Video {
     public boolean isSelected;
 
 
-    public Video(String uri, String name, String path, String dateAdded, String duration, String resolution, String frameRate, String size, boolean isVideo) {
+    public Video(String uri, String name, String path, String dateAdded,  boolean isVideo) {
         this.uri = uri;
         this.name = name;
         this.path = path;
         this.dateAdded = dateAdded;
-        this.duration = duration;
-        this.resolution = resolution;
-        this.frameRate = frameRate;
-        this.size = size;
         this.isVideo = true;
     }
 
@@ -84,36 +80,36 @@ public class Video {
         this.dateAdded = dateAdded;
     }
 
-    public String getDuration() {
-        return !duration.isEmpty() ? duration : "0";
+    public Long getDuration() {
+        return duration;
     }
 
-    public void setDuration(String duration) {
+    public void setDuration(Long duration) {
         this.duration = duration;
     }
 
-    public String getResolution() {
+    public Integer getResolution() {
         return resolution ;//!= null ? resolution : "0";
     }
 
-    public void setResolution(String resolution) {
+    public void setResolution(Integer resolution) {
         this.resolution = resolution;
     }
 
-    public String getFrameRate() {
+    public Double getFrameRate() {
         Log.d("frameRate", "getFrameRate: " + frameRate);
-        return !frameRate.isEmpty() ? String.format("%.2f", Double.parseDouble(frameRate)): "0";
+        return frameRate;
     }
 
-    public void setFrameRate(String fps) {
+    public void setFrameRate(Double fps) {
         this.frameRate = fps;
     }
 
-    public String getSize() {
-        return !size.isEmpty() ? size : "0";
+    public Long getSize() {
+        return size;
     }
     
-    public void setSize(String size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 

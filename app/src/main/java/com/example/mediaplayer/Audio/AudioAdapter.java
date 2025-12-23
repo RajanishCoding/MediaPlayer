@@ -160,10 +160,10 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
             holder.moreB.setImageDrawable(icon_more);
         }
 
-        if (!media.getDuration().isEmpty() || !media.getSize().isEmpty()) {
-            holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
-            holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
-            holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
+        if (media.getDuration() != null || media.getSize() != null) {
+            holder.duration1.setText(SecsToTime(media.getDuration()));
+            holder.duration2.setText(SecsToTime(media.getDuration()));
+            holder.size.setText(getFormattedFileSize(media.getSize()));
         }
 
         try {

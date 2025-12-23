@@ -27,6 +27,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.renderscript.Int2;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -274,21 +275,21 @@ public class VideoFragment extends Fragment {
         recyclerView.setItemAnimator(null);
 
 
-//        Load at Start
+//      Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
         isAscending = settingsPrefs.getBoolean("isAscending", true);
         isList = settingsPrefs.getBoolean("isList", true);
 
-//      Set at start
+//      Setting at start
         setListObserver();
 
-//        Loading at Start
+//      Loading at Start
         loadDetailsButtonVisibility();
 
-//        Notifying Adapter at Start
+//      Notifying Adapter at Start
         setDetailsVisibility();
 
-//        Setting BG at Start
+//      Setting BG at Start
         setBackground_LayoutButtons(isList);
         setBackground_SortButtons(sortBy);
         setBackground_AscDesc_Buttons(isAscending);
@@ -550,26 +551,14 @@ public class VideoFragment extends Fragment {
     }
 
     private LiveData<List<Video>> getSortedListLiveData() {
-        switch (sortBy) {
-            case "Date":
-                return isAscending ? videoDao.getListByDate() : videoDao.getListByDateDesc();
-
-            case "Size":
-                return isAscending ? videoDao.getListBySize() : videoDao.getListBySizeDesc();
-
-            case "Length":
-                return isAscending ? videoDao.getListByDuration() : videoDao.getListByDurationDesc();
-
-            case "Resol":
-                return isAscending ? videoDao.getListByResol() : videoDao.getListByResolDesc();
-
-            case "Fps":
-                return isAscending ? videoDao.getListByFrame() : videoDao.getListByFrameDesc();
-
-            case "Name":
-            default:
-                return isAscending ? videoDao.getListByName() : videoDao.getListByNameDesc();
-        }
+        return switch (sortBy) {
+            case "Date" -> isAscending ? videoDao.getListByDate() : videoDao.getListByDateDesc();
+            case "Size" -> isAscending ? videoDao.getListBySize() : videoDao.getListBySizeDesc();
+            case "Length" -> isAscending ? videoDao.getListByDuration() : videoDao.getListByDurationDesc();
+            case "Resol" -> isAscending ? videoDao.getListByResol() : videoDao.getListByResolDesc();
+            case "Fps" -> isAscending ? videoDao.getListByFrame() : videoDao.getListByFrameDesc();
+            default -> isAscending ? videoDao.getListByName() : videoDao.getListByNameDesc();
+        };
     }
 
 
@@ -780,7 +769,7 @@ public class VideoFragment extends Fragment {
 
 //                storedMediaList = loadMediaListFromPreferences();
 
-                Video media = new Video(videoUri, displayName, filePath, date, "", "", "", "", true);
+                Video media = new Video(videoUri, displayName, filePath, date,  true);
                 mediaList.add(media);
             }
         }
@@ -817,17 +806,17 @@ public class VideoFragment extends Fragment {
     }
 
     private void getMediaDetails(Video media) {
-        if (media.getDuration().isEmpty() || media.getResolution().isEmpty() || media.getSize().isEmpty()) {
+        if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
             new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
                 public void onMetadataReady(FFmpegMetadataRetriever retriever) {
                     try {
-                        String sizeInBytes = String.valueOf(retriever.getFileSize());
+                        Long sizeInBytes = retriever.getFileSize();
 
-                        String duration = String.valueOf(retriever.getDuration());
-                        String width = String.valueOf(retriever.getResolution());
-                        String height = String.valueOf(retriever.getResolution());
-                        String fps = String.valueOf(retriever.getFps());
+                        Long duration = retriever.getDuration();
+                        Integer width = retriever.getResolution();
+                        Integer height = retriever.getResolution();
+                        Double fps = retriever.getFps();
 
                         // Setting all Values
                         media.setSize(sizeInBytes);
@@ -835,7 +824,7 @@ public class VideoFragment extends Fragment {
                         media.setResolution(height);
                         media.setFrameRate(fps);
 
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(Long.parseLong(media.getSize())) + " MB, Duration: " + MillisToTime(Long.parseLong(duration)) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
+                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(media.getSize()) + " MB, Duration: " + MillisToTime(duration) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
 
                         executorService.execute(() -> videoDao.update(media));
                     }
@@ -893,7 +882,7 @@ public class VideoFragment extends Fragment {
     }
 
 
-    public static String getFormattedFileSize(long sizeInBytes) {
+    public static String getFormattedFileSize(Long sizeInBytes) {
         // All sizes in bytes
         final int KILOBYTE = 1024;
         final int MEGABYTE = KILOBYTE * 1024;
@@ -915,7 +904,7 @@ public class VideoFragment extends Fragment {
         }
     }
 
-    public String MillisToTime(long millis) {
+    public String MillisToTime(Long millis) {
         long hours = (millis / (1000 * 60 * 60)) % 24;
         long minutes = (millis / (1000 * 60)) % 60;
         long seconds = (millis / 1000) % 60;

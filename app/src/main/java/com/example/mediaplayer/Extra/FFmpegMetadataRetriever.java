@@ -11,12 +11,12 @@ import com.antonkarpenko.ffmpegkit.ReturnCode;
 
 public class FFmpegMetadataRetriever {
 
-    private long fileSize;
-    private double durationSec;
-    private int bitrate;
-    private int width;
-    private int height;
-    private double frameRate;
+    private Long fileSize;
+    private Double durationSec;
+    private Integer bitrate;
+    private Integer width;
+    private Integer height;
+    private Double frameRate;
 //    private boolean hasDolbyAtmos;
 //    private boolean hasDolbyVision;
 
@@ -84,23 +84,23 @@ public class FFmpegMetadataRetriever {
         });
     }
 
-    public long getFileSize() {
+    public Long getFileSize() {
         return fileSize;
     }
 
     public Long getDuration() {
-        return (long) durationSec;
+        return durationSec.longValue();
     }
 
-    public int getBitrate() {
+    public Integer getBitrate() {
         return bitrate;
     }
 
-    public int getResolution() {
+    public Integer getResolution() {
         return height;
     }
 
-    public double getFps() {
+    public Double getFps() {
         return frameRate;
     }
 

@@ -24,6 +24,7 @@ public abstract class RoomDB extends RoomDatabase {
                 if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(),
                                     RoomDB.class, "MediaDB")
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

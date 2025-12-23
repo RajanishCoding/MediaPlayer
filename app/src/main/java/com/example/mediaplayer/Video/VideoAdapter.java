@@ -174,9 +174,9 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
             holder.moreB.setImageDrawable(icon_more);
         }
 
-        if (!media.getDuration().isEmpty() || !media.getResolution().isEmpty() || !media.getSize().isEmpty()) {
-            holder.duration1.setText(SecsToTime(Long.parseLong(media.getDuration())));
-            holder.duration2.setText(SecsToTime(Long.parseLong(media.getDuration())));
+        if (media.getDuration() != null || media.getResolution() != null || media.getSize() != null) {
+            holder.duration1.setText(SecsToTime(media.getDuration()));
+            holder.duration2.setText(SecsToTime(media.getDuration()));
 
             if (resol || fps) {
                 holder.resolutionFrame.setText(
@@ -187,7 +187,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
                 holder.resolutionFrame.setVisibility(View.GONE);
             }
 
-            holder.size.setText(getFormattedFileSize(Long.parseLong(media.getSize())));
+            holder.size.setText(getFormattedFileSize(media.getSize()));
         }
 
         try {

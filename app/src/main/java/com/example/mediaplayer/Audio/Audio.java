@@ -24,8 +24,8 @@ public class Audio {
     private String path;
     private String dateAdded;
 
-    private String duration;
-    private String size;
+    private Long duration;
+    private Long size;
 
 //    private String lastPlayedTime;
 
@@ -38,13 +38,11 @@ public class Audio {
     public boolean isSelected;
 
 
-    public Audio(String uri, String name, String path, String dateAdded, String duration, String size, boolean isVideo) {
+    public Audio(String uri, String name, String path, String dateAdded, boolean isVideo) {
         this.uri = uri;
         this.name = name;
         this.path = path;
         this.dateAdded = dateAdded;
-        this.duration = duration;
-        this.size = size;
         this.isVideo = false;
     }
 
@@ -81,19 +79,19 @@ public class Audio {
         this.dateAdded = dateAdded;
     }
 
-    public String getDuration() {
+    public Long getDuration() {
         return duration;
     }
 
-    public void setDuration(String duration) {
+    public void setDuration(Long duration) {
         this.duration = duration;
     }
 
-    public String getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(String size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
