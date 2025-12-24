@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.mediaplayer"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.mediaplayer"
@@ -75,6 +75,8 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.inspector)
+
 
     implementation(libs.gson)
 
@@ -97,6 +99,7 @@ dependencies {
 
     implementation("com.otaliastudios:zoomlayout:1.9.0")
 
-    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+2")
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.8.0+1")
+
 
 }

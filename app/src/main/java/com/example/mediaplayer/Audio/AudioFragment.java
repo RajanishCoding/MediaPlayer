@@ -766,7 +766,7 @@ public class AudioFragment extends Fragment {
 
     private void getMediaDetails(Audio media) {
         if (media.getDuration() == null || media.getSize() == null) {
-            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
+            new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
                 public void onMetadataReady(FFmpegMetadataRetriever retriever) {
                     try {

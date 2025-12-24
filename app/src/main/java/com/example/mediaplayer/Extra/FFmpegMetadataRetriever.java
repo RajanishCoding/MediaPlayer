@@ -1,12 +1,31 @@
 package com.example.mediaplayer.Extra;
 
+import android.content.Context;
 import android.util.Log;
+
+import androidx.annotation.OptIn;
+import androidx.core.content.ContextCompat;
+import androidx.media3.common.Format;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.source.TrackGroupArray;
+import androidx.media3.inspector.MetadataRetriever;
+
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.antonkarpenko.ffmpegkit.FFprobeKit;
 import com.antonkarpenko.ffmpegkit.ReturnCode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 public class FFmpegMetadataRetriever {
@@ -24,7 +43,7 @@ public class FFmpegMetadataRetriever {
         void onMetadataReady(FFmpegMetadataRetriever metadata);
     }
 
-    public FFmpegMetadataRetriever(String filePath, MetadataCallback callback) {
+    public FFmpegMetadataRetriever(Context context, String filePath, MetadataCallback callback) {
         // FFprobe command to get metadata in JSON format
         String cmd = "-v quiet -print_format json -show_format -show_streams \"" + filePath + "\"";
 
@@ -84,6 +103,7 @@ public class FFmpegMetadataRetriever {
         });
     }
 
+
     public Long getFileSize() {
         return fileSize;
     }
@@ -122,6 +142,59 @@ public class FFmpegMetadataRetriever {
 
 //    return ArrayList<String>["dd"];
 }
+
+
+//@OptIn(markerClass = UnstableApi.class)
+//public FFmpegMetadataRetriever(Context context, String filePath, MetadataCallback callback) {
+//    // 1. Get File Size (Native Java)
+//    File file = new File(filePath);
+//    this.fileSize = file.length();
+//
+//    // 2. Setup Media3 Retriever
+//    MediaItem mediaItem = MediaItem.fromUri(filePath);
+//    MetadataRetriever retriever = new MetadataRetriever.Builder(context, mediaItem).build();
+//
+//    ListenableFuture<TrackGroupArray> trackGroupsFuture = retriever.retrieveTrackGroups();
+//    ListenableFuture<Long> durationUsFuture = retriever.retrieveDurationUs();
+//
+//    ListenableFuture<List<Object>> allFutures = Futures.allAsList(trackGroupsFuture, durationUsFuture);
+//
+//    Futures.addCallback(allFutures, new FutureCallback<List<Object>>() {
+//        @Override
+//        public void onSuccess(List<Object> result) {
+//            TrackGroupArray trackGroupArray = (TrackGroupArray) result.get(0);
+//
+//            long durationUs = (long) result.get(1);
+//            FFmpegMetadataRetriever.this.durationSec = durationUs / 1000000.0;
+//
+//            // Loop through track group array to find the video track
+//            for (int i = 0; i < trackGroupArray.length; i++) {
+//
+//                Format format = trackGroupArray.get(i).getFormat(0);
+//
+//                // We only want the Video stream for these specific details
+//                if (format.sampleMimeType != null && format.sampleMimeType.startsWith("video")) {
+//
+//                    // Extract Media3 Data
+//                    FFmpegMetadataRetriever.this.bitrate = format.bitrate == Format.NO_VALUE ? 0 : format.bitrate;
+//                    FFmpegMetadataRetriever.this.width = format.width == Format.NO_VALUE ? 0 : format.width;
+//                    FFmpegMetadataRetriever.this.height = format.height == Format.NO_VALUE ? 0 : format.height;
+//                    FFmpegMetadataRetriever.this.frameRate = format.frameRate == Format.NO_VALUE ? 0.0 : (double) format.frameRate;
+//
+//                    break; // Stop after finding the primary video track
+//                }
+//            }
+//
+//            callback.onMetadataReady(FFmpegMetadataRetriever.this);
+//        }
+//
+//        @Override
+//        public void onFailure(Throwable t) {
+//
+//        }
+//    }, ContextCompat.getMainExecutor(context));
+//
+//}
 
 
 //public class FFmpegMetadataRetriever {

@@ -807,7 +807,7 @@ public class VideoFragment extends Fragment {
 
     private void getMediaDetails(Video media) {
         if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
-            new FFmpegMetadataRetriever(media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
+            new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
                 public void onMetadataReady(FFmpegMetadataRetriever retriever) {
                     try {

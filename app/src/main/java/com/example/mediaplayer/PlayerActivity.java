@@ -56,6 +56,7 @@ import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
+import androidx.media3.common.text.Cue;
 import androidx.media3.common.text.CueGroup;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -290,6 +291,10 @@ public class PlayerActivity extends AppCompatActivity {
 
     private LinearLayout popupExpandB;
 
+    private Button openSubSettingB;
+    private ImageButton subSettingBackB;
+    private View subtitleSettingContainer;
+
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
@@ -479,6 +484,10 @@ public class PlayerActivity extends AppCompatActivity {
         expandB = findViewById(R.id.expandB);
         expandView = findViewById(R.id.expandView);
         expandScrollView = findViewById(R.id.expandScroll);
+
+        openSubSettingB = findViewById(R.id.openSubtitleSettingsB);
+        subSettingBackB = findViewById(R.id.subSetting_BackButton);
+        subtitleSettingContainer = findViewById(R.id.subtitleSettingsContainer);
 
         // Colors for Expand Layout Views
         expandButtonsTint1 = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidebarDark));
@@ -686,6 +695,11 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isSubTracksShowing) {
                         hideSubTracks();
                         isSubTracksShowing = false;
+                    }
+
+                    if (isSubSettingShowing) {
+                        hideSubSettingContainer(false);
+                        isSubSettingShowing = false;
                     }
 
                     if (isExpandViewsShowing) {
@@ -1459,6 +1473,10 @@ public class PlayerActivity extends AppCompatActivity {
         subTrackButton.setOnClickListener(v -> showSubTracks());
 
         subTracks_BackButton.setOnClickListener(v -> hideSubTracks());
+
+        openSubSettingB.setOnClickListener(v -> showSubSettingContainer());
+
+        subSettingBackB.setOnClickListener(v -> hideSubSettingContainer(true));
     }
 
 
@@ -1927,6 +1945,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean isAudioTracksShowing;
     private boolean isSubTracksShowing;
+    private boolean isSubSettingShowing;
 
     private void showAudioTracks() {
         hideControls();
@@ -1953,6 +1972,37 @@ public class PlayerActivity extends AppCompatActivity {
                 () -> {
                     isSubTracksShowing = false;
                     subTracksContainer.setVisibility(View.INVISIBLE);
+                });
+    }
+
+    private void showSubSettingContainer() {
+        animationLibs.fadeOut(subTracksContainer, 250, null,
+                () -> {
+                    isSubTracksShowing = false;
+                    subTracksContainer.setVisibility(View.INVISIBLE);
+                });
+
+        animationLibs.fadeIn(subtitleSettingContainer, 250, () -> isSubSettingShowing = true, null);
+    }
+
+    private void hideSubSettingContainer(boolean isBackPressed) {
+        if (isBackPressed) {
+            animationLibs.fadeOut(subtitleSettingContainer, 250, null,
+                    () -> {
+                        isSubSettingShowing = false;
+                        subtitleSettingContainer.setVisibility(View.INVISIBLE);
+            });
+
+            animationLibs.fadeIn(subTracksContainer, 250, () -> isSubTracksShowing = true, null);
+
+            return;
+        }
+
+        animationLibs.slideOutRight(subtitleSettingContainer, 250, null,
+                () -> {
+                    isSubSettingShowing = false;
+                    subtitleSettingContainer.setVisibility(View.INVISIBLE);
+                    subtitleSettingContainer.setTranslationX(0f);
                 });
     }
 
