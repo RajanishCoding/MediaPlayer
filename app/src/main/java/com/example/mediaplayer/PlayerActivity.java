@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -24,10 +25,11 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -56,7 +58,6 @@ import androidx.media3.common.Player;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
-import androidx.media3.common.text.Cue;
 import androidx.media3.common.text.CueGroup;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -70,7 +71,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
-import com.example.mediaplayer.Audio.AudioAdapter;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.PlaylistManager;
@@ -78,7 +78,11 @@ import com.example.mediaplayer.Tracks.AudioTracks;
 import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
 import com.example.mediaplayer.Tracks.SubTracksAdapter;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -291,10 +295,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     private LinearLayout popupExpandB;
 
-    private Button openSubSettingB;
-    private ImageButton subSettingBackB;
-    private View subtitleSettingContainer;
-
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
 
@@ -322,6 +322,35 @@ public class PlayerActivity extends AppCompatActivity {
     private DefaultTrackSelector subTrackSelector;
     private SubTracksAdapter subTracksAdapter;
     private List<SubTracks> subTracksList;
+
+    private Button openSubSettingB;
+    private ImageButton subSettingBackB;
+    private View subtitleSettingContainer;
+    private TabLayout subColorTabs;
+    private View subOutlineLayout;
+
+    private SwitchMaterial subEnableSwitch;
+    private Slider subFontSizeSlider;
+    private TextView subSizeText;
+    private ImageButton subSizeAddB;
+    private ImageButton subSizeMinusB;
+    private MaterialAutoCompleteTextView subFontDropdown;
+    private MaterialButton subBoldB;
+    private MaterialButton subItalicB;
+
+    private float subFontSize;
+    private int subTextColor;
+    private int subFgColor = Color.WHITE;
+    private int subBgColor;
+    private int subEdgeColor = Color.BLACK;
+    private int subFont;
+    private boolean subIsBold;
+    private boolean subIsItalic;
+
+    private Typeface subFontTypeface;
+    private Typeface subFinalTypeface;
+
+    private String[] fontFamilyList = {"Default", "Monospace", "Sans-Serif", "Serif"};
 
     private List<MediaItem> videoList;
     private PlaylistManager manager;
@@ -464,6 +493,25 @@ public class PlayerActivity extends AppCompatActivity {
         subTracksRecyclerView = findViewById(R.id.recyclerSubTracksList);
         subTracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        openSubSettingB = findViewById(R.id.openSubtitleSettingsB);
+        subSettingBackB = findViewById(R.id.subSetting_BackButton);
+        subtitleSettingContainer = findViewById(R.id.subtitleSettingsContainer);
+        subColorTabs = findViewById(R.id.subColorTabs);
+        subOutlineLayout = findViewById(R.id.subOutlineLayout);
+
+        subEnableSwitch = findViewById(R.id.subEnableSwitch);
+        subFontSizeSlider = findViewById(R.id.subTextSizeSeek);
+        subSizeText = findViewById(R.id.subSizeText);
+        subSizeAddB = findViewById(R.id.subSizeAddB);
+        subSizeMinusB = findViewById(R.id.subSizeMinusB);
+        subSizeMinusB = findViewById(R.id.subSizeMinusB);
+        subBoldB = findViewById(R.id.subBoldB);
+        subItalicB = findViewById(R.id.subItalicB);
+
+        subFontDropdown = findViewById(R.id.subFontDropdown);
+        ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, fontFamilyList);
+        subFontDropdown.setAdapter(fontDropdownAdapter);
+
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
         speedToastLayout = findViewById(R.id.speedToast_layout);
@@ -485,9 +533,6 @@ public class PlayerActivity extends AppCompatActivity {
         expandView = findViewById(R.id.expandView);
         expandScrollView = findViewById(R.id.expandScroll);
 
-        openSubSettingB = findViewById(R.id.openSubtitleSettingsB);
-        subSettingBackB = findViewById(R.id.subSetting_BackButton);
-        subtitleSettingContainer = findViewById(R.id.subtitleSettingsContainer);
 
         // Colors for Expand Layout Views
         expandButtonsTint1 = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidebarDark));
@@ -653,6 +698,8 @@ public class PlayerActivity extends AppCompatActivity {
         playerControls_Listeners();
 
         tracksContainers_Listeners();
+
+        subtitleSettings_Listeners();
 
 
         // Expand Views Buttons - Listener ----->
@@ -1186,7 +1233,7 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setPlayer(player);
         playerView.setKeepScreenOn(true);
         playerView.getSubtitleView().setVisibility(View.GONE);
-        setSubtitleViewStyles();
+        applySubtitleStyle();
 
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
         layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
@@ -1479,6 +1526,132 @@ public class PlayerActivity extends AppCompatActivity {
         subSettingBackB.setOnClickListener(v -> hideSubSettingContainer(true));
     }
 
+    private void subtitleSettings_Listeners() {
+        subColorTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int tabPos = tab.getPosition();
+
+                if (tabPos == 0 ) {
+                    subEnableSwitch.setVisibility(View.GONE);
+                }
+
+                else if (tabPos == 1) {
+                    subEnableSwitch.setVisibility(View.VISIBLE);
+                    subEnableSwitch.setText("Enable Background");
+                }
+
+                else {
+                    subEnableSwitch.setVisibility(View.VISIBLE);
+                    subEnableSwitch.setText("Enable Outline");
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
+        subFontSizeSlider.addOnChangeListener((slider, value, fromUser) -> {
+            subSizeText.setText(String.valueOf(value));
+
+            subFontSize = value;
+            float fontSize = subFontSize / 400f;
+            subtitleView.setFractionalTextSize(fontSize);
+            Log.d(TAG, "setSubtitleStyles - Size: " + fontSize);
+        });
+
+        subSizeAddB.setOnClickListener(v -> {
+            if (subFontSize == 40) return;
+
+            subFontSize++;
+            subSizeText.setText(String.valueOf(subFontSize));
+            subFontSizeSlider.setValue(subFontSize);
+
+            float fontSize = subFontSize / 400f;
+            subtitleView.setFractionalTextSize(fontSize);
+            Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
+        });
+
+        subSizeMinusB.setOnClickListener(v -> {
+            if (subFontSize == 4) return;
+
+            subFontSize--;
+            subSizeText.setText(String.valueOf(subFontSize));
+            subFontSizeSlider.setValue(subFontSize);
+
+            float fontSize = subFontSize / 400f;
+            subtitleView.setFractionalTextSize(fontSize);
+            Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
+        });
+        
+        subFontDropdown.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.d(TAG, "setSubtitleStyles - Item: " + i);
+
+                switch (i) {
+                    case 0:
+                        subFontTypeface = Typeface.DEFAULT;
+                        break;
+                    case 1:
+                        subFontTypeface = Typeface.MONOSPACE;
+                        break;
+                    case 2:
+                        subFontTypeface = Typeface.SANS_SERIF;
+                        break;
+                    case 3:
+                        subFontTypeface = Typeface.SERIF;
+                        break;
+                }
+
+                buildTypeface();
+            }
+        });
+
+        subBoldB.addOnCheckedChangeListener(new MaterialButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(MaterialButton button, boolean isChecked) {
+                if (isChecked) {
+                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
+                }
+                else {
+//                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
+                    button.setIcon(null);
+                }
+                subIsBold = !subIsBold;
+                buildTypeface();
+            }
+        });
+
+        subItalicB.addOnCheckedChangeListener(new MaterialButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(MaterialButton button, boolean isChecked) {
+                if (isChecked) {
+                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
+                }
+                else {
+//                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
+                    button.setIcon(null);
+                }
+                subIsItalic = !subIsItalic;
+                buildTypeface();
+            }
+        });
+
+    }
+
+    private void buildTypeface() {
+        int typefaceStyle =
+                subIsBold && subIsItalic ? Typeface.BOLD_ITALIC :
+                        subIsBold ? Typeface.BOLD :
+                                subIsItalic ? Typeface.ITALIC : Typeface.NORMAL;
+
+        subFinalTypeface = Typeface.create(subFontTypeface, typefaceStyle);
+        applySubtitleStyle();
+    }
 
     private void expandViewsListeners() {
         speedExpand_Listeners();
@@ -1622,24 +1795,37 @@ public class PlayerActivity extends AppCompatActivity {
         img.setBackground(drw);
     }
 
+    private void setSubtitleStyles() {
+        applySubtitleStyle();
 
-    private void setSubtitleViewStyles() {
-        subtitleView.setApplyEmbeddedStyles(true);           // Ignore subtitle file's styles
-        subtitleView.setApplyEmbeddedFontSizes(false);       // Ignore font sizes in subtitle file
+//        subtitleView.setForegroundGravity(subPosition);
+    }
 
-        subtitleView.setStyle(
-                new CaptionStyleCompat(
-                        Color.WHITE,                                // foreground (text color)
-                        Color.TRANSPARENT,                          // background
-                        Color.TRANSPARENT,                          // window background
-                        CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,   // edge type
-                        Color.BLACK,                                // edge color
-                        null                                        // typeface
-                )
-        );
+    private void applySubtitleStyle() {
+        subtitleView.setApplyEmbeddedStyles(false);    // Ignores subtitle's styles
+        subtitleView.setApplyEmbeddedFontSizes(false); // Ignores font sizes in subtitle
 
-        // Adjust text size (0.05 = 5% of screen height)
-        subtitleView.setFractionalTextSize(0.055f);  // 5.5% of screen height
+        boolean subShadowEnabled = true;
+        boolean subOutlineEnabled = false;
+        int edgeType;
+        if (subShadowEnabled) {
+            edgeType = CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW;
+        }
+        else if (subOutlineEnabled) {
+            edgeType = CaptionStyleCompat.EDGE_TYPE_OUTLINE;
+        }
+        else {
+            edgeType = CaptionStyleCompat.EDGE_TYPE_NONE;
+        }
+
+        subtitleView.setStyle(new CaptionStyleCompat(
+                subFgColor,
+                subBgColor,
+                Color.TRANSPARENT,  // Window Color
+                edgeType,
+                subEdgeColor,
+                subFinalTypeface
+        ));
     }
 
     @OptIn(markerClass = UnstableApi.class)

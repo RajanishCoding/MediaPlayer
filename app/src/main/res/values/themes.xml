@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.MediaPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Base.Theme.MediaPlayer" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!--        <item name="colorPrimary">@color/my_light_primary</item>-->
         <!--        <item name="colorPrimaryVariant">@color/my_light_primary_variant</item>-->
@@ -114,6 +114,21 @@
         <item name="labelBehavior">gone</item>
         <item name="tickColorActive">@android:color/transparent</item>
         <item name="tickColorInactive">@android:color/transparent</item>
+
+        <item name="thumbWidth">10dp</item>
+        <item name="thumbHeight">18dp</item>
+        <item name="haloRadius">20dp</item>
+    </style>
+
+    <style name="SubSliderStyle" parent="Widget.MaterialComponents.Slider">
+        <item name="labelBehavior">gone</item>
+        <item name="tickColorActive">@android:color/transparent</item>
+        <item name="tickColorInactive">@android:color/transparent</item>
+
+        <item name="trackColorActive">@color/white</item>
+        <item name="trackColorInactive">#55FFFFFF</item>
+        <item name="thumbColor">@color/white</item>
+        <item name="haloColor">#33FFFFFF</item>
 
         <item name="thumbWidth">10dp</item>
         <item name="thumbHeight">18dp</item>

@@ -30,7 +30,8 @@
                 android:visibility="visible"
                 app:show_timeout="0"
                 app:use_controller="false"
-                app:resize_mode="fit"/>
+                app:resize_mode="fit">
+            </androidx.media3.ui.PlayerView>
         </FrameLayout>
 
         <androidx.media3.ui.SubtitleView
@@ -612,7 +613,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- SUBTITLE SETTINGS SIDEBAR -->
+    <!-- Subtitle Settings Sidebar -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/subtitleSettingsContainer"
         android:layout_width="320dp"
@@ -667,7 +668,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Typography"
+                android:text="Font Styles"
                 android:textColor="#AAAAAA"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -679,39 +680,89 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center_vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Font"
-                    android:textColor="@color/white" />
+<!--                <Spinner-->
+<!--                    android:id="@+id/subFontDropdown"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:text="Font"-->
+<!--                    android:textColor="@color/white" />-->
 
-                <Spinner
-                    android:id="@+id/sub_font_spinner"
-                    android:layout_width="0dp"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:backgroundTint="@color/white"
-                    android:spinnerMode="dropdown" />
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:theme="@style/ThemeOverlay.Material3.Dark"
+                    app:endIconTint="@color/white"
+                    android:hint="Font"
+                    app:hintTextColor="#1AFFFFFF"
+                    app:boxStrokeWidth=".5dp"
+                    >
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/subFontDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Default"
+                        android:textColor="@color/white"
+                        android:inputType="none"
+                        android:focusable="false"
+                        />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <!-- SIZE -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Size"
-                android:textColor="@color/white"
-                android:textSize="12sp" />
 
-            <SeekBar
-                android:id="@+id/sub_seek_size"
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50"
-                android:progressTint="@color/white"
-                android:thumbTint="@color/white" />
+                android:layout_marginTop="20dp"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="Size"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+                <ImageButton
+                    android:id="@+id/subSizeMinusB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_remove"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/subSizeText"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="15"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/subSizeAddB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_add"
+                    app:tint="@color/white" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/subTextSizeSeek"
+                style="@style/SubSliderStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="4"
+                android:valueTo="40"
+                android:value="22"
+                android:stepSize="1" />
 
             <!-- BOLD / ITALIC -->
             <LinearLayout
@@ -721,27 +772,30 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_sub_bold"
+                    android:id="@+id/subBoldB"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:checkable="true"
                     android:text="Bold"
                     android:textColor="@color/white"
-                    app:backgroundTint="#333333" />
+                    android:checkable="true"
+                    app:iconTint="@color/white"
+                    app:backgroundTint="#333333"
+                    />
 
                 <Space
                     android:layout_width="10dp"
                     android:layout_height="wrap_content" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_sub_italic"
+                    android:id="@+id/subItalicB"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checkable="true"
                     android:text="Italic"
                     android:textColor="@color/white"
+                    app:iconTint="@color/white"
                     app:backgroundTint="#333333" />
             </LinearLayout>
 
@@ -752,14 +806,6 @@
                 android:layout_marginVertical="16dp"
                 android:background="#33FFFFFF" />
 
-            <!-- ================= COLORS ================= -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Colors"
-                android:textColor="#AAAAAA"
-                android:textSize="12sp"
-                android:textStyle="bold" />
 
             <!-- ================= COLORS ================= -->
             <TextView
@@ -772,7 +818,7 @@
 
             <!-- TABS: Select what to edit (Text / Background / Stroke) -->
             <com.google.android.material.tabs.TabLayout
-                android:id="@+id/sub_color_tabs"
+                android:id="@+id/subColorTabs"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="10dp"
@@ -797,130 +843,77 @@
                     android:text="Outline" />
             </com.google.android.material.tabs.TabLayout>
 
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/subEnableSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:text="Enable Background"
+                android:textColor="@color/white"
+                android:visibility="visible"/>
+
             <!-- COLOR PALETTE (Applies to whichever Tab is selected above) -->
-            <TextView
-                android:id="@+id/lbl_palette_hint"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Select Color"
-                android:textSize="12sp"
-                android:textColor="#DDDDDD" />
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingVertical="10dp"
+                android:layout_gravity="center_vertical">
 
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:scrollbars="none"
-                android:visibility="visible">
-
-                <LinearLayout
-                    android:id="@+id/sub_color_palette_container"
+                <TextView
+                    android:id="@+id/lbl_palette_hint"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="30dp"
+                    android:gravity="center_vertical"
+                    android:text="Select Color"
+                    android:textSize="13sp"
+                    android:textColor="@color/white"/>
 
-                    <!-- Custom Picker Button -->
-                    <ImageView
-                        android:id="@+id/btn_pick_custom_color"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/ripple_player_dark"
-                        android:padding="5dp"
-                        android:src="@drawable/baseline_arrow_back_24"
-                        app:tint="@color/white" />
-<!--                    android:src="@drawable/baseline_color_lens_24"-->
+                <!-- Custom Picker Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/subPickColorB"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:src="@color/white"
+                    app:cardCornerRadius="10dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/blue"/>
 
-                    <!-- Presets -->
-                    <View
-                        android:id="@+id/color_white"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="@color/white" />
+            </LinearLayout>
 
-                    <View
-                        android:id="@+id/color_yellow"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="#FFFF00" />
 
-                    <View
-                        android:id="@+id/color_green"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="#00FF00" />
-
-                    <View
-                        android:id="@+id/color_cyan"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="#00FFFF" />
-
-                    <View
-                        android:id="@+id/color_black"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="#000000" />
-
-                    <!-- Transparent / None -->
-                    <FrameLayout
-                        android:id="@+id/color_none"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/selector_player_buttons"
-                        android:backgroundTint="#444444">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/baseline_close_24"
-                            app:tint="#AAFFFFFF"/>
-                    </FrameLayout>
-
-                </LinearLayout>
-            </HorizontalScrollView>
 
             <!-- STROKE WIDTH (Hidden by default, shown when 'Outline' tab is clicked) -->
             <LinearLayout
-                android:id="@+id/layout_stroke_width"
+                android:id="@+id/subOutlineLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
                 android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
                     android:text="Outline Thickness"
                     android:textColor="@color/white"
                     android:textSize="12sp" />
 
-                <SeekBar
-                    android:id="@+id/sub_seek_stroke_width"
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/subOutlineSizeSeek"
+                    style="@style/SubSliderStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:max="20"
-                    android:progress="0"
-                    android:progressTint="@color/white"
-                    android:thumbTint="@color/white" />
+                    android:valueFrom="1"
+                    android:valueTo="30"
+                    android:value="15"
+                    android:stepSize="1" />
             </LinearLayout>
 
-            <!-- OPACITY (Applies to currently selected tab color) -->
+            <!-- OPACITY (Applies to currently selected tab) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -929,14 +922,15 @@
                 android:textColor="@color/white"
                 android:textSize="12sp" />
 
-            <SeekBar
-                android:id="@+id/sub_seek_opacity"
+            <com.google.android.material.slider.Slider
+                android:id="@+id/subOpacitySeek"
+                style="@style/SubSliderStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="255"
-                android:progress="255"
-                android:progressTint="@color/white"
-                android:thumbTint="@color/white" />
+                android:valueFrom="1"
+                android:valueTo="255"
+                android:value="255"
+                android:stepSize="1" />
 
             <View
                 android:layout_width="match_parent"
@@ -1061,21 +1055,16 @@
                 android:textColor="@color/white"
                 android:textSize="12sp" />
 
-            <SeekBar
-                android:id="@+id/sub_seek_spacing"
+            <com.google.android.material.slider.Slider
+                android:id="@+id/subLineSpacingSeek"
+                style="@style/SubSliderStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="50"
-                android:progress="10"
-                android:progressTint="@color/white"
-                android:thumbTint="@color/white" />
+                android:valueFrom="1"
+                android:valueTo="50"
+                android:value="10"
+                android:stepSize="1" />
 
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="16dp"
-                android:background="#33FFFFFF" />
 
             <!-- ================= TIMING & EFFECTS ================= -->
             <TextView
@@ -1101,56 +1090,48 @@
                     android:textColor="@color/white" />
 
                 <ImageButton
-                    android:id="@+id/btn_delay_minus"
+                    android:id="@+id/subDelayMinusB"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/ripple_player_dark"
-                    android:src="@drawable/baseline_arrow_back_24"
+                    android:src="@drawable/round_remove"
                     app:tint="@color/white" />
 <!--                android:src="@drawable/baseline_remove_24"-->
 
                 <TextView
-                    android:id="@+id/txt_delay_val"
+                    android:id="@+id/subDelayText"
                     android:layout_width="60dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="0 ms"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
 
                 <ImageButton
-                    android:id="@+id/btn_delay_plus"
+                    android:id="@+id/subDelayAddB"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/ripple_player_dark"
-                    android:src="@drawable/baseline_add_24"
+                    android:src="@drawable/round_add"
                     app:tint="@color/white" />
             </LinearLayout>
 
             <!-- SHADOW -->
-            <LinearLayout
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/subShadowSwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Drop Shadow"
-                    android:textColor="@color/white" />
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switch_sub_shadow"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+                app:showText="false"
+                android:textOn=""
+                android:textOff=""
+                android:text="Drop Shadow"
+                android:textColor="@color/white" />
 
 
             <!-- FOOTER RESET -->
             <Button
-                android:id="@+id/btn_sub_reset"
+                android:id="@+id/subResetB"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
