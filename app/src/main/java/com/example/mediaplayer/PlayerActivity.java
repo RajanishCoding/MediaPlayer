@@ -338,7 +338,7 @@ public class PlayerActivity extends AppCompatActivity {
     private MaterialButton subBoldB;
     private MaterialButton subItalicB;
 
-    private float subFontSize;
+    private int subFontSize;
     private int subTextColor;
     private int subFgColor = Color.WHITE;
     private int subBgColor;
@@ -351,6 +351,9 @@ public class PlayerActivity extends AppCompatActivity {
     private Typeface subFinalTypeface;
 
     private String[] fontFamilyList = {"Default", "Monospace", "Sans-Serif", "Serif"};
+
+    private SharedPreferences subtitlePrefs;
+    private SharedPreferences.Editor subtitlePrefsEditor;
 
     private List<MediaItem> videoList;
     private PlaylistManager manager;
@@ -366,7 +369,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     private Player.Listener listener;
     private Player.Listener listener_size;
-
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -586,9 +588,12 @@ public class PlayerActivity extends AppCompatActivity {
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
         Animation fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out);
 
-
         playerPrefs = getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
+
+        subtitlePrefs = getSharedPreferences("SubtitleSetting", Context.MODE_PRIVATE);
+        subtitlePrefsEditor = subtitlePrefs.edit();
+
 
         isTime1ButtonClicked = playerPrefs.getBoolean("isTime1Clicked", false);
         isTime2ButtonClicked = playerPrefs.getBoolean("isTime2Clicked", false);
@@ -700,10 +705,11 @@ public class PlayerActivity extends AppCompatActivity {
         tracksContainers_Listeners();
 
         subtitleSettings_Listeners();
-
+        setSubtitleValuesViews();
 
         // Expand Views Buttons - Listener ----->
         expandViewsListeners();
+
 
         zoomW.post(() -> {
             originalWidth = playerView.getWidth();
@@ -1555,59 +1561,57 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         subFontSizeSlider.addOnChangeListener((slider, value, fromUser) -> {
-            subSizeText.setText(String.valueOf(value));
+            subFontSize = (int) value;
+            subSizeText.setText(String.valueOf(subFontSize));
 
-            subFontSize = value;
             float fontSize = subFontSize / 400f;
             subtitleView.setFractionalTextSize(fontSize);
             Log.d(TAG, "setSubtitleStyles - Size: " + fontSize);
+
+            subtitlePrefsEditor.putInt("size", subFontSize);
+            subtitlePrefsEditor.apply();
         });
 
         subSizeAddB.setOnClickListener(v -> {
             if (subFontSize == 40) return;
 
             subFontSize++;
-            subSizeText.setText(String.valueOf(subFontSize));
+//            subSizeText.setText(String.valueOf(subFontSize));
             subFontSizeSlider.setValue(subFontSize);
 
             float fontSize = subFontSize / 400f;
             subtitleView.setFractionalTextSize(fontSize);
             Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
+
+            subtitlePrefsEditor.putInt("size", subFontSize);
+            subtitlePrefsEditor.apply();
         });
 
         subSizeMinusB.setOnClickListener(v -> {
             if (subFontSize == 4) return;
 
             subFontSize--;
-            subSizeText.setText(String.valueOf(subFontSize));
+//            subSizeText.setText(String.valueOf(subFontSize));
             subFontSizeSlider.setValue(subFontSize);
 
             float fontSize = subFontSize / 400f;
             subtitleView.setFractionalTextSize(fontSize);
             Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
+
+            subtitlePrefsEditor.putInt("size", subFontSize);
+            subtitlePrefsEditor.apply();
         });
         
         subFontDropdown.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Log.d(TAG, "setSubtitleStyles - Item: " + i);
-
-                switch (i) {
-                    case 0:
-                        subFontTypeface = Typeface.DEFAULT;
-                        break;
-                    case 1:
-                        subFontTypeface = Typeface.MONOSPACE;
-                        break;
-                    case 2:
-                        subFontTypeface = Typeface.SANS_SERIF;
-                        break;
-                    case 3:
-                        subFontTypeface = Typeface.SERIF;
-                        break;
-                }
-
+                subFont = i;
+                setSubFontTypeface();
                 buildTypeface();
+
+                subtitlePrefsEditor.putInt("font", subFont);
+                subtitlePrefsEditor.apply();
             }
         });
 
@@ -1621,8 +1625,14 @@ public class PlayerActivity extends AppCompatActivity {
 //                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
                     button.setIcon(null);
                 }
-                subIsBold = !subIsBold;
+
+                Log.d(TAG, "onCheckedChanged: " + isChecked);
+
+                subIsBold = isChecked;
                 buildTypeface();
+
+                subtitlePrefsEditor.putBoolean("isBold", subIsBold);
+                subtitlePrefsEditor.apply();
             }
         });
 
@@ -1636,22 +1646,17 @@ public class PlayerActivity extends AppCompatActivity {
 //                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
                     button.setIcon(null);
                 }
-                subIsItalic = !subIsItalic;
+
+                subIsItalic = isChecked;
                 buildTypeface();
+
+                subtitlePrefsEditor.putBoolean("isItalic", subIsItalic);
+                subtitlePrefsEditor.apply();
             }
         });
 
     }
 
-    private void buildTypeface() {
-        int typefaceStyle =
-                subIsBold && subIsItalic ? Typeface.BOLD_ITALIC :
-                        subIsBold ? Typeface.BOLD :
-                                subIsItalic ? Typeface.ITALIC : Typeface.NORMAL;
-
-        subFinalTypeface = Typeface.create(subFontTypeface, typefaceStyle);
-        applySubtitleStyle();
-    }
 
     private void expandViewsListeners() {
         speedExpand_Listeners();
@@ -1790,15 +1795,26 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
+
     private void setExpandViewColors(ImageButton img, ColorStateList clr, Drawable drw) {
         img.setImageTintList(clr);
         img.setBackground(drw);
     }
 
-    private void setSubtitleStyles() {
-        applySubtitleStyle();
+    private void setSubtitleValuesViews() {
+        subFontSize = subtitlePrefs.getInt("size", 22);
+        subFontSizeSlider.setValue(subFontSize);
 
-//        subtitleView.setForegroundGravity(subPosition);
+        subFont = subtitlePrefs.getInt("font", 0);
+        subFontDropdown.setText(fontFamilyList[subFont], false);
+        setSubFontTypeface();
+        buildTypeface();
+
+        subIsBold = subtitlePrefs.getBoolean("isBold", false);
+        subBoldB.setChecked(subIsBold);
+        subIsItalic = subtitlePrefs.getBoolean("isItalic", false);
+        subItalicB.setChecked(subIsItalic);
+
     }
 
     private void applySubtitleStyle() {
@@ -1826,6 +1842,33 @@ public class PlayerActivity extends AppCompatActivity {
                 subEdgeColor,
                 subFinalTypeface
         ));
+    }
+
+    private void buildTypeface() {
+        int typefaceStyle =
+                subIsBold && subIsItalic ? Typeface.BOLD_ITALIC :
+                        subIsBold ? Typeface.BOLD :
+                                subIsItalic ? Typeface.ITALIC : Typeface.NORMAL;
+
+        subFinalTypeface = Typeface.create(subFontTypeface, typefaceStyle);
+        applySubtitleStyle();
+    }
+
+    private void setSubFontTypeface() {
+        switch (subFont) {
+            case 0:
+                subFontTypeface = Typeface.DEFAULT;
+                break;
+            case 1:
+                subFontTypeface = Typeface.MONOSPACE;
+                break;
+            case 2:
+                subFontTypeface = Typeface.SANS_SERIF;
+                break;
+            case 3:
+                subFontTypeface = Typeface.SERIF;
+                break;
+        }
     }
 
     @OptIn(markerClass = UnstableApi.class)
@@ -2193,7 +2236,6 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-
     private void seekbarUpdater() {
         updateSeekBar = new Runnable() {
             @Override
@@ -2230,6 +2272,16 @@ public class PlayerActivity extends AppCompatActivity {
         handler.postDelayed(lockScreenRunnable, 3000);
     }
 
+
+    private void setSubButtonChecked(MaterialButton btn, boolean isChecked) {
+        if (isChecked) {
+            btn.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
+        }
+        else {
+//                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
+            btn.setIcon(null);
+        }
+    }
 
 
     private void onLandscape(){
