@@ -30,7 +30,9 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -46,6 +48,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -79,10 +82,15 @@ import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
 import com.example.mediaplayer.Tracks.SubTracksAdapter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.skydoves.colorpickerview.ActionMode;
+import com.skydoves.colorpickerview.ColorPickerView;
+import com.skydoves.colorpickerview.listeners.ColorListener;
+import com.skydoves.colorpickerview.sliders.AlphaSlideBar;
+import com.skydoves.colorpickerview.sliders.BrightnessSlideBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -327,25 +335,40 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton subSettingBackB;
     private View subtitleSettingContainer;
     private TabLayout subColorTabs;
+    private MaterialCardView subColorPickerB;
+    private ImageButton subColorPickerBackB;
+    private View subColorPickerContainer;
     private View subOutlineLayout;
 
-    private SwitchMaterial subEnableSwitch;
     private Slider subFontSizeSlider;
     private TextView subSizeText;
     private ImageButton subSizeAddB;
     private ImageButton subSizeMinusB;
-    private MaterialAutoCompleteTextView subFontDropdown;
+    private AutoCompleteTextView subFontDropdown;
     private MaterialButton subBoldB;
     private MaterialButton subItalicB;
+    private SwitchMaterial subEnableSwitch;
+    private ColorPickerView subColorPicker;
+    private BrightnessSlideBar subColorBrightSlider;
+    private AlphaSlideBar subColorAlphaSlider;
+//    private Slider subOpacitySlider;/
 
-    private int subFontSize;
-    private int subTextColor;
-    private int subFgColor = Color.WHITE;
-    private int subBgColor;
-    private int subEdgeColor = Color.BLACK;
     private int subFont;
+    private int subFontSize;
     private boolean subIsBold;
     private boolean subIsItalic;
+    private int subTextColor = Color.WHITE;
+    private int textColor;
+    private int textOpacity = 255;
+    private boolean isBgEnable;
+    private int subBgColor;
+    private int bgColor;
+    private int bgOpacity;
+    private boolean isOutlineEnable;
+    private boolean isShadowEnable;
+    private int subEdgeColor = Color.BLACK;
+    private int edgeColor = Color.BLACK;
+    private int edgeOpacity = 255;
 
     private Typeface subFontTypeface;
     private Typeface subFinalTypeface;
@@ -498,6 +521,9 @@ public class PlayerActivity extends AppCompatActivity {
         openSubSettingB = findViewById(R.id.openSubtitleSettingsB);
         subSettingBackB = findViewById(R.id.subSetting_BackButton);
         subtitleSettingContainer = findViewById(R.id.subtitleSettingsContainer);
+        subColorPickerB = findViewById(R.id.subPickColorB);
+        subColorPickerBackB = findViewById(R.id.colorPicker_BackButton);
+        subColorPickerContainer = findViewById(R.id.colorPickerContainer);
         subColorTabs = findViewById(R.id.subColorTabs);
         subOutlineLayout = findViewById(R.id.subOutlineLayout);
 
@@ -509,6 +535,9 @@ public class PlayerActivity extends AppCompatActivity {
         subSizeMinusB = findViewById(R.id.subSizeMinusB);
         subBoldB = findViewById(R.id.subBoldB);
         subItalicB = findViewById(R.id.subItalicB);
+        subColorPicker = findViewById(R.id.colorPickerView);
+        subColorBrightSlider = findViewById(R.id.subColorBrightSlider);
+        subColorAlphaSlider = findViewById(R.id.subColorAlphaSlider);
 
         subFontDropdown = findViewById(R.id.subFontDropdown);
         ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, fontFamilyList);
@@ -753,6 +782,11 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isSubSettingShowing) {
                         hideSubSettingContainer(false);
                         isSubSettingShowing = false;
+                    }
+
+                    if (isSubColorPickerShowing) {
+                        hideSubColorPicker(false);
+                        isSubColorPickerShowing = false;
                     }
 
                     if (isExpandViewsShowing) {
@@ -1540,16 +1574,27 @@ public class PlayerActivity extends AppCompatActivity {
 
                 if (tabPos == 0 ) {
                     subEnableSwitch.setVisibility(View.GONE);
+                    subColorPickerB.setCardBackgroundColor(subTextColor);
+                    subColorPicker.setInitialColor(subTextColor);
+                    setColorTabsViews(true);
                 }
 
                 else if (tabPos == 1) {
                     subEnableSwitch.setVisibility(View.VISIBLE);
                     subEnableSwitch.setText("Enable Background");
+                    subEnableSwitch.setChecked(isBgEnable);
+                    subColorPickerB.setCardBackgroundColor(subBgColor);
+                    subColorPicker.setInitialColor(subBgColor);
+                    setColorTabsViews(isBgEnable);
                 }
 
                 else {
                     subEnableSwitch.setVisibility(View.VISIBLE);
                     subEnableSwitch.setText("Enable Outline");
+                    subEnableSwitch.setChecked(isOutlineEnable);
+                    subColorPickerB.setCardBackgroundColor(subEdgeColor);
+                    subColorPicker.setInitialColor(subEdgeColor);
+                    setColorTabsViews(isOutlineEnable);
                 }
             }
 
@@ -1654,6 +1699,52 @@ public class PlayerActivity extends AppCompatActivity {
                 subtitlePrefsEditor.apply();
             }
         });
+
+        subEnableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (subColorTabs.getSelectedTabPosition() == 1) {
+                    isBgEnable = b;
+                    setColorTabsViews(isBgEnable);
+                    subtitlePrefsEditor.putBoolean("isBg", b);
+                }
+                else {
+                    isOutlineEnable = b;
+                    setColorTabsViews(isOutlineEnable);
+                    subtitlePrefsEditor.putBoolean("isOutline", b);
+                }
+                applySubtitleStyle();
+                subtitlePrefsEditor.apply();
+            }
+        });
+
+        subColorPickerB.setOnClickListener(v -> showSubColorPicker());
+        subColorPickerBackB.setOnClickListener(v -> hideSubColorPicker(true));
+
+        subColorPicker.setColorListener(new ColorListener() {
+            @Override
+            public void onColorSelected(int color, boolean fromUser) {
+                if (!fromUser) return;
+
+                if (subColorTabs.getSelectedTabPosition() == 0) {
+                    subTextColor = color;
+                    subtitlePrefsEditor.putInt("textColor", color);
+                }
+                else if (subColorTabs.getSelectedTabPosition() == 1) {
+                    subBgColor = color;
+                    subtitlePrefsEditor.putInt("bgColor", color);
+                }
+                else {
+                    subEdgeColor = color;
+                    subtitlePrefsEditor.putInt("edgeColor", color);
+                }
+                applySubtitleStyle();
+                subColorPickerB.setCardBackgroundColor(color);
+                subtitlePrefsEditor.apply();
+            }
+        });
+
+
 
     }
 
@@ -1803,17 +1894,33 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void setSubtitleValuesViews() {
         subFontSize = subtitlePrefs.getInt("size", 22);
+        subFont = subtitlePrefs.getInt("font", 0);
+        subIsBold = subtitlePrefs.getBoolean("isBold", false);
+        subIsItalic = subtitlePrefs.getBoolean("isItalic", false);
+        subTextColor = subtitlePrefs.getInt("textColor", Color.WHITE);
+        subBgColor = subtitlePrefs.getInt("bgColor", Color.BLACK);
+        subEdgeColor = subtitlePrefs.getInt("edgeColor", Color.BLACK);
+        isBgEnable = subtitlePrefs.getBoolean("isBg", false);
+        isOutlineEnable = subtitlePrefs.getBoolean("isOutline", false);
+        applySubtitleStyle();
+
         subFontSizeSlider.setValue(subFontSize);
 
-        subFont = subtitlePrefs.getInt("font", 0);
         subFontDropdown.setText(fontFamilyList[subFont], false);
         setSubFontTypeface();
         buildTypeface();
 
-        subIsBold = subtitlePrefs.getBoolean("isBold", false);
         subBoldB.setChecked(subIsBold);
-        subIsItalic = subtitlePrefs.getBoolean("isItalic", false);
         subItalicB.setChecked(subIsItalic);
+
+        subEnableSwitch.setVisibility(View.GONE);
+        subColorPickerB.setCardBackgroundColor(subTextColor);
+        subColorPicker.setActionMode(ActionMode.ALWAYS);
+        subColorPicker.attachBrightnessSlider(subColorBrightSlider);
+        subColorPicker.attachAlphaSlider(subColorAlphaSlider);
+        subColorPicker.setInitialColor(subTextColor);
+        setColorTabsViews(true);
+
 
     }
 
@@ -1821,13 +1928,20 @@ public class PlayerActivity extends AppCompatActivity {
         subtitleView.setApplyEmbeddedStyles(false);    // Ignores subtitle's styles
         subtitleView.setApplyEmbeddedFontSizes(false); // Ignores font sizes in subtitle
 
-        boolean subShadowEnabled = true;
-        boolean subOutlineEnabled = false;
+        int finalBgColor = subBgColor;
+        int finalEdgeColor = subEdgeColor;
+        if (!isBgEnable) {
+            finalBgColor = Color.TRANSPARENT;
+        }
+        if (!isOutlineEnable) {
+            finalEdgeColor = Color.TRANSPARENT;
+        }
+
         int edgeType;
-        if (subShadowEnabled) {
+        if (isShadowEnable) {
             edgeType = CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW;
         }
-        else if (subOutlineEnabled) {
+        else if (isOutlineEnable) {
             edgeType = CaptionStyleCompat.EDGE_TYPE_OUTLINE;
         }
         else {
@@ -1835,11 +1949,11 @@ public class PlayerActivity extends AppCompatActivity {
         }
 
         subtitleView.setStyle(new CaptionStyleCompat(
-                subFgColor,
-                subBgColor,
+                subTextColor,
+                finalBgColor,
                 Color.TRANSPARENT,  // Window Color
                 edgeType,
-                subEdgeColor,
+                finalEdgeColor,
                 subFinalTypeface
         ));
     }
@@ -1870,6 +1984,19 @@ public class PlayerActivity extends AppCompatActivity {
                 break;
         }
     }
+
+    private void setColorTabsViews(boolean flag) {
+        if (flag) {
+            subColorPickerB.setEnabled(true);
+            subColorPickerB.setAlpha(1);
+        }
+        else {
+            subColorPickerB.setEnabled(false);
+            subColorPickerB.setAlpha(.2f);
+
+        }
+    }
+
 
     @OptIn(markerClass = UnstableApi.class)
     private void loadAudioTracks() {
@@ -2175,6 +2302,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isAudioTracksShowing;
     private boolean isSubTracksShowing;
     private boolean isSubSettingShowing;
+    private boolean isSubColorPickerShowing;
 
     private void showAudioTracks() {
         hideControls();
@@ -2232,6 +2360,37 @@ public class PlayerActivity extends AppCompatActivity {
                     isSubSettingShowing = false;
                     subtitleSettingContainer.setVisibility(View.INVISIBLE);
                     subtitleSettingContainer.setTranslationX(0f);
+                });
+    }
+
+    private void showSubColorPicker() {
+        animationLibs.fadeOut(subTracksContainer, 250, null,
+                () -> {
+                    isSubSettingShowing = false;
+                    subtitleSettingContainer.setVisibility(View.INVISIBLE);
+                });
+
+        animationLibs.fadeIn(subColorPickerContainer, 250, () -> isSubColorPickerShowing = true, null);
+    }
+
+    private void hideSubColorPicker(boolean isBackPressed) {
+        if (isBackPressed) {
+            animationLibs.fadeOut(subColorPickerContainer, 250, null,
+                    () -> {
+                        isSubColorPickerShowing = false;
+                        subColorPickerContainer.setVisibility(View.INVISIBLE);
+                    });
+
+            animationLibs.fadeIn(subtitleSettingContainer, 250, () -> isSubSettingShowing = true, null);
+
+            return;
+        }
+
+        animationLibs.slideOutRight(subColorPickerContainer, 250, null,
+                () -> {
+                    isSubColorPickerShowing = false;
+                    subColorPickerContainer.setVisibility(View.INVISIBLE);
+                    subColorPickerContainer.setTranslationX(0f);
                 });
     }
 

@@ -101,5 +101,7 @@ dependencies {
 
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.8.0+1")
 
+    implementation("com.github.skydoves:colorpickerview:2.3.0")
+
 
 }

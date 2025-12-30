@@ -28,10 +28,9 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:visibility="visible"
+                app:resize_mode="fit"
                 app:show_timeout="0"
-                app:use_controller="false"
-                app:resize_mode="fit">
-            </androidx.media3.ui.PlayerView>
+                app:use_controller="false"></androidx.media3.ui.PlayerView>
         </FrameLayout>
 
         <androidx.media3.ui.SubtitleView
@@ -623,7 +622,7 @@
         android:elevation="8dp"
         android:paddingHorizontal="20dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -691,14 +690,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:theme="@style/ThemeOverlay.Material3.Dark"
                     app:endIconTint="@color/white"
                     android:hint="Font"
-                    app:hintTextColor="#1AFFFFFF"
+                    app:hintTextColor="#80FFFFFF"
                     app:boxStrokeWidth=".5dp"
                     >
 
-                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    <AutoCompleteTextView
                         android:id="@+id/subFontDropdown"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -711,8 +709,6 @@
             </LinearLayout>
 
             <!-- SIZE -->
-
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -848,9 +844,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:text="Enable Background"
                 android:textColor="@color/white"
-                android:visibility="visible"/>
+                android:visibility="gone"/>
 
             <!-- COLOR PALETTE (Applies to whichever Tab is selected above) -->
             <LinearLayout
@@ -859,6 +856,7 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="10dp"
                 android:paddingVertical="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_gravity="center_vertical">
 
                 <TextView
@@ -877,10 +875,10 @@
                     android:layout_width="70dp"
                     android:layout_height="30dp"
                     android:padding="5dp"
-                    android:src="@color/white"
                     app:cardCornerRadius="10dp"
                     app:strokeWidth="1dp"
-                    app:strokeColor="@color/blue"/>
+                    app:strokeColor="@color/blue"
+                    app:cardBackgroundColor="@color/white"/>
 
             </LinearLayout>
 
@@ -914,23 +912,23 @@
             </LinearLayout>
 
             <!-- OPACITY (Applies to currently selected tab) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:text="Opacity / Transparency"
-                android:textColor="@color/white"
-                android:textSize="12sp" />
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="15dp"-->
+<!--                android:text="Opacity / Transparency"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="12sp" />-->
 
-            <com.google.android.material.slider.Slider
-                android:id="@+id/subOpacitySeek"
-                style="@style/SubSliderStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:valueFrom="1"
-                android:valueTo="255"
-                android:value="255"
-                android:stepSize="1" />
+<!--            <com.google.android.material.slider.Slider-->
+<!--                android:id="@+id/subOpacitySeek"-->
+<!--                style="@style/SubSliderStyle"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:valueFrom="0"-->
+<!--                android:valueTo="255"-->
+<!--                android:value="255"-->
+<!--                android:stepSize="1" />-->
 
             <View
                 android:layout_width="match_parent"
@@ -1145,6 +1143,81 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+
+    <LinearLayout
+        android:id="@+id/colorPickerContainer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_margin="15dp"
+        android:orientation="vertical"
+        android:background="@drawable/shape_sidebar"
+        android:elevation="8dp"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="25dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone">
+
+        <!-- HEADER -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/colorPicker_BackContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/colorPicker_BackButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ripple_player_dark"
+                android:padding="3dp"
+                android:src="@drawable/baseline_arrow_back_24"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/ripple_player_dark"
+                android:text="Pick Subtitle Color"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/colorPicker_BackButton"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.skydoves.colorpickerview.ColorPickerView
+            android:id="@+id/colorPickerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="20dp"
+            android:layout_marginHorizontal="15dp" />
+
+        <com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+            android:id="@+id/subColorBrightSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="20dp"
+            android:layout_marginHorizontal="10dp"
+            app:selector_BrightnessSlider="@drawable/colorpickerview_wheel"
+            app:borderColor_BrightnessSlider="@android:color/darker_gray"
+            app:borderSize_BrightnessSlider="5" />
+
+        <com.skydoves.colorpickerview.sliders.AlphaSlideBar
+            android:id="@+id/subColorAlphaSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            app:selector_AlphaSlideBar="@drawable/colorpickerview_wheel"
+            app:borderColor_AlphaSlideBar="@android:color/darker_gray"
+            app:borderSize_AlphaSlideBar="5"/>
+    </LinearLayout>
 
 
     <!-- res/layout/media_player_controls.xml -->
