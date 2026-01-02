@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -33,6 +34,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -48,7 +50,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.ColorUtils;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -82,6 +83,7 @@ import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
 import com.example.mediaplayer.Tracks.SubTracksAdapter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -338,42 +340,43 @@ public class PlayerActivity extends AppCompatActivity {
     private MaterialCardView subColorPickerB;
     private ImageButton subColorPickerBackB;
     private View subColorPickerContainer;
-    private View subOutlineLayout;
 
-    private Slider subFontSizeSlider;
     private TextView subSizeText;
+    private Slider subFontSizeSlider;
     private ImageButton subSizeAddB;
     private ImageButton subSizeMinusB;
     private AutoCompleteTextView subFontDropdown;
+    private MaterialButtonToggleGroup subBoldItalicToggleGroup;
     private MaterialButton subBoldB;
     private MaterialButton subItalicB;
     private SwitchMaterial subEnableSwitch;
+    private MaterialButtonToggleGroup subEdgeToggleGroup;
+    private MaterialButton subOutlineB;
+    private MaterialButton subShadowB;
     private ColorPickerView subColorPicker;
     private BrightnessSlideBar subColorBrightSlider;
     private AlphaSlideBar subColorAlphaSlider;
-//    private Slider subOpacitySlider;/
+    private TextView subMarginText;
+    private Slider subMarginSlider;
+    private ImageButton subMarginAddB;
+    private ImageButton subMarginMinusB;
 
     private int subFont;
     private int subFontSize;
     private boolean subIsBold;
     private boolean subIsItalic;
     private int subTextColor = Color.WHITE;
-    private int textColor;
-    private int textOpacity = 255;
     private boolean isBgEnable;
     private int subBgColor;
-    private int bgColor;
-    private int bgOpacity;
     private boolean isOutlineEnable;
     private boolean isShadowEnable;
     private int subEdgeColor = Color.BLACK;
-    private int edgeColor = Color.BLACK;
-    private int edgeOpacity = 255;
+    private int subMargin;
 
     private Typeface subFontTypeface;
     private Typeface subFinalTypeface;
 
-    private String[] fontFamilyList = {"Default", "Monospace", "Sans-Serif", "Serif"};
+    private final String[] fontFamilyList = {"Default", "Monospace", "Sans-Serif", "Serif"};
 
     private SharedPreferences subtitlePrefs;
     private SharedPreferences.Editor subtitlePrefsEditor;
@@ -525,19 +528,25 @@ public class PlayerActivity extends AppCompatActivity {
         subColorPickerBackB = findViewById(R.id.colorPicker_BackButton);
         subColorPickerContainer = findViewById(R.id.colorPickerContainer);
         subColorTabs = findViewById(R.id.subColorTabs);
-        subOutlineLayout = findViewById(R.id.subOutlineLayout);
 
-        subEnableSwitch = findViewById(R.id.subEnableSwitch);
-        subFontSizeSlider = findViewById(R.id.subTextSizeSeek);
         subSizeText = findViewById(R.id.subSizeText);
+        subFontSizeSlider = findViewById(R.id.subTextSizeSeek);
         subSizeAddB = findViewById(R.id.subSizeAddB);
         subSizeMinusB = findViewById(R.id.subSizeMinusB);
-        subSizeMinusB = findViewById(R.id.subSizeMinusB);
+        subBoldItalicToggleGroup = findViewById(R.id.subBIToggleView);
         subBoldB = findViewById(R.id.subBoldB);
         subItalicB = findViewById(R.id.subItalicB);
+        subEnableSwitch = findViewById(R.id.subEnableSwitch);
+        subEdgeToggleGroup = findViewById(R.id.subOSToggleView);
+        subOutlineB = findViewById(R.id.subOutlineB);
+        subShadowB = findViewById(R.id.subShadowB);
         subColorPicker = findViewById(R.id.colorPickerView);
         subColorBrightSlider = findViewById(R.id.subColorBrightSlider);
         subColorAlphaSlider = findViewById(R.id.subColorAlphaSlider);
+        subMarginText = findViewById(R.id.subMarginText);
+        subMarginSlider = findViewById(R.id.subTextMarginSeek);
+        subMarginAddB = findViewById(R.id.subMarginAddB);
+        subMarginMinusB = findViewById(R.id.subMarginMinusB);
 
         subFontDropdown = findViewById(R.id.subFontDropdown);
         ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, fontFamilyList);
@@ -1574,6 +1583,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 if (tabPos == 0 ) {
                     subEnableSwitch.setVisibility(View.GONE);
+                    subEdgeToggleGroup.setVisibility(View.GONE);
                     subColorPickerB.setCardBackgroundColor(subTextColor);
                     subColorPicker.setInitialColor(subTextColor);
                     setColorTabsViews(true);
@@ -1581,7 +1591,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 else if (tabPos == 1) {
                     subEnableSwitch.setVisibility(View.VISIBLE);
-                    subEnableSwitch.setText("Enable Background");
+                    subEdgeToggleGroup.setVisibility(View.GONE);
                     subEnableSwitch.setChecked(isBgEnable);
                     subColorPickerB.setCardBackgroundColor(subBgColor);
                     subColorPicker.setInitialColor(subBgColor);
@@ -1589,12 +1599,15 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 else {
-                    subEnableSwitch.setVisibility(View.VISIBLE);
-                    subEnableSwitch.setText("Enable Outline");
-                    subEnableSwitch.setChecked(isOutlineEnable);
+                    subEnableSwitch.setVisibility(View.GONE);
+                    subEdgeToggleGroup.setVisibility(View.VISIBLE);
                     subColorPickerB.setCardBackgroundColor(subEdgeColor);
                     subColorPicker.setInitialColor(subEdgeColor);
-                    setColorTabsViews(isOutlineEnable);
+                    subOutlineB.setChecked(isOutlineEnable);
+                    subShadowB.setChecked(isShadowEnable);
+                    setCheckedButtonsIcon(subOutlineB, isOutlineEnable);
+                    setCheckedButtonsIcon(subShadowB, isShadowEnable);
+                    setColorTabsViews(isOutlineEnable || isShadowEnable);
                 }
             }
 
@@ -1609,42 +1622,24 @@ public class PlayerActivity extends AppCompatActivity {
             subFontSize = (int) value;
             subSizeText.setText(String.valueOf(subFontSize));
 
-            float fontSize = subFontSize / 400f;
-            subtitleView.setFractionalTextSize(fontSize);
-            Log.d(TAG, "setSubtitleStyles - Size: " + fontSize);
+            subtitleView.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, subFontSize);
+            Log.d(TAG, "setSubtitleStyles - Size: " + subFontSize);
 
-            subtitlePrefsEditor.putInt("size", subFontSize);
-            subtitlePrefsEditor.apply();
+            subtitlePrefsEditor.putInt("size", subFontSize).apply();
         });
 
         subSizeAddB.setOnClickListener(v -> {
-            if (subFontSize == 40) return;
+            if (subFontSize == 30) return;
 
             subFontSize++;
-//            subSizeText.setText(String.valueOf(subFontSize));
             subFontSizeSlider.setValue(subFontSize);
-
-            float fontSize = subFontSize / 400f;
-            subtitleView.setFractionalTextSize(fontSize);
-            Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
-
-            subtitlePrefsEditor.putInt("size", subFontSize);
-            subtitlePrefsEditor.apply();
         });
 
         subSizeMinusB.setOnClickListener(v -> {
-            if (subFontSize == 4) return;
+            if (subFontSize == 10) return;
 
             subFontSize--;
-//            subSizeText.setText(String.valueOf(subFontSize));
             subFontSizeSlider.setValue(subFontSize);
-
-            float fontSize = subFontSize / 400f;
-            subtitleView.setFractionalTextSize(fontSize);
-            Log.d(TAG, "setSubtitleStyles - SizeB: " + fontSize);
-
-            subtitlePrefsEditor.putInt("size", subFontSize);
-            subtitlePrefsEditor.apply();
         });
         
         subFontDropdown.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -1660,59 +1655,12 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        subBoldB.addOnCheckedChangeListener(new MaterialButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(MaterialButton button, boolean isChecked) {
-                if (isChecked) {
-                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
-                }
-                else {
-//                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
-                    button.setIcon(null);
-                }
-
-                Log.d(TAG, "onCheckedChanged: " + isChecked);
-
-                subIsBold = isChecked;
-                buildTypeface();
-
-                subtitlePrefsEditor.putBoolean("isBold", subIsBold);
-                subtitlePrefsEditor.apply();
-            }
-        });
-
-        subItalicB.addOnCheckedChangeListener(new MaterialButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(MaterialButton button, boolean isChecked) {
-                if (isChecked) {
-                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
-                }
-                else {
-//                    button.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_unfilled);
-                    button.setIcon(null);
-                }
-
-                subIsItalic = isChecked;
-                buildTypeface();
-
-                subtitlePrefsEditor.putBoolean("isItalic", subIsItalic);
-                subtitlePrefsEditor.apply();
-            }
-        });
-
         subEnableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (subColorTabs.getSelectedTabPosition() == 1) {
-                    isBgEnable = b;
-                    setColorTabsViews(isBgEnable);
-                    subtitlePrefsEditor.putBoolean("isBg", b);
-                }
-                else {
-                    isOutlineEnable = b;
-                    setColorTabsViews(isOutlineEnable);
-                    subtitlePrefsEditor.putBoolean("isOutline", b);
-                }
+                isBgEnable = b;
+                setColorTabsViews(isBgEnable);
+                subtitlePrefsEditor.putBoolean("isBg", b);
                 applySubtitleStyle();
                 subtitlePrefsEditor.apply();
             }
@@ -1744,10 +1692,71 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+        subMarginSlider.addOnChangeListener((slider, value, fromUser) -> {
+            subMargin = (int) value;
+            subMarginText.setText(String.valueOf(subMargin));
 
+            int px = DpToPixel(subMargin, this);
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) subtitleView.getLayoutParams();
+            params.setMargins(0, px, 0, px);
+            subtitleView.setLayoutParams(params);
 
+            subtitlePrefsEditor.putInt("margin", subMargin).apply();
+        });
+
+        subMarginAddB.setOnClickListener(v -> {
+            if (subMargin == 20) return;
+
+            subMargin += 5;
+            subMarginSlider.setValue(subMargin);
+        });
+
+        subMarginMinusB.setOnClickListener(v -> {
+            if (subMargin == 0) return;
+
+            subMargin -= 5;
+            subMarginSlider.setValue(subMargin);
+        });
+
+        subBoldItalicToggleGroup.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.subBoldB) {
+                    setCheckedButtonsIcon(subBoldB, isChecked);
+                    subIsBold = isChecked;
+                    subtitlePrefsEditor.putBoolean("isBold", subIsBold).apply();
+                }
+                else if (checkedId == R.id.subItalicB) {
+                    setCheckedButtonsIcon(subItalicB, isChecked);
+                    subIsItalic = isChecked;
+                    subtitlePrefsEditor.putBoolean("isItalic", subIsItalic).apply();
+                }
+                buildTypeface();
+            }
+        });
+
+        subEdgeToggleGroup.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.subOutlineB) {
+                    setCheckedButtonsIcon(subOutlineB, isChecked);
+                    isOutlineEnable = isChecked;
+                    subtitlePrefsEditor.putBoolean("isOutline", isOutlineEnable).apply();
+                }
+                else if (checkedId == R.id.subShadowB) {
+                    setCheckedButtonsIcon(subShadowB, isChecked);
+                    isShadowEnable = isChecked;
+                    subtitlePrefsEditor.putBoolean("isShadow", isShadowEnable).apply();
+                }
+                applySubtitleStyle();
+            }
+        });
     }
 
+    private void setCheckedButtonsIcon(MaterialButton btn, boolean isChecked) {
+        if (isChecked) btn.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
+        else btn.setIcon(null);
+    }
 
     private void expandViewsListeners() {
         speedExpand_Listeners();
@@ -1893,17 +1902,20 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void setSubtitleValuesViews() {
-        subFontSize = subtitlePrefs.getInt("size", 22);
+        subFontSize = subtitlePrefs.getInt("size", 20);
         subFont = subtitlePrefs.getInt("font", 0);
         subIsBold = subtitlePrefs.getBoolean("isBold", false);
         subIsItalic = subtitlePrefs.getBoolean("isItalic", false);
         subTextColor = subtitlePrefs.getInt("textColor", Color.WHITE);
-        subBgColor = subtitlePrefs.getInt("bgColor", Color.BLACK);
-        subEdgeColor = subtitlePrefs.getInt("edgeColor", Color.BLACK);
         isBgEnable = subtitlePrefs.getBoolean("isBg", false);
+        subBgColor = subtitlePrefs.getInt("bgColor", Color.BLACK);
         isOutlineEnable = subtitlePrefs.getBoolean("isOutline", false);
-        applySubtitleStyle();
+        isShadowEnable = subtitlePrefs.getBoolean("isShadow", true);
+        subEdgeColor = subtitlePrefs.getInt("edgeColor", Color.BLACK);
+        subMargin = subtitlePrefs.getInt("margin", 0);
+        setSubtitleStyles();
 
+        subSizeText.setText(String.valueOf(subFontSize));
         subFontSizeSlider.setValue(subFontSize);
 
         subFontDropdown.setText(fontFamilyList[subFont], false);
@@ -1921,7 +1933,18 @@ public class PlayerActivity extends AppCompatActivity {
         subColorPicker.setInitialColor(subTextColor);
         setColorTabsViews(true);
 
+        subMarginText.setText(String.valueOf(subMargin));
+        subMarginSlider.setValue(subMargin);
+    }
 
+    private void setSubtitleStyles() {
+        subtitleView.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, subFontSize);
+        int px = DpToPixel(subMargin, this);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) subtitleView.getLayoutParams();
+        params.setMargins(0, px, 0, px);
+        subtitleView.setLayoutParams(params);
+
+        applySubtitleStyle();
     }
 
     private void applySubtitleStyle() {
@@ -1933,7 +1956,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (!isBgEnable) {
             finalBgColor = Color.TRANSPARENT;
         }
-        if (!isOutlineEnable) {
+        if (!isOutlineEnable && !isShadowEnable) {
             finalEdgeColor = Color.TRANSPARENT;
         }
 
@@ -1995,6 +2018,16 @@ public class PlayerActivity extends AppCompatActivity {
             subColorPickerB.setAlpha(.2f);
 
         }
+    }
+
+    private void setBoldItalicToggleChecked() {
+        if (subIsBold) {
+            subBoldB.setChecked(true);
+        }
+        else if (subIsItalic) {
+            subItalicB.setChecked(true);
+        }
+        applySubtitleStyle();
     }
 
 
