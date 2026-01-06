@@ -31,7 +31,7 @@ public class SettingListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_setting_player, container, false);
+        View view = inflater.inflate(R.layout.fragment_setting_list, container, false);
 
         backB = view.findViewById(R.id.backB);
 

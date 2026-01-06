@@ -194,7 +194,7 @@ public class SettingsFragment extends Fragment {
                         .beginTransaction()
                         .replace(R.id.fragmentContainerSetting, fragment)
                         .addToBackStack(null)
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_OPEN)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
         }
 

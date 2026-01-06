@@ -26,6 +26,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -1585,7 +1586,7 @@ public class PlayerActivity extends AppCompatActivity {
                     subEnableSwitch.setVisibility(View.GONE);
                     subEdgeToggleGroup.setVisibility(View.GONE);
                     subColorPickerB.setCardBackgroundColor(subTextColor);
-                    subColorPicker.setInitialColor(subTextColor);
+                    subColorPickerContainer.post(() -> subColorPicker.setInitialColor(subTextColor));
                     setColorTabsViews(true);
                 }
 
@@ -1594,7 +1595,7 @@ public class PlayerActivity extends AppCompatActivity {
                     subEdgeToggleGroup.setVisibility(View.GONE);
                     subEnableSwitch.setChecked(isBgEnable);
                     subColorPickerB.setCardBackgroundColor(subBgColor);
-                    subColorPicker.setInitialColor(subBgColor);
+                    subColorPickerContainer.post(() -> subColorPicker.setInitialColor(subBgColor));
                     setColorTabsViews(isBgEnable);
                 }
 
@@ -1602,7 +1603,7 @@ public class PlayerActivity extends AppCompatActivity {
                     subEnableSwitch.setVisibility(View.GONE);
                     subEdgeToggleGroup.setVisibility(View.VISIBLE);
                     subColorPickerB.setCardBackgroundColor(subEdgeColor);
-                    subColorPicker.setInitialColor(subEdgeColor);
+                    subColorPickerContainer.post(() -> subColorPicker.setInitialColor(subEdgeColor));
                     subOutlineB.setChecked(isOutlineEnable);
                     subShadowB.setChecked(isShadowEnable);
                     setCheckedButtonsIcon(subOutlineB, isOutlineEnable);
@@ -1753,10 +1754,6 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void setCheckedButtonsIcon(MaterialButton btn, boolean isChecked) {
-        if (isChecked) btn.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
-        else btn.setIcon(null);
-    }
 
     private void expandViewsListeners() {
         speedExpand_Listeners();
@@ -1930,12 +1927,13 @@ public class PlayerActivity extends AppCompatActivity {
         subColorPicker.setActionMode(ActionMode.ALWAYS);
         subColorPicker.attachBrightnessSlider(subColorBrightSlider);
         subColorPicker.attachAlphaSlider(subColorAlphaSlider);
-        subColorPicker.setInitialColor(subTextColor);
+        setColorPickerInitialColor();
         setColorTabsViews(true);
 
         subMarginText.setText(String.valueOf(subMargin));
         subMarginSlider.setValue(subMargin);
     }
+
 
     private void setSubtitleStyles() {
         subtitleView.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, subFontSize);
@@ -2020,14 +2018,21 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void setBoldItalicToggleChecked() {
-        if (subIsBold) {
-            subBoldB.setChecked(true);
-        }
-        else if (subIsItalic) {
-            subItalicB.setChecked(true);
-        }
-        applySubtitleStyle();
+    private void setCheckedButtonsIcon(MaterialButton btn, boolean isChecked) {
+        if (isChecked) btn.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);
+        else btn.setIcon(null);
+    }
+
+    private void setColorPickerInitialColor() {
+        subColorPickerContainer.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (subColorPickerContainer.getWidth() > 0) {
+                    subColorPicker.setInitialColor(subTextColor);
+                    subColorPickerContainer.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            }
+        });
     }
 
 

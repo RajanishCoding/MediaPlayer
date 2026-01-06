@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/FilesListBG"
-    tools:context=".Settings.SettingPlayerFragment">
+    tools:context=".Settings.SettingSubtitleFragment">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -50,11 +50,337 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-
-    <TextView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginBottom="25dp"
+        android:paddingHorizontal="25dp"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
-        android:text="@string/hello_blank_fragment" />
+        app:layout_constraintBottom_toTopOf="@id/subResetB">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="vertical">
+
+            <!-- ================= TYPOGRAPHY ================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Font Styles"
+                android:textColor="@color/text_color2"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- FONT FAMILY -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="17dp"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:endIconMode="dropdown_menu"
+                    android:hint="Font">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/subFontDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Default"
+                        android:textColor="@color/text_color"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:clickable="true"
+                        />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <!-- SIZE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="Size"
+                    android:textColor="@color/text_color"
+                    android:textSize="14sp" />
+
+                <ImageButton
+                    android:id="@+id/subSizeMinusB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_remove"
+                    app:tint="@color/text_color" />
+
+                <TextView
+                    android:id="@+id/subSizeText"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="20"
+                    android:textColor="@color/text_color"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/subSizeAddB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_add"
+                    app:tint="@color/text_color" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/subTextSizeSeek"
+                style="@style/SliderStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="10"
+                android:valueTo="30"
+                android:value="20"
+                android:stepSize="1" />
+
+            <!-- BOLD / ITALIC -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/subBIToggleView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:singleSelection="false"
+                app:selectionRequired="false">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/subBoldB"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Bold"
+                    app:iconTint="@color/text_color"
+                    android:backgroundTint="@color/btn_color"
+                    />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/subItalicB"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Italic"
+                    app:iconTint="@color/text_color"
+                    android:backgroundTint="@color/btn_color" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginVertical="25dp"
+                android:background="@color/divider_color" />
+
+
+            <!-- ================= COLORS ================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Colors"
+                android:textColor="@color/text_color2"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- TABS: Select what to edit (Text / Background / Stroke) -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/subColorTabs"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="15dp"
+                android:background="@android:color/transparent"
+                app:tabIndicatorColor="@color/text_color"
+                app:tabSelectedTextColor="@color/text_color">
+
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Text" />
+
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Background" />
+
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Edge" />
+            </com.google.android.material.tabs.TabLayout>
+
+            <!-- For Background -->
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/subEnableSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
+                android:text="Enable Background"
+                android:textColor="@color/text_color"
+                android:visibility="gone"/>
+
+            <!-- For Edge -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/subOSToggleView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:visibility="gone">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/subOutlineB"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:text="Outline"
+                    app:iconTint="@color/text_color"
+                    android:backgroundTint="@color/btn_color"
+                    />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/subShadowB"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:text="Shadow"
+                    app:iconTint="@color/text_color"
+                    android:backgroundTint="@color/btn_color"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- COLOR PALETTE (Applies to whichever Tab is selected above) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp"
+                android:padding="5dp"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="30dp"
+                    android:gravity="center_vertical"
+                    android:text="Select Color"
+                    android:textColor="@color/text_color"/>
+
+                <!-- Custom Picker Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/subPickColorB"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    app:cardCornerRadius="10dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/text_color2"
+                    app:cardBackgroundColor="@color/white"/>
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginVertical="25dp"
+                android:background="@color/divider_color" />
+
+
+            <!-- ================= LAYOUT & POSITION ================= -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Layout"
+                android:textColor="@color/text_color2"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="Bottom Margins"
+                    android:textColor="@color/text_color"
+                    android:textSize="14sp" />
+
+                <ImageButton
+                    android:id="@+id/subMarginMinusB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_remove"
+                    app:tint="@color/text_color" />
+
+                <TextView
+                    android:id="@+id/subMarginText"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="@color/text_color"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/subMarginAddB"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ripple_player_dark"
+                    android:src="@drawable/round_add"
+                    app:tint="@color/text_color" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/subTextMarginSeek"
+                style="@style/SliderStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="0"
+                android:valueTo="100"
+                android:value="0"
+                android:stepSize="5" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- RESET -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/subResetB"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:layout_marginHorizontal="25dp"
+        android:backgroundTint="#FF4444"
+        android:text="Reset to Default"
+        android:textColor="@color/white"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -31,6 +31,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
+import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -95,6 +96,8 @@ public class PlayerService extends MediaSessionService {
                 .setTrackSelector(new DefaultTrackSelector(this))
 //                .setRenderersFactory(renderersFactory)
                 .build();
+
+
 
         mediaSession = new MediaSession.Builder(this, player).build();
 

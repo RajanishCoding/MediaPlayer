@@ -36,4 +36,17 @@
     <color name="text_color">#FFFFFF</color>
     <color name="text_color_rev">#000000</color>
 
+    <color name="text_color2">#AAAAAA</color>
+    <color name="text_color2_rev">#757575</color>
+
+    <color name="btn_color">#403D3D3D</color>
+
+    <color name="slider_active_color">#FFFFFFFF</color>
+    <color name="slider_inactive_color">#55FFFFFF</color>
+    <color name="slider_halo_color">#33FFFFFF</color>
+
+    <color name="divider_color">#33FFFFFF</color>
+
+    <color name="stroke_color">#565656</color>
+
 </resources>

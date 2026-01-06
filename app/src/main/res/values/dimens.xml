@@ -3,5 +3,5 @@
     <dimen name="text_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
 
-    <dimen name="content_max_width">-1dp</dimen> <!-- -1 = match_parent -->
+    <dimen name="content_max_width">-1dp</dimen>
 </resources>
