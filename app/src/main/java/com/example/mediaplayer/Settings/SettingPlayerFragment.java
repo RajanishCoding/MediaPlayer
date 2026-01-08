@@ -2,6 +2,7 @@ package com.example.mediaplayer.Settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -9,13 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -26,6 +27,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
+import com.skydoves.colorpickerview.ActionMode;
 
 import java.util.Arrays;
 import java.util.List;
@@ -69,20 +71,17 @@ public class SettingPlayerFragment extends Fragment {
     private boolean isSeekEnable;
     private boolean isPlayEnable;
     private int seekDuration;
-    private boolean isSeekSwipeSlow;
-    private boolean isSeekSwipeNormal;
-    private boolean isSeekSwipeFast;
-    private boolean isVerticalSwipeSlow;
-    private boolean isVerticalSwipeNormal;
-    private boolean isVerticalSwipeFast;
+    private int seekSwipeValue;
+    private int verticalSwipeValue;
     private int hideTimeout;
     private int fadeTime;
     private boolean isLockModeAll;
-    private boolean isLockModeTouch;
     private boolean isRemainingTimeEnable;
     private boolean isTrackSelectionEnable;
 
-    private final List<String> seekDurationList = Arrays.asList("5", "10", "15", "20", "30", "40", "50", "60");
+//    private final int[] seekDurationList = new int[]{5, 10, 15, 20, 30, 40, 50, 60};
+//    private final List<String> seekDurationListDropdown = Arrays.asList("5 seconds", "10 seconds", "15 seconds", "20 seconds", "30 seconds", "40 seconds", "50 seconds", "60 seconds");
+    private final List<String> seekDurationListDropdown = Arrays.asList("5", "10", "15", "20", "30", "40", "50", "60");
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
@@ -135,7 +134,7 @@ public class SettingPlayerFragment extends Fragment {
         trackSelectionLayout = view.findViewById(R.id.trackSelection);
         trackSelectionSwitch = view.findViewById(R.id.trackSelectionSwitch);
 
-        ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, seekDurationList);
+        ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, seekDurationListDropdown);
         seekDurationDropdown.setAdapter(fontDropdownAdapter);
 
         playerPrefs = requireContext().getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
@@ -187,14 +186,13 @@ public class SettingPlayerFragment extends Fragment {
         });
         playEnableLayout.setOnClickListener(v -> playEnableSwitch.setChecked(!isPlayEnable));
 
-        seekDurationDropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        seekDurationDropdown.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                seekDuration = Integer.parseInt(seekDurationList.get(i));
-                playerPrefsEditor.putInt("seekDuration", i).apply();
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                seekDuration = Integer.parseInt(seekDurationListDropdown.get(i));
+                seekDurationDropdown.setText(seekDuration + " seconds", false);
+                playerPrefsEditor.putInt("seekDuration", seekDuration).apply();
             }
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
         seekSwipeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
@@ -202,18 +200,24 @@ public class SettingPlayerFragment extends Fragment {
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
                 if (checkedId == R.id.seekSwipeSlow) {
                     setCheckedButtonsIcon(seekSwipeSlowB, isChecked);
-                    isSeekSwipeSlow = isChecked;
-                    playerPrefsEditor.putBoolean("isSeekSlow", isChecked).apply();
+                    if (isChecked) {
+                        seekSwipeValue = 0;
+                        playerPrefsEditor.putInt("seekSwipeValue", 0).apply();
+                    }
                 }
                 else if (checkedId == R.id.seekSwipeNormal) {
                     setCheckedButtonsIcon(seekSwipeNormalB, isChecked);
-                    isSeekSwipeNormal = isChecked;
-                    playerPrefsEditor.putBoolean("isSeekNormal", isChecked).apply();
+                    if (isChecked) {
+                        seekSwipeValue = 1;
+                        playerPrefsEditor.putInt("seekSwipeValue", 1).apply();
+                    }
                 }
                 else if (checkedId == R.id.seekSwipeFast) {
                     setCheckedButtonsIcon(seekSwipeFastB, isChecked);
-                    isSeekSwipeFast = isChecked;
-                    playerPrefsEditor.putBoolean("isSeekFast", isChecked).apply();
+                    if (isChecked) {
+                        seekSwipeValue = 2;
+                        playerPrefsEditor.putInt("seekSwipeValue", 2).apply();
+                    }
                 }
             }
         });
@@ -223,18 +227,24 @@ public class SettingPlayerFragment extends Fragment {
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
                 if (checkedId == R.id.verticalSwipeSlow) {
                     setCheckedButtonsIcon(verticalSwipeSlowB, isChecked);
-                    isVerticalSwipeSlow = isChecked;
-                    playerPrefsEditor.putBoolean("isVerticalSlow", isChecked).apply();
+                    if (isChecked) {
+                        verticalSwipeValue = 0;
+                        playerPrefsEditor.putInt("verticalSwipeValue", 0).apply();
+                    }
                 }
                 else if (checkedId == R.id.verticalSwipeNormal) {
                     setCheckedButtonsIcon(verticalSwipeNormalB, isChecked);
-                    isVerticalSwipeNormal = isChecked;
-                    playerPrefsEditor.putBoolean("isVerticalNormal", isChecked).apply();
+                    if (isChecked) {
+                        verticalSwipeValue = 1;
+                        playerPrefsEditor.putInt("verticalSwipeValue", 1).apply();
+                    }
                 }
                 else if (checkedId == R.id.verticalSwipeFast) {
                     setCheckedButtonsIcon(verticalSwipeFastB, isChecked);
-                    isVerticalSwipeFast = isChecked;
-                    playerPrefsEditor.putBoolean("isVerticalFast", isChecked).apply();
+                    if (isChecked) {
+                        verticalSwipeValue = 2;
+                        playerPrefsEditor.putInt("verticalSwipeValue", 2).apply();
+                    }
                 }
             }
         });
@@ -244,7 +254,7 @@ public class SettingPlayerFragment extends Fragment {
             public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
                 int val = (int) value;
                 hideTimeout = val;
-                timeoutText.setText(String.valueOf(val));
+                timeoutText.setText(val + "s");
                 playerPrefsEditor.putInt("hideTimeout", val).apply();
             }
         });
@@ -259,8 +269,8 @@ public class SettingPlayerFragment extends Fragment {
                 }
                 else if (checkedId == R.id.lockModeTouch) {
                     setCheckedButtonsIcon(lockModeTouchB, isChecked);
-                    isLockModeTouch = isChecked;
-                    playerPrefsEditor.putBoolean("isLockModeTouch", isChecked).apply();
+                    isLockModeAll = !isChecked;
+                    playerPrefsEditor.putBoolean("isLockModeAll", !isChecked).apply();
                 }
             }
         });
@@ -283,8 +293,37 @@ public class SettingPlayerFragment extends Fragment {
         });
         trackSelectionLayout.setOnClickListener(v -> trackSelectionSwitch.setChecked(!isTrackSelectionEnable));
 
+        setValuesViewsAtStart();
     }
 
+    private void setValuesViewsAtStart() {
+        isSwipeEnable = playerPrefs.getBoolean("isSwipe", true);
+        isSeekEnable = playerPrefs.getBoolean("isSeek", true);
+        isPlayEnable = playerPrefs.getBoolean("isPlay", true);
+        seekDuration = playerPrefs.getInt("seekDuration", 10);
+        seekSwipeValue = playerPrefs.getInt("seekSwipeValue", 1);
+        verticalSwipeValue = playerPrefs.getInt("verticalSwipeValue", 1);
+        hideTimeout = playerPrefs.getInt("hideTimeout", 5);
+        isLockModeAll = playerPrefs.getBoolean("isLockModeAll", true);
+        isRemainingTimeEnable = playerPrefs.getBoolean("isRemainingTimeEnable", false);
+        isTrackSelectionEnable = playerPrefs.getBoolean("isTrackSelectionEnable", true);
+
+        swipeEnableSwitch.setChecked(isSwipeEnable);
+        seekEnableSwitch.setChecked(isSeekEnable);
+        playEnableSwitch.setChecked(isPlayEnable);
+        seekDurationDropdown.setText(seekDuration + " seconds", false);
+
+        seekSwipeToggle.check(seekSwipeValue == 0 ? R.id.seekSwipeSlow : seekSwipeValue == 1 ? R.id.seekSwipeNormal : R.id.seekSwipeFast);
+        verticalSwipeToggle.check(verticalSwipeValue == 0 ? R.id.verticalSwipeSlow : verticalSwipeValue == 1 ? R.id.verticalSwipeNormal : R.id.verticalSwipeFast);
+
+        timeoutSlider.setValue(hideTimeout);
+//        timeoutText.setText(String.valueOf(hideTimeout) + "s");
+
+        lockModeToggle.check(isLockModeAll ? R.id.lockModeFull : R.id.lockModeTouch);
+
+        remainingTimeSwitch.setChecked(isRemainingTimeEnable);
+        trackSelectionSwitch.setChecked(isTrackSelectionEnable);
+    }
 
     private void setCheckedButtonsIcon(MaterialButton btn, boolean isChecked) {
         if (isChecked) btn.setIconResource(androidx.media3.session.R.drawable.media3_icon_check_circle_filled);

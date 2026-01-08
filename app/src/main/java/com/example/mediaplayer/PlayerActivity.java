@@ -161,7 +161,6 @@ public class PlayerActivity extends AppCompatActivity {
     private View buffer_view;
 
     private boolean isTime1ButtonClicked;
-    private boolean isTime2ButtonClicked;
 
     private boolean isBufferingFinished;
     private boolean isVideoFile;
@@ -334,6 +333,7 @@ public class PlayerActivity extends AppCompatActivity {
     private SubTracksAdapter subTracksAdapter;
     private List<SubTracks> subTracksList;
 
+    // For Subtitle Settings Side Bar
     private Button openSubSettingB;
     private ImageButton subSettingBackB;
     private View subtitleSettingContainer;
@@ -362,6 +362,7 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton subMarginAddB;
     private ImageButton subMarginMinusB;
 
+    // For Subtitle Settings
     private int subFont;
     private int subFontSize;
     private boolean subIsBold;
@@ -381,6 +382,21 @@ public class PlayerActivity extends AppCompatActivity {
 
     private SharedPreferences subtitlePrefs;
     private SharedPreferences.Editor subtitlePrefsEditor;
+
+    // For Player Settings
+    private boolean isSwipeGestureEnabled;
+    private boolean isDoubleTapSeekEnabled;
+    private boolean isDoubleTapPlayEnabled;
+    private int seekDuration;
+    private int seekSwipeSensiLevel;
+    private int seekSwipeSensitivity;
+    private int verticalSwipeSensiLevel;
+    private int volumeSwipeSensitivity;
+    private int brightnessSwipeSensitivity;
+    private int controlsHideTimeout;
+    private boolean isLockModeAll;
+    private boolean isRemainingTimeViewEnabled;
+    private boolean isTrackSelectionEnabled;
 
     private List<MediaItem> videoList;
     private PlaylistManager manager;
@@ -634,9 +650,6 @@ public class PlayerActivity extends AppCompatActivity {
         subtitlePrefsEditor = subtitlePrefs.edit();
 
 
-        isTime1ButtonClicked = playerPrefs.getBoolean("isTime1Clicked", false);
-        isTime2ButtonClicked = playerPrefs.getBoolean("isTime2Clicked", false);
-
         loopValue = playerPrefs.getInt("loopValue", 0);
         isShuffled = playerPrefs.getBoolean("isShuffle", false);
 
@@ -693,7 +706,7 @@ public class PlayerActivity extends AppCompatActivity {
                     time1.setText(MillisToTime(progress));
                 }
 
-                if (isTime2ButtonClicked) {
+                if (isRemainingTimeViewEnabled) {
                     time2.setText("-" + MillisToTime(player.getDuration() - progress));
                 } else {
                     time2.setText(MillisToTime(player.getDuration()));
@@ -744,10 +757,13 @@ public class PlayerActivity extends AppCompatActivity {
         tracksContainers_Listeners();
 
         subtitleSettings_Listeners();
-        setSubtitleValuesViews();
 
         // Expand Views Buttons - Listener ----->
         expandViewsListeners();
+
+        // For Getting Values at Start from Preferences
+        setSubtitleValuesViewsAtStart();
+        setPLayerSettingsValuesAtStart();
 
 
         zoomW.post(() -> {
@@ -919,18 +935,20 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public boolean onDoubleTap(@NonNull MotionEvent e) {
                 if (!isLongPressed_Speed && !isScrolling) {
-                    if (e.getX() <= Q3_Width) {
-                        player.seekTo(player.getCurrentPosition() - doubleTapSeekTime);
+                    if (e.getX() <= Q3_Width && isDoubleTapSeekEnabled) {
+                        player.seekTo(player.getCurrentPosition() - seekDuration);
                         showRewindLayout(rewindLayout, rewindText);
                         Log.d(TAG, "onDoubleTap: " + Q3_Width + " " + e.getX() + " " + screenWidth);
-                    } else if (e.getX() <= 2 * Q3_Width) {
+                    }
+                    else if (e.getX() <= 2 * Q3_Width && isDoubleTapPlayEnabled) {
                         if (player != null) {
                             if (!player.isPlaying()) {
                                 playMedia();
                                 isPlaying = true;
                                 playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
                                 Log.d(TAG, "onPLAY: YES");
-                            } else {
+                            }
+                            else {
                                 player.pause();
                                 isPlaying = false;
                                 playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
@@ -938,8 +956,9 @@ public class PlayerActivity extends AppCompatActivity {
                             }
                             Log.d(TAG, "onDoubleTap: " + 2 * Q3_Width + " " + e.getX() + " " + screenWidth);
                         }
-                    } else {
-                        player.seekTo(player.getCurrentPosition() + doubleTapSeekTime);
+                    }
+                    else if (isDoubleTapSeekEnabled) {
+                        player.seekTo(player.getCurrentPosition() + seekDuration);
                         showForwardLayout(forwardLayout, forwardText);
                         Log.d(TAG, "onDoubleTap: " + 3 * Q3_Width + " " + e.getX() + " " + screenWidth);
                     }
@@ -954,7 +973,7 @@ public class PlayerActivity extends AppCompatActivity {
                     isLongPressed = true;
                     hideLayouts(volumeLayout, brightnessLayout, zoomLayout);
 
-                    if (e.getX() < halfWidth) {
+                    if (e.getX() >= Q3_Width && e.getX() <= 2*Q3_Width) {
                         isLongPressed_Lock = true;
                         if (!isScreenLocked) {
                             isScreenLocked = true;
@@ -981,7 +1000,7 @@ public class PlayerActivity extends AppCompatActivity {
             public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float distanceX, float distanceY) {
                 Log.d("Scrolling", "onScroll: "+ gestureDirection.name() + "  " + isSeeking + " - " + isScalling);
 
-                if (gestureDirection == GestureDirection.NONE && !isScalling && !isLongPressed_Speed) {
+                if (gestureDirection == GestureDirection.NONE && !isScalling && !isLongPressed_Speed && isSwipeGestureEnabled) {
                     isScrolling = true;
 
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
@@ -1012,11 +1031,11 @@ public class PlayerActivity extends AppCompatActivity {
                     isSeeking = true;
                     totalScrollX += distanceX;
 
-                    if (Math.abs(totalScrollX) > 20) {
+                    if (Math.abs(totalScrollX) > seekSwipeSensitivity) {
                         if (totalScrollX > 0) {
-                            performSeekByTouch(-500, false);
+                            performSeekByTouch(-500);
                         } else {
-                            performSeekByTouch(500, false);
+                            performSeekByTouch(500);
                         }
                         totalScrollX = 0;
                     }
@@ -1026,34 +1045,32 @@ public class PlayerActivity extends AppCompatActivity {
                         isBrightnessChanging = true;
                         totalScrollY1 += distanceY;
 
-                        if (Math.abs(totalScrollY1) > 30) {
+                        if (Math.abs(totalScrollY1) > brightnessSwipeSensitivity) {
                             if (totalScrollY1 > 0) {
-                                // Scrolled on left, increase volume
+                                // Scrolled Up, increase Brightness
                                 adjustBrightness(0.02f);
                             } else {
-                                // Scrolled on right, decrease volume
+                                // Scrolled Down, decrease Brightness
                                 adjustBrightness(-0.02f);
                             }
-
                             totalScrollY1 = 0;
                         }
                     } else {
                         isVolumeChanging = true;
                         totalScrollY2 += distanceY;
 
-                        if (Math.abs(totalScrollY2) > 50) {
-                            float maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-                            int incrementValue = (int) ((5.0 / 150) * maxVolume);
-                            incrementValue = Math.max(1, incrementValue);
+                        if (Math.abs(totalScrollY2) > volumeSwipeSensitivity) {
+                                float maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                                int incrementValue = Math.round((5f / 150f) * maxVolume);
+                                incrementValue = Math.max(1, incrementValue);
 
                             if (totalScrollY2 > 0) {
-                                // Scrolled on left, increase volume
+                                // Scrolled Up, increase volume
                                 adjustVolume(incrementValue);
                             } else {
-                                // Scrolled on right, decrease volume
+                                // Scrolled Down, decrease volume
                                 adjustVolume(-incrementValue);
                             }
-
                             totalScrollY2 = 0;
                         }
                     }
@@ -1191,7 +1208,7 @@ public class PlayerActivity extends AppCompatActivity {
             seekbar.setMax((int) player.getDuration());
             seekbar.setProgress((int) player.getCurrentPosition());
             time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
-            time2.setText(isTime2ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
+            time2.setText(isRemainingTimeViewEnabled ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
             controlsToast();
 
             audioTracksList.clear();
@@ -1537,27 +1554,23 @@ public class PlayerActivity extends AppCompatActivity {
         time1.setOnClickListener(v -> {
             if (!isTime1ButtonClicked) {
                 time1.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
-                isTime1ButtonClicked = true;
             } else {
                 time1.setText(MillisToTime(player.getCurrentPosition()));
-                isTime1ButtonClicked = false;
             }
-            playerPrefsEditor.putBoolean("isTime1Clicked", isTime1ButtonClicked);
-            playerPrefsEditor.apply();
+            isTime1ButtonClicked = !isTime1ButtonClicked;
+            playerPrefsEditor.putBoolean("isTime1Clicked", isTime1ButtonClicked).apply();
             Log.d(TAG, "onClickTime1: " + isTime1ButtonClicked);
         });
 
         time2.setOnClickListener(v -> {
-            if (!isTime2ButtonClicked) {
+            if (!isRemainingTimeViewEnabled) {
                 time2.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
-                isTime2ButtonClicked = true;
             } else {
                 time2.setText(MillisToTime(player.getDuration()));
-                isTime2ButtonClicked = false;
             }
-            playerPrefsEditor.putBoolean("isTime2Clicked", isTime2ButtonClicked);
-            playerPrefsEditor.apply();
-            Log.d(TAG, "onClickTime2: " + isTime2ButtonClicked);
+            isRemainingTimeViewEnabled = !isRemainingTimeViewEnabled;
+            playerPrefsEditor.putBoolean("isRemainingTimeEnable", isRemainingTimeViewEnabled).apply();
+            Log.d(TAG, "onClickTime2: " + isRemainingTimeViewEnabled);
         });
 
     }
@@ -1898,7 +1911,26 @@ public class PlayerActivity extends AppCompatActivity {
         img.setBackground(drw);
     }
 
-    private void setSubtitleValuesViews() {
+
+    private void setPLayerSettingsValuesAtStart() {
+        isSwipeGestureEnabled = playerPrefs.getBoolean("isSwipe", true);
+        isDoubleTapSeekEnabled = playerPrefs.getBoolean("isSeek", true);
+        isDoubleTapPlayEnabled = playerPrefs.getBoolean("isPlay", true);
+        int seekDurationSec = playerPrefs.getInt("seekDuration", 10);
+        seekSwipeSensiLevel = playerPrefs.getInt("seekSwipeValue", 1);
+        verticalSwipeSensiLevel = playerPrefs.getInt("verticalSwipeValue", 1);
+        int controlsHideTimeoutSec = playerPrefs.getInt("hideTimeout", 5);
+        isLockModeAll = playerPrefs.getBoolean("isLockModeAll", true);
+        isRemainingTimeViewEnabled = playerPrefs.getBoolean("isRemainingTimeEnable", false);
+        isTrackSelectionEnabled = playerPrefs.getBoolean("isTrackSelectionEnable", true);
+
+        seekDuration = seekDurationSec * 1000;
+        controlsHideTimeout = controlsHideTimeoutSec * 1000;
+
+        applySensitivity(seekSwipeSensiLevel, verticalSwipeSensiLevel);
+    }
+    
+    private void setSubtitleValuesViewsAtStart() {
         subFontSize = subtitlePrefs.getInt("size", 20);
         subFont = subtitlePrefs.getInt("font", 0);
         subIsBold = subtitlePrefs.getBoolean("isBold", false);
@@ -2033,6 +2065,35 @@ public class PlayerActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void applySensitivity(int seekLevel, int verticalLevel) {
+        switch (seekLevel) {
+            case 0:
+                seekSwipeSensitivity = DpToPx(35);
+                break;
+            case 1:
+                seekSwipeSensitivity = DpToPx(15);
+                break;
+            case 2:
+                seekSwipeSensitivity = DpToPx(5);
+                break;
+        }
+
+        switch (verticalLevel) {
+            case 0:
+                brightnessSwipeSensitivity = DpToPx(35);
+                volumeSwipeSensitivity = DpToPx(45);
+                break;
+            case 1:
+                brightnessSwipeSensitivity = DpToPx(15);
+                volumeSwipeSensitivity = DpToPx(20);
+                break;
+            case 2:
+                brightnessSwipeSensitivity = DpToPx(5);
+                volumeSwipeSensitivity = DpToPx(10);
+                break;
+        }
     }
 
 
@@ -2456,7 +2517,7 @@ public class PlayerActivity extends AppCompatActivity {
             hideControls();
         };
 
-        handler.postDelayed(controlsRunnable, 5000);
+        handler.postDelayed(controlsRunnable, controlsHideTimeout);
     }
 
     private void lockScreenToast() {
@@ -2466,7 +2527,7 @@ public class PlayerActivity extends AppCompatActivity {
             hideLockButton();
         };
 
-        handler.postDelayed(lockScreenRunnable, 3000);
+        handler.postDelayed(lockScreenRunnable, controlsHideTimeout);
     }
 
 
@@ -2840,10 +2901,10 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    private void performSeekByTouch(int incrementValue, boolean fromUser) {
-        int seekValue = (int) player.getCurrentPosition() + incrementValue;
+    private void performSeekByTouch(int incrementValue) {
+        long seekValue = player.getCurrentPosition() + incrementValue;
         player.seekTo(seekValue);
-        seekbar.setProgress(seekValue);
+        seekbar.setProgress((int) seekValue);
 
         seekCurrentTime = (int) player.getCurrentPosition();
         seekCurrentTimeText.setText(MillisToTime(seekCurrentTime));
@@ -2891,13 +2952,13 @@ public class PlayerActivity extends AppCompatActivity {
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-
-        return (int) ((currentVolume / (float) maxVolume) * 150);
+        float vol = (float) currentVolume / maxVolume;
+        return Math.round(vol * 150);
     }
 
     private int getCurrentBrightnessLevelText() {
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        return (int) (layoutParams.screenBrightness * 50);
+        return Math.round(layoutParams.screenBrightness * 50);
     }
 
 
@@ -3008,7 +3069,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         tapCount++;
 
-        String time = String.valueOf((doubleTapSeekTime / 1000) * tapCount);
+        String time = String.valueOf((seekDuration / 1000) * tapCount);
         timeText.setText(time + " sec");
 
         layout.setPressed(true);
@@ -3066,7 +3127,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         tapCount++;
 
-        String time = String.valueOf((doubleTapSeekTime / 1000) * tapCount);
+        String time = String.valueOf((seekDuration / 1000) * tapCount);
         timeText.setText(time + " sec");
 
         layout.setPressed(true);
@@ -3185,6 +3246,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     public int DpToPixel(float dp, Context context) {
         float density = context.getResources().getDisplayMetrics().density;
-        return (int) (dp * density + 0.5f);
+        return Math.round(dp * density);
+    }
+
+    public int DpToPx(int dp) {
+        float density = this.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }

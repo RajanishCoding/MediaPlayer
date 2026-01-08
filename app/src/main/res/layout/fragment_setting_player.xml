@@ -71,7 +71,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="15dp"
+                android:layout_marginBottom="20dp"
                 android:text="Gesture Controls"
                 android:textColor="@color/text_color2"
                 android:textSize="14sp"
@@ -81,9 +81,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="20dp"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -121,9 +120,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="20dp"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -161,8 +159,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -204,7 +202,8 @@
                 android:layout_height="wrap_content"
                 android:hint="Double-tap Seek Duration"
                 app:hintTextColor="?attr/colorOnSurface"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="15dp">
 
                 <AutoCompleteTextView
                     android:id="@+id/seekDurationDropdown"
@@ -223,7 +222,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center_vertical"
                 android:orientation="vertical">
 
@@ -260,7 +259,9 @@
                         android:layout_weight="1"
                         app:iconTint="@color/text_color"
                         android:backgroundTint="@color/btn_color"
-                        android:text="Normal" />
+                        android:text="Normal"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMaxTextSize="14sp"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/seekSwipeFast"
@@ -279,7 +280,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="15dp"
                 android:gravity="center_vertical"
                 android:orientation="vertical">
 
@@ -333,14 +334,14 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="20dp"
+                android:layout_marginVertical="30dp"
                 android:background="@color/divider_color" />
 
-            <!-- ================= UI APPEARANCE SECTION ================= -->
+            <!-- UI APPEARANCE SECTION -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="20dp"
                 android:text="Interface &amp; Display"
                 android:textColor="@color/text_color2"
                 android:textSize="14sp"
@@ -350,8 +351,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginTop="5dp">
+                android:layout_gravity="center_vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -381,79 +381,11 @@
                 android:valueFrom="1"
                 android:valueTo="10" />
 
-            <!-- Sliders for UI -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginTop="5dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Button Opacity"
-                    android:textColor="@color/text_color"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/buttonOpacityText"
-                    android:layout_width="50dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="100%"
-                    android:textColor="?attr/colorOnSurface"/>
-            </LinearLayout>
-
-            <com.google.android.material.slider.Slider
-                android:id="@+id/buttonOpacitySlider"
-                style="@style/SliderStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:stepSize="10"
-                android:value="100"
-                android:valueFrom="20"
-                android:valueTo="100" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginTop="5dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Fade Animation (ms)"
-                    android:textColor="@color/text_color"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/fadeTimeText"
-                    android:layout_width="50dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="20ms"
-                    android:textColor="?attr/colorOnSurface"/>
-            </LinearLayout>
-
-            <com.google.android.material.slider.Slider
-                android:id="@+id/fadeTimeSlider"
-                style="@style/SliderStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:stepSize="100"
-                android:value="300"
-                android:valueFrom="100"
-                android:valueTo="800" />
-
-
             <!-- Interface Lock Mode -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="10dp"
                 android:text="Interface Lock Mode"
                 android:textColor="@color/text_color"
                 android:textSize="14sp" />
@@ -496,66 +428,25 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="20dp"
+                android:layout_marginVertical="30dp"
                 android:background="@color/divider_color" />
 
-            <!-- ================= NAVIGATION & BEHAVIOR ================= -->
+            <!-- NAVIGATION & BEHAVIOR -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="20dp"
                 android:text="Navigation &amp; Behavior"
                 android:textColor="@color/text_color2"
                 android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- Persistent Seekbar (Two-Line) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:gravity="center_vertical"
-                android:minHeight="64dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/persistentSeek"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:paddingEnd="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Persistent Seekbar"
-                        android:textColor="@color/text_color"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:alpha="0.7"
-                        android:text="Keep the bottom progress bar visible even when controls are hidden."
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/persistentSeekSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+                android:textStyle="bold"/>
 
             <!-- Show Remaining Time (Two-Line) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="20dp"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -570,9 +461,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Show Remaining Time"
-                        android:textColor="?attr/colorOnSurface                        android:textColor="@color/text_color"
-
-                    android:textSize="16sp" />
+                        android:textColor="@color/text_color"
+                        android:textSize="16sp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -595,7 +485,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal">
 
                 <LinearLayout

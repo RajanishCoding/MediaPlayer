@@ -541,7 +541,7 @@
         android:elevation="8dp"
         android:paddingHorizontal="20dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <!-- Back Button and Title Bar -->
         <androidx.constraintlayout.widget.ConstraintLayout
