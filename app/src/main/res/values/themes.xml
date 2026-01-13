@@ -42,6 +42,12 @@
         <item name="android:textColor">@color/button_text_dark</item>
     </style>
 
+    <style name="ButtonStyleToggle2" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/btn_color</item>
+        <item name="strokeColor">@color/stroke_color</item>
+        <item name="android:textColor">@color/text_color</item>
+    </style>
+
     <!-- Text View Style -->
     <style name="TextViewStyle" parent="Widget.MaterialComponents.TextView">
         <item name="android:textColor">@color/text_view_text</item>

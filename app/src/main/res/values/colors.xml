@@ -127,6 +127,7 @@
     <color name="text_color2_rev">#AAAAAA</color>
 
     <color name="btn_color">#40DFDFDF</color>
+    <color name="btn_color_checked">#400A004E</color>
 
     <color name="slider_thumb_color">@color/text_color</color>
     <color name="slider_active_color">@color/text_color</color>

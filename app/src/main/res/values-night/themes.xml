@@ -39,7 +39,7 @@
     </style>
 
     <style name="ButtonStyleToggle" parent="Widget.AppCompat.Button">
-        <item name="android:background">@drawable/toggle_notselected</item>
+        <item name="android:background">@drawable/togglebtn_notselected</item>
         <item name="android:textColor">@color/button_text_dark</item>
     </style>
 

@@ -217,8 +217,9 @@
         android:id="@+id/MenuContainer_Audio"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/gradient_menu"
+        android:background="@drawable/shape_sidebar"
         android:visibility="gone"
+        android:layout_margin="8dp"
         android:clickable="true"
         android:focusable="true"
         android:elevation="5dp"
@@ -248,38 +249,39 @@
                     android:textStyle="bold"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <LinearLayout
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/layoutViewToggle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="15dp"
+                    android:layout_marginTop="5dp"
                     android:padding="8dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true"
                     app:layout_constraintTop_toBottomOf="@id/layoutTitle">
 
-
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/layout_list"
-                        style="@style/ButtonStyleToggle"
+                        style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_marginRight="8dp"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:drawableTop="@drawable/rounded_lists_24"
-                        android:drawablePadding="6dp"
-                        android:paddingVertical="6dp"
+                        app:iconGravity="top"
+                        app:icon="@drawable/rounded_lists_24"
+                        android:backgroundTint="@color/selector_toggle_btn"
                         android:text="List Layout" />
 
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/layout_grid"
-                        style="@style/ButtonStyleToggle"
-                        android:layout_weight="1"
+                        style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:drawableTop="@drawable/rounded_grid_view_24"
-                        android:paddingVertical="6dp"
-                        android:drawablePadding="6dp"
-                        android:text="Grid Layout" />
-                </LinearLayout>
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        app:iconGravity="top"
+                        app:icon="@drawable/rounded_grid_view_24"
+                        android:backgroundTint="@color/selector_toggle_btn"
+                        android:text="Grid Layout"/>
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -318,29 +320,39 @@
 
                         <TableRow
                             android:paddingVertical="4dp"
-                            android:layout_width="match_parent">
+                            android:layout_width="match_parent"
+                            >
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_byName"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Name" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_byDate"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
-                                android:layout_height="40dp"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
+                                android:layout_height="38dp"
                                 android:layout_marginRight="5dp"
-                                android:text="Date Added" />
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:text="Date Added"
+                                android:textColor="@color/text_color" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_bySize"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Size" />
                         </TableRow>
 
@@ -348,64 +360,72 @@
                             android:paddingVertical="4dp"
                             android:layout_width="match_parent">
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_byLength"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Duration" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_byResol"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
-                                android:clickable="false"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Resolution" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/sort_byFps"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
-                                android:clickable="false"
-                                android:text="FPS" />
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
+                                android:text="Frame Rate" />
                         </TableRow>
 
                     </TableLayout>
 
-                    <LinearLayout
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/sortOrderToggle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginTop="5dp"
                         android:padding="8dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true"
                         app:layout_constraintTop_toBottomOf="@id/sortTable">
 
-                        <androidx.appcompat.widget.AppCompatButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/sort_Asc"
-                            style="@style/ButtonStyleToggle"
+                            style="?attr/materialButtonOutlinedStyle"
                             android:layout_weight="1"
                             android:layout_width="0dp"
-                            android:layout_height="40dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginRight="8dp"
-                            android:drawableStart="@drawable/rounded_arrow_downward_alt_24"
-                            android:paddingHorizontal="30dp"
-                            android:drawablePadding="0dp"
+                            app:icon="@drawable/rounded_arrow_downward_alt_24"
+                            android:backgroundTint="@color/selector_toggle_btn"
                             android:text="Ascending"/>
 
-                        <androidx.appcompat.widget.AppCompatButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/sort_Desc"
-                            style="@style/ButtonStyleToggle"
+                            style="?attr/materialButtonOutlinedStyle"
                             android:layout_weight="1"
                             android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:drawableStart="@drawable/rounded_arrow_upward_alt_24"
-                            android:paddingHorizontal="30dp"
-                            android:drawablePadding="0dp"
+                            android:layout_height="wrap_content"
+                            app:icon="@drawable/rounded_arrow_upward_alt_24"
+                            android:backgroundTint="@color/selector_toggle_btn"
                             android:text="Descending" />
-                    </LinearLayout>
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -449,19 +469,26 @@
                             android:paddingVertical="4dp"
                             android:layout_width="wrap_content">
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/details_Date"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Date Added" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/details_Dur"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
+                                android:layout_marginRight="5dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Duration" />
 
                         </TableRow>
@@ -470,20 +497,25 @@
                             android:paddingVertical="4dp"
                             android:layout_width="match_parent">
 
-
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/details_Path"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
                                 android:layout_marginRight="5dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Path" />
 
-                            <androidx.appcompat.widget.AppCompatButton
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/details_Size"
-                                style="@style/ButtonStyleToggle"
-                                android:layout_width="match_parent"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
                                 android:layout_height="40dp"
+                                android:checkable="true"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:textColor="@color/text_color"
                                 android:text="Size" />
 
                         </TableRow>

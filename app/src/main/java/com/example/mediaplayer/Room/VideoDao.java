@@ -39,6 +39,12 @@ public interface VideoDao {
     @Query("SELECT * FROM video WHERE uri = :uri")
     Video getByUri(String uri);
 
+    @Query("SELECT EXISTS(SELECT 1 FROM video WHERE path = :path)")
+    boolean isPathExists(String path);
+
+    @Query("UPDATE video SET isNewVideo = 0 WHERE path = :path")
+    void markAsPlayed(String path);
+
 
 
     @Query("select * from video order by name")

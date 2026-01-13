@@ -40,6 +40,12 @@ public interface AudioDao {
     @Query("SELECT * FROM audio WHERE uri = :uri")
     Audio getByUri(String uri);
 
+    @Query("SELECT EXISTS(SELECT 1 FROM audio WHERE path = :path)")
+    boolean isPathExists(String path);
+
+    @Query("UPDATE audio SET isNewAudio = 0 WHERE path = :path")
+    void markAsPlayed(String path);
+
 
 
     @Query("select * from audio order by name")

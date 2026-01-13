@@ -76,6 +76,9 @@ public class FilesListActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
+    private SharedPreferences listPrefs;
+    private SharedPreferences.Editor listPrefsEditor;
+
     private View menu_Container;
     private ImageButton menu_Button;
     private ImageButton search_Button;
@@ -102,19 +105,22 @@ public class FilesListActivity extends AppCompatActivity {
 
 //        lastPlay_Button = findViewById(R.id.Play_Last);
 
-        sharedPreferences = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
-        setThemeMode();
-
 //        menu_Container = findViewById(R.id.MenuContainer);
         menu_Button = findViewById(R.id.moremenu_button);
         search_Button = findViewById(R.id.search_button);
 
+        sharedPreferences = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        listPrefs = getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
+
+        setThemeMode();
+
+
 //        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 //            @Override
 //            public void onRefresh() {
-////                queryMediaFiles(true); // Example: Refresh media list
+//                queryMediaFiles(true); // Example: Refresh media list
 //                swipeRefreshLayout.setRefreshing(false);
 //            }
 //        });

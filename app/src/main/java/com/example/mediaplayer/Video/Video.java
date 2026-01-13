@@ -34,7 +34,10 @@ public class Video {
     private Bitmap thumbnailUrl;
 
     private boolean isVideo;
-    
+
+    private boolean isNewVideo = true;
+    private boolean isLastPlayed;
+
     @Ignore
     public boolean isSelected;
 
@@ -137,6 +140,22 @@ public class Video {
         isVideo = video;
     }
 
+    public boolean isNewVideo() {
+        return isNewVideo;
+    }
+
+    public void setIsNewVideo(boolean isNew) {
+        isNewVideo = isNew;
+    }
+
+    public boolean isLastPlayed() {
+        return isLastPlayed;
+    }
+
+    public void setLastPlayed(boolean isLastPlayed) {
+        this.isLastPlayed = isLastPlayed;
+    }
+
     public boolean isSelected() {
         return isSelected;
     }
@@ -165,6 +184,8 @@ public class Video {
                 Objects.equals(size, video.size) &&
                 isSelected == video.isSelected &&
 //                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
-                isVideo == video.isVideo;
+                isVideo == video.isVideo &&
+                isNewVideo == video.isNewVideo &&
+                isLastPlayed == video.isLastPlayed;
     }
 }

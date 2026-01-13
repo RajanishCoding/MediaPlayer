@@ -34,6 +34,9 @@ public class Audio {
 
     private boolean isVideo;
 
+    private boolean isNewAudio = true;
+    private boolean isLastPlayed;
+
     @Ignore
     public boolean isSelected;
 
@@ -111,6 +114,22 @@ public class Audio {
         isVideo = video;
     }
 
+    public boolean isNewAudio() {
+        return isNewAudio;
+    }
+
+    public void setIsNewAudio(boolean isNew) {
+        isNewAudio = isNew;
+    }
+
+    public boolean isLastPlayed() {
+        return isLastPlayed;
+    }
+
+    public void setLastPlayed(boolean isLastPlayed) {
+        this.isLastPlayed = isLastPlayed;
+    }
+
     public void isSelected(boolean isSelected) {
         this.isSelected = isSelected;
     }
@@ -138,6 +157,8 @@ public class Audio {
                 Objects.equals(duration, audio.duration) &&
                 Objects.equals(size, audio.size) &&
 //                Objects.equals(lastPlayedTime, video.lastPlayedTime) &&
-                isVideo == audio.isVideo;
+                isVideo == audio.isVideo &&
+                isNewAudio == audio.isNewAudio &&
+                isLastPlayed == audio.isLastPlayed;
     }
 }

@@ -58,14 +58,8 @@ public class SettingPlayerFragment extends Fragment {
     private Slider timeoutSlider;
     private TextView timeoutText;
 
-    private MaterialButtonToggleGroup lockModeToggle;
-    private MaterialButton lockModeAllB;
-    private MaterialButton lockModeTouchB;
-
     private LinearLayout remainingTimeLayout;
     private MaterialSwitch remainingTimeSwitch;
-    private LinearLayout trackSelectionLayout;
-    private MaterialSwitch trackSelectionSwitch;
 
     private boolean isSwipeEnable;
     private boolean isSeekEnable;
@@ -74,10 +68,7 @@ public class SettingPlayerFragment extends Fragment {
     private int seekSwipeValue;
     private int verticalSwipeValue;
     private int hideTimeout;
-    private int fadeTime;
-    private boolean isLockModeAll;
     private boolean isRemainingTimeEnable;
-    private boolean isTrackSelectionEnable;
 
 //    private final int[] seekDurationList = new int[]{5, 10, 15, 20, 30, 40, 50, 60};
 //    private final List<String> seekDurationListDropdown = Arrays.asList("5 seconds", "10 seconds", "15 seconds", "20 seconds", "30 seconds", "40 seconds", "50 seconds", "60 seconds");
@@ -125,14 +116,8 @@ public class SettingPlayerFragment extends Fragment {
         timeoutSlider = view.findViewById(R.id.timeoutSlider);
         timeoutText = view.findViewById(R.id.timeoutText);
 
-        lockModeToggle = view.findViewById(R.id.lockModeToggle);
-        lockModeAllB = view.findViewById(R.id.lockModeFull);
-        lockModeTouchB = view.findViewById(R.id.lockModeTouch);
-
         remainingTimeLayout = view.findViewById(R.id.remainingTime);
         remainingTimeSwitch = view.findViewById(R.id.remainingTimeSwitch);
-        trackSelectionLayout = view.findViewById(R.id.trackSelection);
-        trackSelectionSwitch = view.findViewById(R.id.trackSelectionSwitch);
 
         ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, seekDurationListDropdown);
         seekDurationDropdown.setAdapter(fontDropdownAdapter);
@@ -259,22 +244,6 @@ public class SettingPlayerFragment extends Fragment {
             }
         });
 
-        lockModeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-            @Override
-            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                if (checkedId == R.id.lockModeFull) {
-                    setCheckedButtonsIcon(lockModeAllB, isChecked);
-                    isLockModeAll = isChecked;
-                    playerPrefsEditor.putBoolean("isLockModeAll", isChecked).apply();
-                }
-                else if (checkedId == R.id.lockModeTouch) {
-                    setCheckedButtonsIcon(lockModeTouchB, isChecked);
-                    isLockModeAll = !isChecked;
-                    playerPrefsEditor.putBoolean("isLockModeAll", !isChecked).apply();
-                }
-            }
-        });
-
         remainingTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -283,15 +252,6 @@ public class SettingPlayerFragment extends Fragment {
             }
         });
         remainingTimeLayout.setOnClickListener(v -> remainingTimeSwitch.setChecked(!isRemainingTimeEnable));
-
-        trackSelectionSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                isTrackSelectionEnable = b;
-                playerPrefsEditor.putBoolean("isTrackSelectionEnable", b).apply();
-            }
-        });
-        trackSelectionLayout.setOnClickListener(v -> trackSelectionSwitch.setChecked(!isTrackSelectionEnable));
 
         setValuesViewsAtStart();
     }
@@ -304,9 +264,7 @@ public class SettingPlayerFragment extends Fragment {
         seekSwipeValue = playerPrefs.getInt("seekSwipeValue", 1);
         verticalSwipeValue = playerPrefs.getInt("verticalSwipeValue", 1);
         hideTimeout = playerPrefs.getInt("hideTimeout", 5);
-        isLockModeAll = playerPrefs.getBoolean("isLockModeAll", true);
         isRemainingTimeEnable = playerPrefs.getBoolean("isRemainingTimeEnable", false);
-        isTrackSelectionEnable = playerPrefs.getBoolean("isTrackSelectionEnable", true);
 
         swipeEnableSwitch.setChecked(isSwipeEnable);
         seekEnableSwitch.setChecked(isSeekEnable);
@@ -317,12 +275,7 @@ public class SettingPlayerFragment extends Fragment {
         verticalSwipeToggle.check(verticalSwipeValue == 0 ? R.id.verticalSwipeSlow : verticalSwipeValue == 1 ? R.id.verticalSwipeNormal : R.id.verticalSwipeFast);
 
         timeoutSlider.setValue(hideTimeout);
-//        timeoutText.setText(String.valueOf(hideTimeout) + "s");
-
-        lockModeToggle.check(isLockModeAll ? R.id.lockModeFull : R.id.lockModeTouch);
-
         remainingTimeSwitch.setChecked(isRemainingTimeEnable);
-        trackSelectionSwitch.setChecked(isTrackSelectionEnable);
     }
 
     private void setCheckedButtonsIcon(MaterialButton btn, boolean isChecked) {

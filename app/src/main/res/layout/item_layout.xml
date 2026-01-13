@@ -71,6 +71,21 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
+            <TextView
+                android:id="@+id/newText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:background="@drawable/shape_new_text"
+                android:paddingHorizontal="5dp"
+                android:paddingVertical="1dp"
+                android:text="NEW"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:elevation="4dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Video Info -->

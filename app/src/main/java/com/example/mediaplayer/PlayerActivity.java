@@ -79,6 +79,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.PlaylistManager;
+import com.example.mediaplayer.Room.AudioDao;
+import com.example.mediaplayer.Room.RoomDB;
+import com.example.mediaplayer.Room.VideoDao;
 import com.example.mediaplayer.Tracks.AudioTracks;
 import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
@@ -408,6 +411,12 @@ public class PlayerActivity extends AppCompatActivity {
 
     private AnimationLibs animationLibs;
 
+    private SharedPreferences listPrefs;
+    private SharedPreferences.Editor listPrefsEditor;
+
+    private VideoDao videoDao;
+    private AudioDao audioDao;
+
     public static PlayerListener playerListener;
 
     private Player.Listener listener;
@@ -649,9 +658,11 @@ public class PlayerActivity extends AppCompatActivity {
         subtitlePrefs = getSharedPreferences("SubtitleSetting", Context.MODE_PRIVATE);
         subtitlePrefsEditor = subtitlePrefs.edit();
 
+        listPrefs = getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
+        listPrefsEditor = listPrefs.edit();
 
-        loopValue = playerPrefs.getInt("loopValue", 0);
-        isShuffled = playerPrefs.getBoolean("isShuffle", false);
+        audioDao = RoomDB.getDatabase(this).audioDao();
+        videoDao = RoomDB.getDatabase(this).videoDao();
 
 
         Intent intent = getIntent();
@@ -659,11 +670,6 @@ public class PlayerActivity extends AppCompatActivity {
         media_path = intent.getStringExtra("Path");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
         currentIndex = intent.getIntExtra("currentIndex", 0);
-
-        playerPrefsEditor.putString("lastPlayedFileName", media_name);
-        playerPrefsEditor.putString("lastPlayedFilePath", media_path);
-        playerPrefsEditor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
-        playerPrefsEditor.apply();
 
         Log.d("isVideoFile", "onCreate: " + isVideoFile);
 
@@ -763,14 +769,14 @@ public class PlayerActivity extends AppCompatActivity {
 
         // For Getting Values at Start from Preferences
         setSubtitleValuesViewsAtStart();
-        setPLayerSettingsValuesAtStart();
+        setPlayerSettingsValuesAtStart();
 
 
         zoomW.post(() -> {
             originalWidth = playerView.getWidth();
             originalHeight = playerView.getHeight();
-        });
 
+        });
 
         zoomW.setOnTouchListener((v, event) -> {
             if (!isScreenLocked) {
@@ -1198,7 +1204,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (isFirstTimeForCurrentMedia) {
             isFirstTimeForCurrentMedia = false;
-            
+
             lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
             player.seekTo(lastPlayedTime);
 
@@ -1226,16 +1232,25 @@ public class PlayerActivity extends AppCompatActivity {
             loadAudioTracks();
             loadSubTracks();
 
-            playerPrefsEditor.putString("lastPlayedFileName", media_name);
-            playerPrefsEditor.putString("lastPlayedFilePath", media_path);
-            playerPrefsEditor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
-            playerPrefsEditor.apply();
+            if (isVideoFile) {
+                new Thread(() -> videoDao.markAsPlayed(media_path)).start();
+                listPrefsEditor.putString("lastPlayedVideoName", media_name);
+                listPrefsEditor.putString("lastPlayedVideoPath", media_path);
+            }
+            else {
+                new Thread(() -> audioDao.markAsPlayed(media_path)).start();
+                listPrefsEditor.putString("lastPlayedAudioName", media_name);
+                listPrefsEditor.putString("lastPlayedAudioPath", media_path);
+            }
+
+            listPrefsEditor.putBoolean("lastPlayedFile_isVideo", isVideoFile);
+            listPrefsEditor.apply();
         }
     }
 
     private void updatePlayerUI(boolean isNamePresent) {
         String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
-        ToolbarText.setText(name);
+        ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
         buffer_view.setVisibility(View.VISIBLE);
         isBuffuringForCurrentMedia = true;
@@ -1245,9 +1260,9 @@ public class PlayerActivity extends AppCompatActivity {
         Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
         Log.d("heibeibvi", "updatePlayerUI: ");
 
-        if (isNamePresent) {
+//        if (isNamePresent) {
             playMedia();
-        }
+//        }
 
         updateExpandViews();
 
@@ -1256,8 +1271,6 @@ public class PlayerActivity extends AppCompatActivity {
         Intent intent = new Intent("BG_PLAY_STATUS");
         intent.putExtra("isBGPlay", isBackgroundPlay);
         LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
-
-
     }
 
     private void updateExpandViews() {
@@ -1363,6 +1376,8 @@ public class PlayerActivity extends AppCompatActivity {
             public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
                 Log.d("heibeibvi", "onMediaItemTransition: ");
                 mediaItem = newMediaItem;
+                media_name = mediaItem.mediaMetadata.title.toString();
+                media_path = mediaItem.localConfiguration.uri.getPath();
                 isOrientationChangedOnReady = false;
                 updatePlayerUI(false);
                 if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
@@ -1912,7 +1927,9 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    private void setPLayerSettingsValuesAtStart() {
+    private void setPlayerSettingsValuesAtStart() {
+        loopValue = playerPrefs.getInt("loopValue", 0);
+        isShuffled = playerPrefs.getBoolean("isShuffle", false);
         isSwipeGestureEnabled = playerPrefs.getBoolean("isSwipe", true);
         isDoubleTapSeekEnabled = playerPrefs.getBoolean("isSeek", true);
         isDoubleTapPlayEnabled = playerPrefs.getBoolean("isPlay", true);
@@ -2972,7 +2989,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !hasAudioFocus) {
             audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
                     .build();
 
             focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
@@ -2988,14 +3005,13 @@ public class PlayerActivity extends AppCompatActivity {
                             wasPlaying_Focus = false;
                         }
                         else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                            // pause playback, ex. if a call occurs
                             if (player.isPlaying()){
                                 player.pause();
                                 wasPlaying_Focus = true;
                             }
-
                         }
                         else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-//                            player.setVolume(1.0f);
                             if (wasPlaying_Focus) {
                                 player.play();
                                 wasPlaying_Focus = false;

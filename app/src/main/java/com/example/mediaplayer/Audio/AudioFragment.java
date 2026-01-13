@@ -49,7 +49,8 @@ import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.example.mediaplayer.Room.AudioDao;
 import com.example.mediaplayer.Room.RoomDB;
-import com.example.mediaplayer.Video.Video;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -57,7 +58,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -100,21 +100,23 @@ public class AudioFragment extends Fragment {
     private boolean switch_frag;
     private boolean switch_isEnd = true;
 
-    private Button ByName_sort;
-    private Button BySize_sort;
-    private Button ByDate_sort;
-    private Button ByLength_sort;
-    private Button Asc_sort;
-    private Button Desc_sort;
+    private MaterialButton ByName_sort;
+    private MaterialButton BySize_sort;
+    private MaterialButton ByDate_sort;
+    private MaterialButton ByLength_sort;
+    private MaterialButtonToggleGroup sortOrderToggle;
+    private MaterialButton Asc_sort;
+    private MaterialButton Desc_sort;
 
-    private Button path_Details;
-    private Button date_Details;
-    private Button size_Details;
-    private Button dur_Details;
+    private MaterialButton path_Details;
+    private MaterialButton date_Details;
+    private MaterialButton size_Details;
+    private MaterialButton dur_Details;
     private CheckBox durThumbnail_Details;
 
-    private Button layout_List;
-    private Button layout_Grid;
+    private MaterialButtonToggleGroup layoutToggle;
+    private MaterialButton layout_List;
+    private MaterialButton layout_Grid;
 
     private boolean isPath_Visible;
     private boolean isDate_Visible;
@@ -130,6 +132,7 @@ public class AudioFragment extends Fragment {
     private boolean isDur_OnThumbnail;
 
     private ImageButton lastPlay_Button;
+    private int lastPlayedPosition;
 
     private ImageButton toolbarSel_back;
     private ImageButton toolbarSel_play;
@@ -148,6 +151,9 @@ public class AudioFragment extends Fragment {
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
+
+    private SharedPreferences listPrefs;
+    private SharedPreferences.Editor listPrefsEditor;
 
     private AudioDao audioDao;
 
@@ -191,6 +197,7 @@ public class AudioFragment extends Fragment {
         ByLength_sort = view.findViewById(R.id.sort_byLength);
         BySize_sort = view.findViewById(R.id.sort_bySize);
 
+        sortOrderToggle = view.findViewById(R.id.sortOrderToggle);
         Asc_sort = view.findViewById(R.id.sort_Asc);
         Desc_sort = view.findViewById(R.id.sort_Desc);
 
@@ -200,6 +207,7 @@ public class AudioFragment extends Fragment {
         dur_Details = view.findViewById(R.id.details_Dur);
         durThumbnail_Details = view.findViewById(R.id.more_dur);
 
+        layoutToggle = view.findViewById(R.id.layoutViewToggle);
         layout_List = view.findViewById(R.id.layout_list);
         layout_Grid = view.findViewById(R.id.layout_grid);
 
@@ -220,6 +228,9 @@ public class AudioFragment extends Fragment {
 
         settingsPrefs = requireContext().getSharedPreferences("AudioListSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
+
+        listPrefs = requireContext().getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
+        listPrefsEditor = listPrefs.edit();
 
         playerPrefs = requireContext().getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
@@ -248,6 +259,8 @@ public class AudioFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
+        boolean isLastPlayButtonEnabled = listPrefs.getBoolean("isFloatingResumeEnabled", true);
+        lastPlay_Button.setVisibility(isLastPlayButtonEnabled ? View.VISIBLE : View.GONE);
 
 //      Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -256,6 +269,7 @@ public class AudioFragment extends Fragment {
 
 //      Setting at start
         setListObserver();
+        Load_Or_Query_MediaList();
 
 //      Loading at Start
         loadDetailsButtonVisibility();
@@ -270,6 +284,19 @@ public class AudioFragment extends Fragment {
         setBackground_DetailsButtons();
 
         adapter.addSelectionListener(new AudioAdapter.SelectionListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onItemClicked(int position, Audio audio) {
+//                new Thread(() -> audioDao.markAsPlayed(audio.getPath())).start();
+                Intent intent = new Intent(context, PlayerActivity.class);
+                intent.putExtra("Name", audio.getName());
+                intent.putExtra("Path", audio.getPath());
+                intent.putExtra("isVideo", audio.isVideo());
+                intent.putExtra("currentIndex", position);
+                Log.d("isVideoFile", "onClick: " + audio.isVideo());
+                context.startActivity(intent);
+            }
+
             @Override
             public void onSelectionStarts() {
                 animationLibs.fadeIn(toolbar_selection, 350, null, null);
@@ -377,17 +404,22 @@ public class AudioFragment extends Fragment {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                String name = playerPrefs.getString("lastPlayedFileName", null);
-                String path = playerPrefs.getString("lastPlayedFilePath", null);
-                Boolean isVideo = playerPrefs.getBoolean("lastPlayedFile_isVideo", false);
+                String name = listPrefs.getString("lastPlayedAudioName", "");
+                String path = listPrefs.getString("lastPlayedAudioPath", "");
+                Boolean isVideo = listPrefs.getBoolean("lastPlayedFile_isVideo", false);
 
-                if (name != null) {
-                    Intent intent = new Intent(requireActivity(), PlayerActivity.class);
-                    intent.putExtra("Name", name);
-                    intent.putExtra("Path", path);
-                    intent.putExtra("isVideo", isVideo);
-                    startActivity(intent);
-                }
+                new Thread(() -> {
+                    if (audioDao.isPathExists(path)) {
+                        requireActivity().runOnUiThread(() -> {
+                            Intent intent = new Intent(requireActivity(), PlayerActivity.class);
+                            intent.putExtra("Name", name);
+                            intent.putExtra("Path", path);
+                            intent.putExtra("isVideo", isVideo);
+                            intent.putExtra("currentIndex", lastPlayedPosition);
+                            startActivity(intent);
+                        });
+                    }
+                }).start();
             }
         });
 
@@ -448,8 +480,17 @@ public class AudioFragment extends Fragment {
 
 
     private void layoutB_Listeners() {
-        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
-        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+        layoutToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.layout_list) {
+                    isList = isChecked;
+                }
+                else {
+                    isList = !isChecked;
+                }
+            }
+        });
     }
 
     private void sortB_Listeners() {
@@ -458,29 +499,38 @@ public class AudioFragment extends Fragment {
         ByLength_sort.setOnClickListener(v -> setBackground_SortButtons("Length"));
         BySize_sort.setOnClickListener(v -> setBackground_SortButtons("Size"));
 
-        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
-        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+        sortOrderToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.sort_Asc) {
+                    isAscending = isChecked;
+                }
+                else {
+                    isAscending = !isChecked;
+                }
+            }
+        });
     }
 
     private void detailsB_Listeners() {
         path_Details.setOnClickListener(v -> {
             isPath_Visible = !isPath_Visible;
-            setBackground(path_Details, isPath_Visible);
+            path_Details.setChecked(isPath_Visible);
         });
 
         date_Details.setOnClickListener(v -> {
             isDate_Visible = !isDate_Visible;
-            setBackground(date_Details, isDate_Visible);
+            date_Details.setChecked(isDate_Visible);
         });
 
         size_Details.setOnClickListener(v -> {
             isSize_Visible = !isSize_Visible;
-            setBackground(size_Details, isSize_Visible);
+            size_Details.setChecked(isSize_Visible);
         });
 
         dur_Details.setOnClickListener(v -> {
             isDur_Visible = !isDur_Visible;
-            setBackground(dur_Details, isDur_Visible);
+            dur_Details.setChecked(isDur_Visible);
         });
 
         durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -502,9 +552,23 @@ public class AudioFragment extends Fragment {
                 if (audios == null || audios.isEmpty()) foundText.setVisibility(View.VISIBLE);
                 else foundText.setVisibility(View.INVISIBLE);
 
+                if (audios != null) {
+                    String lastPlayedPath = listPrefs.getString("lastPlayedAudioPath", "");
+                    lastPlayedPosition = 0;
+
+                    for (int i = 0; i < audios.size(); i++) {
+                        Audio v = audios.get(i);
+                        boolean isMatch = v.getPath().equals(lastPlayedPath);
+                        v.setLastPlayed(isMatch);
+
+                        if (isMatch) {
+                            lastPlayedPosition = i; // Position for Last Play Floating Button
+                        }
+                    }
+                }
+
                 adapter.submitList(audios);
                 storedMediaList = new ArrayList<>(audios);
-                Load_Or_Query_MediaList();
                 setAudioPlaylist();
             }
         });
@@ -529,47 +593,45 @@ public class AudioFragment extends Fragment {
         if (!b)
             button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
         else
-            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
+            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.togglebtn_selected));
     }
 
     private void setBackground_LayoutButtons(boolean isList) {
-        setBackground(layout_List, false);
-        setBackground(layout_Grid, false);
-        setBackground(isList ? layout_List : layout_Grid, true);
+        if (isList) layout_List.setChecked(true);
+        else layout_Grid.setChecked(true);
         this.isList = isList;
     }
 
     private void setBackground_SortButtons(String sortBy_Button) {
-        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort);
+        List<MaterialButton> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort);
 
         // Set all buttons to false first
-        for (Button button : sortButtons) {
-            setBackground(button, false);
+        for (MaterialButton button : sortButtons) {
+            button.setChecked(false);
         }
 
         // Set the selected button to true
         switch (sortBy_Button) {
-            case "Name":   setBackground(ByName_sort, true);  break;
-            case "Size":   setBackground(BySize_sort, true);  break;
-            case "Length": setBackground(ByLength_sort, true); break;
-            case "Date":   setBackground(ByDate_sort, true);  break;
+            case "Name":   ByName_sort.setChecked(true);   break;
+            case "Size":   BySize_sort.setChecked(true);   break;
+            case "Length": ByLength_sort.setChecked(true); break;
+            case "Date":   ByDate_sort.setChecked(true);   break;
         }
 
         sortBy = sortBy_Button;
     }
 
     private void setBackground_AscDesc_Buttons(boolean isAscending) {
-        setBackground(Asc_sort, false);
-        setBackground(Desc_sort, false);
-        setBackground(isAscending ? Asc_sort : Desc_sort, true);
+        if (isAscending) Asc_sort.setChecked(true);
+        else Desc_sort.setChecked(true);
         this.isAscending = isAscending;
     }
 
     private void setBackground_DetailsButtons() {
-        setBackground(path_Details, isPath_Visible);
-        setBackground(size_Details, isSize_Visible);
-        setBackground(date_Details, isDate_Visible);
-        setBackground(dur_Details, isDur_Visible);
+        path_Details.setChecked(isPath_Visible);
+        size_Details.setChecked(isSize_Visible);
+        date_Details.setChecked(isDate_Visible);
+        dur_Details.setChecked(isDur_Visible);
         durThumbnail_Details.setChecked(isDur_OnThumbnail);
     }
 
@@ -667,8 +729,10 @@ public class AudioFragment extends Fragment {
                 Check_And_Update_Files();
             }
 
-            for (Audio v : storedMediaList) {
-                getMediaDetails(v);
+            if (storedMediaList != null) {
+                for (Audio v : storedMediaList) {
+                    getMediaDetails(v);
+                }
             }
         });
     }

@@ -3,9 +3,11 @@
   <component name="AndroidLayouts">
     <shared>
       <config>
-        <device id="_android_virtual_device_id_Pixel_7_API_29_-_A10" />
-        <device id="_device_class_phone" />
+        <device id="_android_virtual_device_id_Pixel_7_API_33_-_A13" />
+        <device id="pixel_9_pro_xl" />
         <device id="_device_class_foldable" />
+        <device id="_device_class_phone" />
+        <device id="_android_virtual_device_id_Pixel_7_API_29_-_A10" />
         <device id="pixel_8" />
         <device id="desktop_medium" />
         <device id="tv_4k" />
@@ -29,7 +31,24 @@
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable-night/shape_sidebar.xml">
+        <config>
+          <night>night</night>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable-night/shape_thumbnail_text.xml">
+        <config>
+          <night>night</night>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/gradient_bg_button.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/rounded_arrow_downward_alt_24.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
@@ -69,12 +88,37 @@
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_new_text.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_sidebar.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_thumbnail_text.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_tracks_bg.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/toggle_notselected.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/togglebtn_notselected.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/togglebtn_selected.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
@@ -145,7 +189,6 @@
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml">
         <config>
-          <night>night</night>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
@@ -162,6 +205,7 @@
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_video.xml">
         <config>
+          <night>night</night>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
@@ -209,12 +253,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="New Commit">
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/color/selector_toggle_btn.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable-night/shape_sidebar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/shape_new_text.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/togglebtn_notselected.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/Audio.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/Audio.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Room/AudioDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Room/AudioDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Room/VideoDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Room/VideoDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingListFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingListFragment.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingPlayerFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingPlayerFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_player.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_player.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/Video.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/Video.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/shape_sidebar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/shape_sidebar.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/toggle_selected.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/togglebtn_selected.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_audio.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_audio.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_list.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-night/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-night/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_video.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_video.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/item_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-night/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-night/themes.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,7 +289,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=LocalEmulator, isTemplate=false, identifier=path=C:\Users\rajan\.android\avd\Pixel_7_API_29_-_A10.avd)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=PhysicalDevice, isTemplate=false, identifier=serial=2fe6fcbb)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -353,17 +418,17 @@
     </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable-night" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\layout" />
-      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable-night" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\animator" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java\mediaarea" />
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res" />
-      <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
     </key>
     <key name="android.template.-780496765">
       <recent name="com.example.mediaplayer" />
@@ -557,14 +622,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1721030140346</updated>
-    </task>
-    <task id="LOCAL-00036" summary="Removed MediaInfo">
-      <option name="closed" value="true" />
-      <created>1750212322085</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1750212322085</updated>
     </task>
     <task id="LOCAL-00037" summary="Latest Commit">
       <option name="closed" value="true" />
@@ -950,7 +1007,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767687162640</updated>
     </task>
-    <option name="localTasksCounter" value="85" />
+    <task id="LOCAL-00085" summary="New Commit">
+      <option name="closed" value="true" />
+      <created>1767880973650</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1767880973650</updated>
+    </task>
+    <option name="localTasksCounter" value="86" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -1011,12 +1076,12 @@
       <map>
         <entry key="com.example.mediaplayer">
           <value>
-            <CheckInfo lastCheckTimestamp="1767879692711" />
+            <CheckInfo lastCheckTimestamp="1768054048942" />
           </value>
         </entry>
         <entry key="com.example.mediaplayer.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1767879692713" />
+            <CheckInfo lastCheckTimestamp="1768054048943" />
           </value>
         </entry>
       </map>

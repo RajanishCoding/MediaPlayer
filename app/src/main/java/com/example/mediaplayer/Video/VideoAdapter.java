@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -58,6 +60,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         void onSelectionEnds();
         void onCountChanged(int counts);
         void onOptionButtonClicked(int position, String name);
+        void onItemClicked(int position, Video video);
     }
 
     private List<Video> mediaList;
@@ -83,6 +86,11 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     private Drawable icon_more;
     private Drawable icon_check;
     private Drawable icon_uncheck;
+
+    private boolean isNewTagEnabled;
+    private boolean isLastPlayedShowing;
+
+    private SharedPreferences listPrefs;
 
 
     public static final DiffUtil.ItemCallback<Video> DIFF_CALLBACK = new DiffUtil.ItemCallback<Video>() {
@@ -115,6 +123,11 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         icon_check = ContextCompat.getDrawable(context, R.drawable.round_check_circle);
         icon_uncheck = ContextCompat.getDrawable(context, R.drawable.round_check_circle_outline);
 
+        listPrefs = context.getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
+
+        isNewTagEnabled = listPrefs.getBoolean("isNewMediaEnabled", true);
+        isLastPlayedShowing = listPrefs.getBoolean("isLastPlayedEnabled", true);
+
         selectedList = new ArrayList<>();
 
         return holder;
@@ -130,6 +143,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         TextView resolutionFrame;
         TextView size;
         ImageButton moreB;
+        TextView newText;
 
         public VideoViewHolder(View item_layout) {
             super(item_layout);
@@ -142,7 +156,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
             resolutionFrame = item_layout.findViewById(R.id.t2_resolutionFrame);
             size = item_layout.findViewById(R.id.t3_size);
             moreB = item_layout.findViewById(R.id.moreB_item);
-
+            newText = item_layout.findViewById(R.id.newText);
         }
     }
 
@@ -173,6 +187,13 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
             holder.moreB.setEnabled(true);
             holder.moreB.setImageDrawable(icon_more);
         }
+
+        if (media.isNewVideo() && isNewTagEnabled) holder.newText.setVisibility(View.VISIBLE);
+        else holder.newText.setVisibility(View.GONE);
+
+        if (media.isLastPlayed() && isLastPlayedShowing) holder.name.setTypeface(null, Typeface.BOLD);
+        else holder.name.setTypeface(null, Typeface.NORMAL);
+
 
         if (media.getDuration() != null || media.getResolution() != null || media.getSize() != null) {
             holder.duration1.setText(SecsToTime(media.getDuration()));
@@ -229,7 +250,6 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
                 Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
@@ -238,13 +258,8 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
                     toggleSelection(holder.getBindingAdapterPosition());
                 }
                 else {
-                    Intent intent = new Intent(context, PlayerActivity.class);
-                    intent.putExtra("Name", media.getName());
-                    intent.putExtra("Path", media.getPath());
-                    intent.putExtra("isVideo", media.isVideo());
-                    intent.putExtra("currentIndex", holder.getBindingAdapterPosition());
-                    Log.d("isVideoFile", "onClick: " + media.isVideo());
-                    context.startActivity(intent);
+                    Log.d("TAG", "onItemNNN3: " + media.getName());
+                    listener.onItemClicked(holder.getBindingAdapterPosition(), media);
                 }
             }
         });

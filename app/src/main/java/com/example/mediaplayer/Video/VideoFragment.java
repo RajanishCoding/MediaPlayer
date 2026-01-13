@@ -4,6 +4,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -27,7 +28,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
-import android.renderscript.Int2;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +39,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 
+import com.example.mediaplayer.Audio.Audio;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
 import com.example.mediaplayer.Extra.MediaRepository;
@@ -50,6 +51,8 @@ import com.example.mediaplayer.R;
 import com.example.mediaplayer.Room.RoomDB;
 import com.example.mediaplayer.Room.VideoDao;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -57,7 +60,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -102,25 +104,27 @@ public class VideoFragment extends Fragment {
     private boolean switch_frag;
     private boolean switch_isEnd = true;
 
-    private Button ByName_sort;
-    private Button BySize_sort;
-    private Button ByDate_sort;
-    private Button ByLength_sort;
-    private Button ByResol_sort;
-    private Button ByFps_sort;
-    private Button Asc_sort;
-    private Button Desc_sort;
+    private MaterialButton ByName_sort;
+    private MaterialButton BySize_sort;
+    private MaterialButton ByDate_sort;
+    private MaterialButton ByLength_sort;
+    private MaterialButton ByResol_sort;
+    private MaterialButton ByFps_sort;
+    private MaterialButtonToggleGroup sortOrderToggle;
+    private MaterialButton Asc_sort;
+    private MaterialButton Desc_sort;
 
-    private Button path_Details;
-    private Button date_Details;
-    private Button resol_Details;
-    private Button fps_Details;
-    private Button size_Details;
-    private Button dur_Details;
+    private MaterialButton path_Details;
+    private MaterialButton date_Details;
+    private MaterialButton resol_Details;
+    private MaterialButton fps_Details;
+    private MaterialButton size_Details;
+    private MaterialButton dur_Details;
     private CheckBox durThumbnail_Details;
 
-    private Button layout_List;
-    private Button layout_Grid;
+    private MaterialButtonToggleGroup layoutToggle;
+    private MaterialButton layout_List;
+    private MaterialButton layout_Grid;
 
     private boolean isPath_Visible;
     private boolean isDate_Visible;
@@ -138,6 +142,7 @@ public class VideoFragment extends Fragment {
     private boolean isDur_OnThumbnail;
 
     private ImageButton lastPlay_Button;
+    private int lastPlayedPosition;
 
     private View bottomSheet;
     private BottomSheetBehavior<View> behavior;
@@ -156,6 +161,9 @@ public class VideoFragment extends Fragment {
 
     private SharedPreferences settingsPrefs;
     private SharedPreferences.Editor settingsPrefsEditor;
+
+    private SharedPreferences listPrefs;
+    private SharedPreferences.Editor listPrefsEditor;
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
@@ -204,6 +212,7 @@ public class VideoFragment extends Fragment {
         ByResol_sort = view.findViewById(R.id.sort_byResol);
         ByFps_sort = view.findViewById(R.id.sort_byFps);
 
+        sortOrderToggle = view.findViewById(R.id.sortOrderToggle);
         Asc_sort = view.findViewById(R.id.sort_Asc);
         Desc_sort = view.findViewById(R.id.sort_Desc);
 
@@ -215,6 +224,7 @@ public class VideoFragment extends Fragment {
         dur_Details = view.findViewById(R.id.details_Dur);
         durThumbnail_Details = view.findViewById(R.id.more_dur);
 
+        layoutToggle = view.findViewById(R.id.layoutViewToggle);
         layout_List = view.findViewById(R.id.layout_list);
         layout_Grid = view.findViewById(R.id.layout_grid);
 
@@ -238,6 +248,9 @@ public class VideoFragment extends Fragment {
 
         settingsPrefs = requireContext().getSharedPreferences("VideoListSettings", Context.MODE_PRIVATE);
         settingsPrefsEditor = settingsPrefs.edit();
+
+        listPrefs = requireContext().getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
+        listPrefsEditor = listPrefs.edit();
 
         playerPrefs = requireContext().getSharedPreferences("PlayerSetting", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
@@ -274,6 +287,8 @@ public class VideoFragment extends Fragment {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
+        boolean isLastPlayButtonEnabled = listPrefs.getBoolean("isFloatingResumeEnabled", true);
+        lastPlay_Button.setVisibility(isLastPlayButtonEnabled ? View.VISIBLE : View.GONE);
 
 //      Load at Start
         sortBy = settingsPrefs.getString("sortBy", "Name");
@@ -282,6 +297,7 @@ public class VideoFragment extends Fragment {
 
 //      Setting at start
         setListObserver();
+        Load_Or_Query_MediaList();
 
 //      Loading at Start
         loadDetailsButtonVisibility();
@@ -296,6 +312,19 @@ public class VideoFragment extends Fragment {
         setBackground_DetailsButtons();
 
         adapter.addSelectionListener(new VideoAdapter.SelectionListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onItemClicked(int position, Video video) {
+//                new Thread(() -> videoDao.markAsPlayed(video.getPath())).start();
+                Intent intent = new Intent(context, PlayerActivity.class);
+                intent.putExtra("Name", video.getName());
+                intent.putExtra("Path", video.getPath());
+                intent.putExtra("isVideo", video.isVideo());
+                intent.putExtra("currentIndex", position);
+                Log.d("isVideoFile", "onClick: " + video.isVideo());
+                context.startActivity(intent);
+            }
+
             @Override
             public void onSelectionStarts() {
                 animationLibs.fadeIn(toolbar_selection, 350, null, null);
@@ -403,17 +432,22 @@ public class VideoFragment extends Fragment {
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                String name = playerPrefs.getString("lastPlayedFileName", null);
-                String path = playerPrefs.getString("lastPlayedFilePath", null);
-                Boolean isVideo = playerPrefs.getBoolean("lastPlayedFile_isVideo", false);
+                String name = listPrefs.getString("lastPlayedVideoName", "");
+                String path = listPrefs.getString("lastPlayedVideoPath", "");
+                Boolean isVideo = listPrefs.getBoolean("lastPlayedFile_isVideo", false);
 
-                if (name != null) {
-                    Intent intent = new Intent(requireActivity(), PlayerActivity.class);
-                    intent.putExtra("Name", name);
-                    intent.putExtra("Path", path);
-                    intent.putExtra("isVideo", isVideo);
-                    startActivity(intent);
-                }
+                new Thread(() -> {
+                    if (videoDao.isPathExists(path)) {
+                        requireActivity().runOnUiThread(() -> {
+                            Intent intent = new Intent(requireActivity(), PlayerActivity.class);
+                            intent.putExtra("Name", name);
+                            intent.putExtra("Path", path);
+                            intent.putExtra("isVideo", isVideo);
+                            intent.putExtra("currentIndex", lastPlayedPosition);
+                            startActivity(intent);
+                        });
+                    }
+                }).start();
             }
         });
 
@@ -479,8 +513,17 @@ public class VideoFragment extends Fragment {
 
 
     private void layoutB_Listeners() {
-        layout_List.setOnClickListener(v -> setBackground_LayoutButtons(true));
-        layout_Grid.setOnClickListener(v -> setBackground_LayoutButtons(false));
+        layoutToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.layout_list) {
+                    isList = isChecked;
+                }
+                else {
+                    isList = !isChecked;
+                }
+            }
+        });
     }
 
     private void sortB_Listeners() {
@@ -491,39 +534,48 @@ public class VideoFragment extends Fragment {
         ByResol_sort.setOnClickListener(v -> setBackground_SortButtons("Resol"));
         ByFps_sort.setOnClickListener(v -> setBackground_SortButtons("Fps"));
 
-        Asc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(true));
-        Desc_sort.setOnClickListener(v -> setBackground_AscDesc_Buttons(false));
+        sortOrderToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (checkedId == R.id.sort_Asc) {
+                    isAscending = isChecked;
+                }
+                else {
+                    isAscending = !isChecked;
+                }
+            }
+        });
     }
 
     private void detailsB_Listeners() {
         path_Details.setOnClickListener(v -> {
             isPath_Visible = !isPath_Visible;
-            setBackground(path_Details, isPath_Visible);
+            path_Details.setChecked(isPath_Visible);
         });
 
         resol_Details.setOnClickListener(v -> {
             isResol_Visible = !isResol_Visible;
-            setBackground(resol_Details, isResol_Visible);
+            resol_Details.setChecked(isResol_Visible);
         });
 
         fps_Details.setOnClickListener(v -> {
             isFps_Visible = !isFps_Visible;
-            setBackground(fps_Details, isFps_Visible);
+            fps_Details.setChecked(isFps_Visible);
         });
 
         date_Details.setOnClickListener(v -> {
             isDate_Visible = !isDate_Visible;
-            setBackground(date_Details, isDate_Visible);
+            date_Details.setChecked(isDate_Visible);
         });
 
         size_Details.setOnClickListener(v -> {
             isSize_Visible = !isSize_Visible;
-            setBackground(size_Details, isSize_Visible);
+            size_Details.setChecked(isSize_Visible);
         });
 
         dur_Details.setOnClickListener(v -> {
             isDur_Visible = !isDur_Visible;
-            setBackground(dur_Details, isDur_Visible);
+            dur_Details.setChecked(isDur_Visible);
         });
 
         durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> isDur_OnThumbnail = isChecked);
@@ -542,9 +594,23 @@ public class VideoFragment extends Fragment {
                 if (videos == null || videos.isEmpty()) foundText.setVisibility(View.VISIBLE);
                 else foundText.setVisibility(View.INVISIBLE);
 
+                if (videos != null) {
+                    String lastPlayedPath = listPrefs.getString("lastPlayedVideoPath", "");
+                    lastPlayedPosition = 0;
+
+                    for (int i = 0; i < videos.size(); i++) {
+                        Video v = videos.get(i);
+                        boolean isMatch = v.getPath().equals(lastPlayedPath);
+                        v.setLastPlayed(isMatch);
+
+                        if (isMatch) {
+                            lastPlayedPosition = i; // Position for Last Play Floating Button
+                        }
+                    }
+                }
+
                 adapter.submitList(videos);
                 storedMediaList = new ArrayList<>(videos);
-                Load_Or_Query_MediaList();
                 setVideoPlaylist();
             }
         });
@@ -570,63 +636,52 @@ public class VideoFragment extends Fragment {
 
     private void setBackground(Button button, boolean b) {
         if (!b)
-            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_notselected));
+            button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireActivity(), R.color.btn_color)));
         else
-            button.setBackground(ContextCompat.getDrawable(requireActivity(), R.drawable.toggle_selected));
+            button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireActivity(), R.color.btn_color_checked)));
     }
 
     private void setBackground_LayoutButtons(boolean isList) {
-        setBackground(layout_List, false);
-        setBackground(layout_Grid, false);
-        setBackground(isList ? layout_List : layout_Grid, true);
+        if (isList) layout_List.setChecked(true);
+        else layout_Grid.setChecked(true);
         this.isList = isList;
     }
 
     private void setBackground_SortButtons(String sortBy_Button) {
-        List<Button> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort, ByResol_sort, ByFps_sort);
+        List<MaterialButton> sortButtons = Arrays.asList(ByName_sort, BySize_sort, ByLength_sort, ByDate_sort, ByResol_sort, ByFps_sort);
 
         // Set all buttons to false first
-        for (Button button : sortButtons) {
-            setBackground(button, false);
+        for (MaterialButton button : sortButtons) {
+            button.setChecked(false);
         }
 
         // Set the selected button to true
         switch (sortBy_Button) {
-            case "Name":   setBackground(ByName_sort, true);  break;
-            case "Size":   setBackground(BySize_sort, true);  break;
-            case "Length": setBackground(ByLength_sort, true); break;
-            case "Date":   setBackground(ByDate_sort, true);  break;
-            case "Resol":  setBackground(ByResol_sort, true); break;
-            case "Fps":    setBackground(ByFps_sort, true);   break;
+            case "Name":   ByName_sort.setChecked(true);   break;
+            case "Size":   BySize_sort.setChecked(true);   break;
+            case "Length": ByLength_sort.setChecked(true); break;
+            case "Date":   ByDate_sort.setChecked(true);   break;
+            case "Resol":  ByResol_sort.setChecked(true);  break;
+            case "Fps":    ByFps_sort.setChecked(true);    break;
         }
 
         sortBy = sortBy_Button;
     }
 
     private void setBackground_AscDesc_Buttons(boolean isAscending) {
-        setBackground(Asc_sort, false);
-        setBackground(Desc_sort, false);
-        setBackground(isAscending ? Asc_sort : Desc_sort, true);
+        if (isAscending) Asc_sort.setChecked(true);
+        else Desc_sort.setChecked(true);
         this.isAscending = isAscending;
     }
 
     private void setBackground_DetailsButtons() {
-        setBackground(path_Details, isPath_Visible);
-        setBackground(resol_Details, isResol_Visible);
-        setBackground(fps_Details, isFps_Visible);
-        setBackground(size_Details, isSize_Visible);
-        setBackground(date_Details, isDate_Visible);
-        setBackground(dur_Details, isDur_Visible);
+        path_Details.setChecked(isPath_Visible);
+        resol_Details.setChecked(isResol_Visible);
+        fps_Details.setChecked(isFps_Visible);
+        size_Details.setChecked(isSize_Visible);
+        date_Details.setChecked(isDate_Visible);
+        dur_Details.setChecked(isDur_Visible);
         durThumbnail_Details.setChecked(isDur_OnThumbnail);
-    }
-
-    private void resetMoreContainerViews() {
-        sortBy = settingsPrefs.getString("sortBy", "Name");
-        isAscending = settingsPrefs.getBoolean("isAscending", true);
-        loadDetailsButtonVisibility();
-        setBackground_SortButtons(sortBy);
-        setBackground_AscDesc_Buttons(isAscending);
-        setBackground_DetailsButtons();
     }
 
     private void loadDetailsButtonVisibility() {
@@ -676,6 +731,15 @@ public class VideoFragment extends Fragment {
                 });
     }
 
+    private void resetMoreContainerViews() {
+        sortBy = settingsPrefs.getString("sortBy", "Name");
+        isAscending = settingsPrefs.getBoolean("isAscending", true);
+        loadDetailsButtonVisibility();
+        setBackground_SortButtons(sortBy);
+        setBackground_AscDesc_Buttons(isAscending);
+        setBackground_DetailsButtons();
+    }
+
 
     @Override
     public void onStart() {
@@ -709,8 +773,10 @@ public class VideoFragment extends Fragment {
                 Check_And_Update_Files();
             }
 
-            for (Video v : storedMediaList) {
-                getMediaDetails(v);
+            if (storedMediaList != null) {
+                for (Video v : storedMediaList) {
+                    getMediaDetails(v);
+                }
             }
         });
     }
