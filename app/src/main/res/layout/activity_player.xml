@@ -1239,7 +1239,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:elevation="5dp"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <ScrollView
             android:id="@+id/expandScroll"
@@ -1250,7 +1250,7 @@
             android:layout_margin="15dp"
             android:elevation="5dp"
             android:scrollbars="none"
-            android:visibility="gone" >
+            android:visibility="visible" >
 
             <LinearLayout
                 android:id="@+id/expandView"
@@ -1305,6 +1305,7 @@
                     android:gravity="center">
 
                     <ImageButton
+                        android:id="@+id/bg_expand_image"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:background="@color/transparent"
@@ -1650,80 +1651,83 @@
                 android:src="@drawable/round_add"/>
         </LinearLayout>
 
-        <LinearLayout
+
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/speedButtonsToggle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
-            android:orientation="horizontal"
-            android:gravity="center_horizontal">
+            app:selectionRequired="true"
+            app:singleSelection="true">
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed75"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
                 android:text="0.75"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                android:textColor="@color/white"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed100"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
                 android:text="1.00"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                android:textColor="@color/white"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed125"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
                 android:text="1.25"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
+                android:textColor="@color/white"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed150"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
                 android:text="1.50"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
+                android:textColor="@color/white"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed175"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
                 android:text="1.75"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
+                android:textColor="@color/white"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/speed200"
-                android:layout_width="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:background="@drawable/ripple_speed_view"
+                android:layout_weight="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="14sp"
                 android:text="2.00"
-                android:textColor="@color/white"
-                android:layout_marginEnd="5dp"
-                android:gravity="center"
-                android:layout_weight="1"/>
+                android:textColor="@color/white"/>
 
-        </LinearLayout>
+        </com.google.android.material.button.MaterialButtonToggleGroup>
 
 
     </LinearLayout>

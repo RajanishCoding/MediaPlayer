@@ -13,6 +13,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -63,6 +66,12 @@ public class PlayerService extends MediaSessionService {
     private boolean isInitialized;
     private String currentMediaPath;
 
+    private AudioManager audioManager;
+    private AudioAttributes audioAttributes;
+    private AudioFocusRequest focusRequest;
+    private boolean wasPlaying_Focus;
+    private boolean hasAudioFocus;
+
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
 
@@ -97,9 +106,9 @@ public class PlayerService extends MediaSessionService {
 //                .setRenderersFactory(renderersFactory)
                 .build();
 
-
-
         mediaSession = new MediaSession.Builder(this, player).build();
+
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         playerPrefs = getSharedPreferences("PlayerPrefs", Context.MODE_PRIVATE);
         playerPrefsEditor = playerPrefs.edit();
@@ -126,6 +135,10 @@ public class PlayerService extends MediaSessionService {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 updateNotification();
+                if (mediaItem != null && mediaItem.localConfiguration != null) {
+                    mediaName = mediaItem.localConfiguration.uri.getLastPathSegment();
+                    currentMediaPath = mediaItem.localConfiguration.uri.getPath();
+                }
             }
 
             @Override
@@ -150,7 +163,7 @@ public class PlayerService extends MediaSessionService {
 
         PlayerActivity.addPlayerListener(new PlayerActivity.PlayerListener() {
             @Override
-            public void onMediaSessionFLagChange(boolean flag) {
+            public void onMediaSessionFlagChange(boolean flag) {
                 if (flag){
                     isMediaSessionEnabled = true;
                     startMediaSession();
@@ -159,7 +172,7 @@ public class PlayerService extends MediaSessionService {
                     isMediaSessionEnabled = false;
                     stopMediaSession();
                 }
-                Log.d("mediass1", "onMediaSessionFLagChange: " + flag);
+                Log.d("mediass1", "onMediaSessionFlagChange: " + flag);
             }
 
             @Override
@@ -168,7 +181,7 @@ public class PlayerService extends MediaSessionService {
             }
         });
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BG_PLAY_STATUS"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(bgPlayReceiver, new IntentFilter("BGPlay_Status"));
     }
 
 
@@ -271,7 +284,7 @@ public class PlayerService extends MediaSessionService {
                 .setOngoing(true)
                 .setContentTitle(title)
                 .setContentText(artist)
-                .setContentIntent(createContentPendingIntent()); // This is optional if you have a specific action on clicking the notification
+                .setContentIntent(createContentPendingIntent()); // Action on clicking the notification
 
         builder.setStyle(new MediaStyleNotificationHelper.MediaStyle(mediaSession)
                 .setShowActionsInCompactView(1, 2, 3));
@@ -379,7 +392,6 @@ public class PlayerService extends MediaSessionService {
         @Override
         public void onReceive(Context context, Intent intent) {
             boolean isBGPlay = intent.getBooleanExtra("isBGPlay", false);
-            Log.d("isBGPLAY", "onReceive: " + isBGPlay);
             if (isBGPlay) startForegroundNotification();
             else stopForegroundNotification();
         }
@@ -388,9 +400,11 @@ public class PlayerService extends MediaSessionService {
 
     private PendingIntent createContentPendingIntent() {
         Intent contentIntent = new Intent(this, PlayerActivity.class);
-        contentIntent.setAction(Intent.ACTION_MAIN);
-        contentIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        // FLAG_IMMUTABLE is crucial for Android 12+
+        contentIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        contentIntent.putExtra("Name", mediaName);
+        contentIntent.putExtra("Path", currentMediaPath);
+        contentIntent.putExtra("fromNotification", true);
+        // FLAG_IMMUTABLE is important for Android 12+
         return PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
@@ -429,5 +443,55 @@ public class PlayerService extends MediaSessionService {
         return null;
     }
 
+
+    public void play() {
+        requestAudioFocus();
+        player.play();
+        wasPlaying_Focus = false;
+    }
+
+    private void requestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !hasAudioFocus) {
+            audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
+                    .build();
+
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(audioAttributes)
+                    .setAcceptsDelayedFocusGain(false)
+                    .setOnAudioFocusChangeListener(focusChange -> {
+                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                            // pause playback, if other app starts playing
+                            player.pause();
+                            Log.d(TAG, "logkaro: " + "pause6");
+                            hasAudioFocus = false;
+                            wasPlaying_Focus = false;
+                        }
+                        else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                            // pause playback, ex. if a call occurs
+                            player.pause();
+                            Log.d(TAG, "logkaro: " + "pause7");
+                            wasPlaying_Focus = player.isPlaying();
+                        }
+                        else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                            if (wasPlaying_Focus) {
+                                player.play();
+                                wasPlaying_Focus = false;
+                                hasAudioFocus = true;
+                            }
+                        }
+                    })
+                    .build();
+
+            int result = audioManager.requestAudioFocus(focusRequest);
+            if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.d("AudioFocus", "Focus not granted, do not start media");
+            }
+            else {
+                hasAudioFocus = true;
+            }
+        }
+    }
 
 }

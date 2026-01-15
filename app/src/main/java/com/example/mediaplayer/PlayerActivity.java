@@ -42,6 +42,7 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
@@ -68,6 +69,7 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.TrackGroupArray;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.trackselection.MappingTrackSelector;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerView;
@@ -107,7 +109,7 @@ import java.util.Locale;
 public class PlayerActivity extends AppCompatActivity {
 
     public interface PlayerListener {
-        void onMediaSessionFLagChange(boolean flag);
+        void onMediaSessionFlagChange(boolean flag);
         void onBackgroundPlayChange(boolean isBGPlay);
     }
 
@@ -153,6 +155,8 @@ public class PlayerActivity extends AppCompatActivity {
     private String media_path;
     private int currentIndex = 0;
 
+    private boolean fromNotification;
+
     private boolean isBound = false;
 
     private boolean isOrientation;
@@ -177,10 +181,6 @@ public class PlayerActivity extends AppCompatActivity {
     private ScaleGestureDetector scaleGestureDetector;
 
     private AudioManager audioManager;
-    private AudioAttributes audioAttributes;
-    private AudioFocusRequest focusRequest;
-    private boolean wasPlaying_Focus;
-    private boolean hasAudioFocus;
 
     private int screenWidth;
     private int halfWidth;
@@ -270,6 +270,9 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton muteExpandImg;
     private boolean isMuted;
 
+    private LinearLayout bgExpandB;
+    private ImageButton bgExpandImg;
+
     private TextView speedText_Expand;
     private LinearLayout speedExpandB;
     private LinearLayout speedLayout;
@@ -277,13 +280,14 @@ public class PlayerActivity extends AppCompatActivity {
     private Slider sliderSpeed;
     private ImageButton incrSpeed;
     private ImageButton decrSpeed;
+    private MaterialButtonToggleGroup speedButtonsToggle;
     private Button speed75;
     private Button speed100;
     private Button speed125;
     private Button speed150;
     private Button speed175;
     private Button speed200;
-    private float PlaybackSpeed = 1;
+    private float playbackSpeed = 1;
     private boolean isSpeedLayoutShowing;
 
     private LinearLayout sleepExpandB;
@@ -421,6 +425,8 @@ public class PlayerActivity extends AppCompatActivity {
 
     private Player.Listener listener;
     private Player.Listener listener_size;
+
+    private PlayerService playerService;
 
 
     @OptIn(markerClass = UnstableApi.class)
@@ -615,6 +621,7 @@ public class PlayerActivity extends AppCompatActivity {
         sliderSpeed = findViewById(R.id.sliderSpeed);
         incrSpeed = findViewById(R.id.incrSpeed);
         decrSpeed = findViewById(R.id.decrSpeed);
+        speedButtonsToggle = findViewById(R.id.speedButtonsToggle);
         speed75 = findViewById(R.id.speed75);
         speed100 = findViewById(R.id.speed100);
         speed125 = findViewById(R.id.speed125);
@@ -624,6 +631,9 @@ public class PlayerActivity extends AppCompatActivity {
 
         muteExpandB = findViewById(R.id.mute_expand);
         muteExpandImg = findViewById(R.id.mute_expand_image);
+
+        bgExpandB = findViewById(R.id.bgplay_expand);
+        bgExpandImg = findViewById(R.id.bg_expand_image);
 
         loopExpandB = findViewById(R.id.loop_expand);
         loopExpandImg = findViewById(R.id.loop_expand_image);
@@ -670,14 +680,17 @@ public class PlayerActivity extends AppCompatActivity {
         media_path = intent.getStringExtra("Path");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
         currentIndex = intent.getIntExtra("currentIndex", 0);
+        fromNotification = intent.getBooleanExtra("fromNotification", false);
 
         Log.d("isVideoFile", "onCreate: " + isVideoFile);
 
         Intent serviceIntent = new Intent(this, PlayerService.class);
-        serviceIntent.putExtra("name", media_name);
-        serviceIntent.putExtra("path", media_path);
+        if (!fromNotification) {
+            serviceIntent.putExtra("name", media_name);
+            serviceIntent.putExtra("path", media_path);
+            startService(serviceIntent);
+        }
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
-        startService(serviceIntent);
 
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -835,7 +848,7 @@ public class PlayerActivity extends AppCompatActivity {
                     
                     if (isLongPressed_Speed) {
                         isLongPressed_Speed = false;
-                        player.setPlaybackSpeed(PlaybackSpeed);
+                        player.setPlaybackSpeed(playbackSpeed);
                         speedToastLayout.startAnimation(fadeOut);
                         fadeOut.setAnimationListener(new Animation.AnimationListener() {
                             @Override
@@ -1136,6 +1149,21 @@ public class PlayerActivity extends AppCompatActivity {
                         .start();
             }
         });
+
+        getOnBackPressedDispatcher().addCallback(
+                this,
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+//                        if (isBackgroundPlay) {
+//                            moveTaskToBack(true);
+//                        } else {
+//                            finish();
+//                        }
+                        finish();
+                    }
+                }
+        );
     }
 
 
@@ -1205,12 +1233,16 @@ public class PlayerActivity extends AppCompatActivity {
         if (isFirstTimeForCurrentMedia) {
             isFirstTimeForCurrentMedia = false;
 
-            lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
-            player.seekTo(lastPlayedTime);
+            if (!fromNotification) {
+                lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+                player.seekTo(lastPlayedTime);
+            }
 
+            fromNotification = false;
             buffer_view.setVisibility(View.GONE);
             isBuffuringForCurrentMedia = false;
 
+            playButton.setImageResource(player.isPlaying() ? R.drawable.baseline_pause_circle_outline_24 : R.drawable.baseline_play_circle_outline_24);
             seekbar.setMax((int) player.getDuration());
             seekbar.setProgress((int) player.getCurrentPosition());
             time1.setText(isTime1ButtonClicked ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getCurrentPosition()));
@@ -1248,8 +1280,9 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void updatePlayerUI(boolean isNamePresent) {
-        String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
+    private void updatePlayerUI(boolean isItemTransistion) {
+//        String name = isNamePresent ? media_name : String.valueOf(mediaItem.mediaMetadata.title);
+        Log.d(TAG, "updatePlayerUI: " + media_name);
         ToolbarText.setText(media_name);
         playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
         buffer_view.setVisibility(View.VISIBLE);
@@ -1257,43 +1290,26 @@ public class PlayerActivity extends AppCompatActivity {
         isFirstTimeForCurrentMedia = true;
         isFirstFetchTracksForCurrentMedia = true;
 
-        Log.d("mediaitem56", "initializePlayer: " + player.getMediaItemCount() + "  " + player.getCurrentMediaItemIndex());
-        Log.d("heibeibvi", "updatePlayerUI: ");
+        if (!isItemTransistion) {
+            playerView.setPlayer(player);
+            playerView.setKeepScreenOn(true);
+            playerView.getSubtitleView().setVisibility(View.GONE);
+            applySubtitleStyle();
 
-//        if (isNamePresent) {
-            playMedia();
-//        }
+            WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+            layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", layoutParams.screenBrightness);
+            getWindow().setAttributes(layoutParams);
+        }
 
-        updateExpandViews();
+        if (!fromNotification) playMedia();
 
-        isBackgroundPlay = !isVideoFile;
-
-        Intent intent = new Intent("BG_PLAY_STATUS");
-        intent.putExtra("isBGPlay", isBackgroundPlay);
-        LocalBroadcastManager.getInstance(PlayerActivity.this).sendBroadcast(intent);
+        if (!isVideoFile) {
+            setExpandViewColors(bgExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            isBackgroundPlay = true;
+        }
+        updateBackgroundPlayStatus(isBackgroundPlay);
     }
 
-    private void updateExpandViews() {
-        if (loopValue == 0) {
-            loopExpandImg.setImageResource(R.drawable.round_repeat);
-            setExpandViewColors(loopExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-        }
-        else if (loopValue == 1) {
-            loopExpandImg.setImageResource(R.drawable.round_repeat_one);
-            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-        }
-        else {
-            loopExpandImg.setImageResource(R.drawable.round_repeat);
-            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-        }
-
-        if (isShuffled) {
-            setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-        }
-        else {
-            setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-        }
-    }
 
     @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
@@ -1309,17 +1325,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         player.setRepeatMode(loopValue);
         player.setShuffleModeEnabled(isShuffled);
-
-        playerView.setPlayer(player);
-        playerView.setKeepScreenOn(true);
-        playerView.getSubtitleView().setVisibility(View.GONE);
-        applySubtitleStyle();
-
-        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
-        layoutParams.screenBrightness = playerPrefs.getFloat("Brightness", 0f);
-        getWindow().setAttributes(layoutParams);
-
-        Log.d("inittt", "init: " + playerPrefs.getFloat("Brightness", 0f));
     }
 
 
@@ -1328,15 +1333,24 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
-            PlayerService playerService = binder.getService();
+            playerService = binder.getService();
             player = playerService.getPlayer();
-            Log.d("service", "onServiceConnected: YES: " + player);
+            Log.d("serviced", "onServiceConnected: YES: " + player);
 
             if (player != null) {
                 player_Listeners();
-                initializePlayer();
-                updatePlayerUI(true);
-                Log.d("service", "isPlayer: YES");
+
+                if (!fromNotification) {
+                    initializePlayer();
+                    updatePlayerUI(false);
+                }
+                else {
+                    updatePlayerUI(false);
+                    if (player.getPlaybackState() == Player.STATE_READY) {
+                        mediaItem = player.getCurrentMediaItem();
+                        onStateReady();
+                    }
+                }
             }
             isBound = true;
         }
@@ -1357,7 +1371,8 @@ public class PlayerActivity extends AppCompatActivity {
                 }
 
                 if (playbackState == Player.STATE_ENDED) {
-                    Log.d("statePlay", " Ended " + playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));                }
+                    Log.d("statePlay", " Ended " + playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0));
+                }
 
                 if (playbackState == Player.STATE_BUFFERING) {
                     if (isBuffuringForCurrentMedia) {
@@ -1376,18 +1391,13 @@ public class PlayerActivity extends AppCompatActivity {
             public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
                 Log.d("heibeibvi", "onMediaItemTransition: ");
                 mediaItem = newMediaItem;
-                media_name = mediaItem.mediaMetadata.title.toString();
+                media_name = mediaItem.localConfiguration.uri.getLastPathSegment();
                 media_path = mediaItem.localConfiguration.uri.getPath();
                 isOrientationChangedOnReady = false;
-                updatePlayerUI(false);
-                if (player.getPlaybackState() == Player.STATE_READY && isFirstTimeForCurrentMedia) {
+                updatePlayerUI(true);
+                if (player.getPlaybackState() == Player.STATE_READY) {
                     onStateReady();
                 }
-            }
-
-            @Override
-            public void onTracksChanged(@NonNull Tracks tracks) {
-                ;
             }
 
             @Override
@@ -1396,7 +1406,8 @@ public class PlayerActivity extends AppCompatActivity {
                 if (isPlayingOn) {
                     isPlaying = true;
                     playButton.setImageResource(R.drawable.baseline_pause_circle_outline_24);
-                } else {
+                }
+                else {
                     isPlaying = false;
                     playButton.setImageResource(R.drawable.baseline_play_circle_outline_24);
                 }
@@ -1501,7 +1512,7 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
 
-        backButton.setOnClickListener(v -> finish());
+        backButton.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
 
         expandB.setOnClickListener(v -> {
             Log.d("dgiuhors", "onCreate: jbissg");
@@ -1785,12 +1796,71 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void expandViewsListeners() {
         speedExpand_Listeners();
-        muteExpand_Listeners();
+
+        muteExpandB.setOnClickListener(v -> {
+            if (isMuted) {
+                setExpandViewColors(muteExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+                player.setVolume(1f);
+            }
+            else {
+                setExpandViewColors(muteExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+                player.setVolume(0f);
+            }
+            isMuted = !isMuted;
+        });
+
+        bgExpandB.setOnClickListener(v -> {
+            if (isBackgroundPlay) {
+                setExpandViewColors(bgExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+            }
+            else {
+                setExpandViewColors(bgExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            }
+            isBackgroundPlay = !isBackgroundPlay;
+            updateBackgroundPlayStatus(isBackgroundPlay);
+        });
+
         loopExpand_Listeners();
-        shuffleExpand_Listeners();
-        audioExpand_Listeners();
-        lockExpand_Listeners();
-        rotateExpand_Listeners();
+
+        shuffleExpandB.setOnClickListener(v -> {
+            if (isShuffled) {
+                setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+            }
+            else {
+                setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            }
+            isShuffled = !isShuffled;
+            player.setShuffleModeEnabled(isShuffled);
+        });
+
+        audioExpandB.setOnClickListener(v -> {
+            if (isAudioPlay) {
+                setExpandViewColors(audioExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+            }
+            else {
+                setExpandViewColors(audioExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+            }
+            isAudioPlay = !isAudioPlay;
+        });
+
+        lockExpandB.setOnClickListener(v -> {
+            isScreenLocked = true;
+            hideControls();
+            removeControlsRunnable();
+            showLockButton();
+            lockScreenToast();
+        });
+
+        rotateExpandB.setOnClickListener(v -> {
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                Log.d(TAG, "onRotate: " + "Landscape");
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                Log.d(TAG, "onRotate: " + "Portrait");
+            }
+            isOrientation = true;
+        });
     }
 
     private void speedExpand_Listeners() {
@@ -1802,53 +1872,45 @@ public class PlayerActivity extends AppCompatActivity {
 
         sliderSpeed.addOnChangeListener((slider, value, fromUser) -> {
             if (fromUser) {
-                PlaybackSpeed = value;
-                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-                speedText.setText(String.format("%sX", PlaybackSpeed));
+                playbackSpeed = value;
+                if (player != null) player.setPlaybackSpeed(playbackSpeed);
+                speedText.setText(String.format("%sX", playbackSpeed));
+                speedButtonsToggle.clearChecked();
             }
         });
 
         incrSpeed.setOnClickListener(v -> {
-            if (PlaybackSpeed < 4) {
-                PlaybackSpeed += 0.05F;
-                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-                sliderSpeed.setValue(PlaybackSpeed);
-                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            if (playbackSpeed < 4) {
+                playbackSpeed += 0.05F;
+                if (player != null) player.setPlaybackSpeed(playbackSpeed);
+                sliderSpeed.setValue(playbackSpeed);
+                speedText.setText(String.format(Locale.ROOT, "%.2fX", playbackSpeed));
+                speedButtonsToggle.clearChecked();
             }
         });
 
         decrSpeed.setOnClickListener(v -> {
-            if (PlaybackSpeed > 0.25) {
-                PlaybackSpeed -= 0.05F;
-                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-                sliderSpeed.setValue(PlaybackSpeed);
-                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+            if (playbackSpeed > 0.25) {
+                playbackSpeed -= 0.05F;
+                if (player != null) player.setPlaybackSpeed(playbackSpeed);
+                sliderSpeed.setValue(playbackSpeed);
+                speedText.setText(String.format(Locale.ROOT, "%.2fX", playbackSpeed));
+                speedButtonsToggle.clearChecked();
             }
         });
 
-        Button[] speedButtons = {speed75, speed100, speed125, speed150, speed175, speed200};
-        for (Button btn : speedButtons) {
-            btn.setOnClickListener(v -> {
-                String speedStr = ((Button) v).getText().toString();
-                PlaybackSpeed = Float.parseFloat(speedStr);
-                if (player != null) player.setPlaybackSpeed(PlaybackSpeed);
-                sliderSpeed.setValue(PlaybackSpeed);
-                speedText.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
-            });
-        }
-    }
-
-    private void muteExpand_Listeners() {
-        muteExpandB.setOnClickListener(v -> {
-            if (isMuted) {
-                setExpandViewColors(muteExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-                player.setVolume(1f);
+        speedButtonsToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                if (isChecked) {
+                    MaterialButton checkedButton = group.findViewById(checkedId);
+                    String speedStr = checkedButton.getText().toString();
+                    playbackSpeed = Float.parseFloat(speedStr);
+                    if (player != null) player.setPlaybackSpeed(playbackSpeed);
+                    sliderSpeed.setValue(playbackSpeed);
+                    speedText.setText(String.format(Locale.ROOT, "%.2fX", playbackSpeed));
+                }
             }
-            else {
-                setExpandViewColors(muteExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-                player.setVolume(0f);
-            }
-            isMuted = !isMuted;
         });
     }
 
@@ -1872,60 +1934,33 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void shuffleExpand_Listeners() {
-        shuffleExpandB.setOnClickListener(v -> {
-            if (isShuffled) {
-                setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-            }
-            else {
-                setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-            }
-            isShuffled = !isShuffled;
-            player.setShuffleModeEnabled(isShuffled);
-        });
-    }
-
-    private void audioExpand_Listeners() {
-        audioExpandB.setOnClickListener(v -> {
-            if (isAudioPlay) {
-                setExpandViewColors(audioExpandImg, expandButtonsTint0, expandButtonsDrawable0);
-            }
-            else {
-                setExpandViewColors(audioExpandImg, expandButtonsTint1, expandButtonsDrawable1);
-            }
-            isAudioPlay = !isAudioPlay;
-        });
-    }
-
-    private void lockExpand_Listeners() {
-        lockExpandB.setOnClickListener(v -> {
-            isScreenLocked = true;
-            hideControls();
-            removeControlsRunnable();
-            showLockButton();
-            lockScreenToast();
-        });
-    }
-
-    private void rotateExpand_Listeners() {
-        rotateExpandB.setOnClickListener(v -> {
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                Log.d(TAG, "onRotate: " + "Landscape");
-            } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                Log.d(TAG, "onRotate: " + "Portrait");
-            }
-            isOrientation = true;
-        });
-    }
-
 
     private void setExpandViewColors(ImageButton img, ColorStateList clr, Drawable drw) {
         img.setImageTintList(clr);
         img.setBackground(drw);
     }
 
+    private void updateExpandViews() {
+        if (loopValue == 0) {
+            loopExpandImg.setImageResource(R.drawable.round_repeat);
+            setExpandViewColors(loopExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+        }
+        else if (loopValue == 1) {
+            loopExpandImg.setImageResource(R.drawable.round_repeat_one);
+            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+        else {
+            loopExpandImg.setImageResource(R.drawable.round_repeat);
+            setExpandViewColors(loopExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+
+        if (isShuffled) {
+            setExpandViewColors(shuffleExpandImg, expandButtonsTint1, expandButtonsDrawable1);
+        }
+        else {
+            setExpandViewColors(shuffleExpandImg, expandButtonsTint0, expandButtonsDrawable0);
+        }
+    }
 
     private void setPlayerSettingsValuesAtStart() {
         loopValue = playerPrefs.getInt("loopValue", 0);
@@ -1945,6 +1980,8 @@ public class PlayerActivity extends AppCompatActivity {
         controlsHideTimeout = controlsHideTimeoutSec * 1000;
 
         applySensitivity(seekSwipeSensiLevel, verticalSwipeSensiLevel);
+
+        updateExpandViews();
     }
     
     private void setSubtitleValuesViewsAtStart() {
@@ -2273,7 +2310,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void hideSpeedLayout() {
-        speedText_Expand.setText(String.format(Locale.ROOT, "%.2fX", PlaybackSpeed));
+        speedText_Expand.setText(String.format(Locale.ROOT, "%.2fX", playbackSpeed));
         animationLibs.fadeSlideOutBottom(speedLayout, 200, null, null);
     }
 
@@ -2508,6 +2545,12 @@ public class PlayerActivity extends AppCompatActivity {
                     subColorPickerContainer.setVisibility(View.INVISIBLE);
                     subColorPickerContainer.setTranslationX(0f);
                 });
+    }
+
+    private void updateBackgroundPlayStatus(boolean isBackgroundPlay) {
+        Intent intent = new Intent("BGPlay_Status");
+        intent.putExtra("isBGPlay", isBackgroundPlay);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
 
@@ -2827,15 +2870,14 @@ public class PlayerActivity extends AppCompatActivity {
                 isPlay = player.getPlayWhenReady();
                 player.setPlayWhenReady(false);
                 player.pause();
-            }
 
+                if (playerListener != null) {
+                    playerListener.onMediaSessionFlagChange(false);
+                }
+            }
         }
 
         Log.d("mediddass", "onPause: ");
-
-        if (playerListener != null) {
-            playerListener.onMediaSessionFLagChange(false);
-        }
     }
 
     @Override
@@ -2848,15 +2890,15 @@ public class PlayerActivity extends AppCompatActivity {
                 player.setPlayWhenReady(true);
                 playMedia();
                 isPlay = false;
+
+                if (playerListener != null) {
+                    playerListener.onMediaSessionFlagChange(true);
+                }
             }
         }
 
         Log.d("mediddass", "onResume: ");
 
-        if (playerListener != null) {
-            Log.d("mediass", "onResume: ");
-            playerListener.onMediaSessionFLagChange(true);
-        }
     }
 
     @Override
@@ -2980,55 +3022,7 @@ public class PlayerActivity extends AppCompatActivity {
 
 
     private void playMedia() {
-        requestAudioFocus();
-        player.play();
-        wasPlaying_Focus = false;
-    }
-
-    private void requestAudioFocus() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !hasAudioFocus) {
-            audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
-                    .build();
-
-            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(audioAttributes)
-                    .setAcceptsDelayedFocusGain(false)
-                    .setOnAudioFocusChangeListener(focusChange -> {
-                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                            // pause playback, if other app starts playing
-                            if (player.isPlaying()) {
-                                player.pause();
-                            }
-                            hasAudioFocus = false;
-                            wasPlaying_Focus = false;
-                        }
-                        else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                            // pause playback, ex. if a call occurs
-                            if (player.isPlaying()){
-                                player.pause();
-                                wasPlaying_Focus = true;
-                            }
-                        }
-                        else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                            if (wasPlaying_Focus) {
-                                player.play();
-                                wasPlaying_Focus = false;
-                                hasAudioFocus = true;
-                            }
-                        }
-                    })
-                    .build();
-
-            int result = audioManager.requestAudioFocus(focusRequest);
-            if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                Log.d("AudioFocus", "Focus not granted, do not start media");
-            }
-            else {
-                hasAudioFocus = true;
-            }
-        }
+        playerService.play();
     }
 
 

@@ -41,7 +41,7 @@
                 android:layout_height="wrap_content"
                 style="@style/ToolbarTitleStyle"
                 android:layout_toEndOf="@id/backB"
-                android:text="Subtitle Setting"
+                android:text="Player Setting"
                 android:textSize="18sp"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="18dp" />
@@ -79,6 +79,7 @@
 
             <!-- Enable Gestures (Two-Line) -->
             <LinearLayout
+                android:id="@+id/swipeEnable"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -86,7 +87,6 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/swipeEnable"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -118,6 +118,7 @@
 
             <!-- Double Tap to Seek (Two-Line) -->
             <LinearLayout
+                android:id="@+id/seekEnable"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -125,7 +126,6 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/seekEnable"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -157,6 +157,7 @@
 
             <!-- Double Tap to Play/Pause (Two-Line) -->
             <LinearLayout
+                android:id="@+id/playEnable"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -164,7 +165,6 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/playEnable"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -382,6 +382,7 @@
 
             <!-- Show Remaining Time (Two-Line) -->
             <LinearLayout
+                android:id="@+id/remainingTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -389,7 +390,6 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/remainingTime"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

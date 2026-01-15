@@ -51,6 +51,7 @@ import com.example.mediaplayer.Room.AudioDao;
 import com.example.mediaplayer.Room.RoomDB;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -112,7 +113,7 @@ public class AudioFragment extends Fragment {
     private MaterialButton date_Details;
     private MaterialButton size_Details;
     private MaterialButton dur_Details;
-    private CheckBox durThumbnail_Details;
+    private MaterialSwitch durThumbnail_Details;
 
     private MaterialButtonToggleGroup layoutToggle;
     private MaterialButton layout_List;
