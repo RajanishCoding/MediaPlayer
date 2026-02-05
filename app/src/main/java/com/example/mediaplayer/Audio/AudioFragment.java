@@ -34,7 +34,6 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -42,6 +41,7 @@ import android.widget.TextView;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.ConsentDialog;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
+import com.example.mediaplayer.Extra.InfoDialog;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
@@ -58,9 +58,10 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -141,9 +142,12 @@ public class AudioFragment extends Fragment {
     private TextView toolbarSel_text;
     private boolean isAllSelected;
 
-    private ImageButton bottomSel_ren;
-    private ImageButton bottomSel_del;
-    private ImageButton bottomSel_share;
+    private MaterialButton bottomSel_ren;
+    private MaterialButton bottomSel_del;
+    private MaterialButton bottomSel_share;
+
+    private List<Uri> selectedListUris;
+    private int position;
 
     private AnimationLibs animationLibs;
 
@@ -269,8 +273,7 @@ public class AudioFragment extends Fragment {
         isList = settingsPrefs.getBoolean("isList", true);
 
 //      Setting at start
-        setListObserver();
-        Load_Or_Query_MediaList();
+        setListObserver(true);
 
 //      Loading at Start
         loadDetailsButtonVisibility();
@@ -311,46 +314,63 @@ public class AudioFragment extends Fragment {
             }
 
             @Override
-            public void onCountChanged(int counts) {
+            public void onCountChanged(int counts, List<Uri> list, int position) {
                 toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, mediaList.size()));
+                bottomSel_del.setEnabled(counts != 0);
                 bottomSel_ren.setEnabled(counts == 1);
+                bottomSel_share.setEnabled(counts != 0);
+                selectedListUris = new ArrayList<>(list);
+                AudioFragment.this.position = position;
             }
 
             @Override
-            public void onOptionButtonClicked(int p, String name) {
+            public void onOptionButtonClicked(int p, Audio audio, String name) {
                 MyBottomSheet sheet = new MyBottomSheet(p, name);
                 sheet.show(getChildFragmentManager(), sheet.getTag());
 
                 sheet.addBottomSheetDialogListeners(new MyBottomSheet.BottomSheetDialogListeners() {
+                    @OptIn(markerClass = UnstableApi.class)
                     @Override
                     public void onPlayCLickListener(int position) {
-
+                        Intent intent = new Intent(context, PlayerActivity.class);
+                        intent.putExtra("Name", audio.getName());
+                        intent.putExtra("Path", audio.getPath());
+                        intent.putExtra("isVideo", audio.isVideo());
+                        intent.putExtra("currentIndex", position);
+                        Log.d("isVideoFile", "onClick: " + audio.isVideo());
+                        context.startActivity(intent);
                     }
 
                     @Override
                     public void onInfoClickListener(int position) {
-
+                        InfoDialog dialog = new InfoDialog(audio, false);
+                        dialog.show(getParentFragmentManager(), "infoDialog");
                     }
 
                     @Override
-                    public void onRenameClickListener(int p) {
+                    public void onRenameClickListener(int position) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(Uri.parse(mediaList.get(p).getUri()));
-                        ConsentDialog consent = new ConsentDialog(2, uris, mediaList.get(p).getName());
+                        uris.add(Uri.parse(storedMediaList.get(position).getUri()));
+                        ConsentDialog consent = new ConsentDialog(2, uris, storedMediaList.get(position).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
                     @Override
-                    public void onDeleteClickListener(int p) {
+                    public void onDeleteClickListener(int position) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(Uri.parse(mediaList.get(p).getUri()));
-                        ConsentDialog consent = new ConsentDialog(1, uris, mediaList.get(p).getName());
+                        uris.add(Uri.parse(storedMediaList.get(position).getUri()));
+                        ConsentDialog consent = new ConsentDialog(1, uris, storedMediaList.get(position).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
                     @Override
                     public void onShareClickListener(int position) {
-
+                        Uri uri = Uri.parse(storedMediaList.get(position).getUri());
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("audio/*");
+                        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(shareIntent, "Share via"));
                     }
                 });
             }
@@ -385,6 +405,7 @@ public class AudioFragment extends Fragment {
         layoutB_Listeners();
         sortB_Listeners();
         detailsB_Listeners();
+        bottomBarListeners();
 
         apply_Button.setOnClickListener(v -> {
             settingsPrefsEditor.putString("sortBy", sortBy);
@@ -392,7 +413,7 @@ public class AudioFragment extends Fragment {
             settingsPrefsEditor.apply();
 
             setDetailsVisibility();
-            setListObserver();
+            setListObserver(false);
             hideMenuLayout();
         });
 
@@ -451,32 +472,60 @@ public class AudioFragment extends Fragment {
 
 
     private void selectAllItems() {
-        for (Audio v : mediaList) {
+        for (Audio v : storedMediaList) {
             v.isSelected = true;
         }
         adapter.notifyDataSetChanged();
-        adapter.selectionCounts = mediaList.size();
+
+        adapter.selectionCounts = storedMediaList.size();
         toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
 //        adapter.listener.onCountChanged(mediaList.size());
     }
 
     private void deselectAllItems() {
-        for (Audio v : mediaList) {
+        Log.d(TAG, "deselectAllItems: " + 1);
+        for (Audio v : storedMediaList) {
             v.isSelected = false;
         }
         adapter.notifyDataSetChanged();
+
         adapter.selectionCounts = 0;
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, mediaList.size()));
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
 //        adapter.listener.onCountChanged(0);
     }
 
     private void clearSelection() {
-        for (Audio v : mediaList) {
+        for (Audio v : storedMediaList) {
             v.isSelected = false;
         }
         adapter.isSelectionMode = false;
+        adapter.selectionCounts = 0;
+        adapter.selectedList = new ArrayList<>();
         adapter.notifyDataSetChanged();
         adapter.listener.onSelectionEnds();
+    }
+
+    private void bottomBarListeners() {
+        bottomSel_ren.setOnClickListener(v -> {
+            ConsentDialog consent = new ConsentDialog(2, selectedListUris, storedMediaList.get(position).getName());
+            consent.show(getChildFragmentManager(), "tag");
+            clearSelection();
+        });
+
+        bottomSel_del.setOnClickListener(v -> {
+            ConsentDialog consent = new ConsentDialog(1, selectedListUris, storedMediaList.get(position).getName());
+            consent.show(getChildFragmentManager(), "tag");
+            clearSelection();
+        });
+
+        bottomSel_share.setOnClickListener(v -> {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            shareIntent.setType("audio/*");
+            shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, new ArrayList<>(selectedListUris));
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share Via"));
+            clearSelection();
+        });
     }
 
 
@@ -539,37 +588,41 @@ public class AudioFragment extends Fragment {
         });
     }
 
+    private boolean isStoredListAvailable = false;
 
-    private void setListObserver() {
-        LiveData<List<Audio>> livedataList = getSortedListLiveData();
+    private void setListObserver(boolean isFirstTime) {
+        LiveData<List<Audio>> liveData = getSortedListLiveData();
 
-        if (livedataList != null) {
-            livedataList.removeObservers(getViewLifecycleOwner());
-        }
+        liveData.removeObservers(getViewLifecycleOwner());
 
-        getSortedListLiveData().observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
+        liveData.observe(getViewLifecycleOwner(), new Observer<List<Audio>>() {
             @Override
             public void onChanged(List<Audio> audios) {
-                if (audios == null || audios.isEmpty()) foundText.setVisibility(View.VISIBLE);
-                else foundText.setVisibility(View.INVISIBLE);
+                if (audios.isEmpty()) foundText.setVisibility(View.VISIBLE);
+                else foundText.setVisibility(View.GONE);
 
-                if (audios != null) {
-                    String lastPlayedPath = listPrefs.getString("lastPlayedAudioPath", "");
-                    lastPlayedPosition = 0;
+                String lastPlayedPath = listPrefs.getString("lastPlayedAudioPath", "");
+                lastPlayedPosition = 0;
 
-                    for (int i = 0; i < audios.size(); i++) {
-                        Audio v = audios.get(i);
-                        boolean isMatch = v.getPath().equals(lastPlayedPath);
-                        v.setLastPlayed(isMatch);
+                for (int i = 0; i < audios.size(); i++) {
+                    Audio v = audios.get(i);
+                    boolean isMatch = v.getPath().equals(lastPlayedPath);
+                    v.setLastPlayed(isMatch);
 
-                        if (isMatch) {
-                            lastPlayedPosition = i; // Position for Last Play Floating Button
-                        }
+                    if (isMatch) {
+                        lastPlayedPosition = i; // Position for Last Play Floating Button
                     }
                 }
 
-                adapter.submitList(audios);
                 storedMediaList = new ArrayList<>(audios);
+                adapter.submitList(audios);
+
+                if (!isStoredListAvailable && isFirstTime) {
+                    isStoredListAvailable = true;
+                    Load_Or_Query_MediaList();
+                    Log.d(TAG, "onChanged: " + "yes");
+                }
+
                 setAudioPlaylist();
             }
         });
@@ -584,11 +637,11 @@ public class AudioFragment extends Fragment {
         };
     }
 
+
     private void setDetailsVisibility() {
         adapter.setDetailsVisibility(isPath_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
-
 
     private void setBackground(Button button, boolean b) {
         if (!b)
@@ -724,13 +777,16 @@ public class AudioFragment extends Fragment {
 
                 // If no media files in preferences, query media files
                 audioDao.insertAll(mediaList);
+
+                for (Audio v : mediaList) {
+                    getMediaDetails(v);
+                    Log.d(TAG, "Load_Or_Query_MediaList1: " + v.getName());
+                }
             }
             else {
                 isFilesStored = true;
                 Check_And_Update_Files();
-            }
 
-            if (storedMediaList != null) {
                 for (Audio v : storedMediaList) {
                     getMediaDetails(v);
                 }
@@ -749,6 +805,8 @@ public class AudioFragment extends Fragment {
         };
 
         String sortOrder = MediaStore.Audio.Media.DISPLAY_NAME + " ASC";
+
+        if (!isAdded()) return mediaList;
 
         Cursor audioCursor = requireContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -784,7 +842,7 @@ public class AudioFragment extends Fragment {
                 String displayName = cursor.getString(displayNameInd);
                 String date = cursor.getString(dateAddedInd);
 
-                String audioUri = String.valueOf(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
+                String audioUri = String.valueOf(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id));
 
                 FilesName.add(displayName);
                 FilesPath.add(filePath);
@@ -800,40 +858,42 @@ public class AudioFragment extends Fragment {
         return mediaList;
     }
 
-
     private void Check_And_Update_Files() {
-        // For Deletion
-        List<String> newListUris = new ArrayList<>();
+        // URIs currently stored in DB
+        Set<String> dbUris = new HashSet<>(audioDao.getAllUris());
 
+        // URIs from MediaStore
+        Set<String> mediaUris = new HashSet<>();
         for (Audio m : mediaList) {
-            newListUris.add(m.getUri());
+            mediaUris.add(m.getUri());
         }
 
-        audioDao.deleteAllByUris(newListUris);
+        // Delete files not in storage
+        audioDao.deleteAllNotInUris(mediaUris);
 
-        // For Insertion
-        for (Audio audio : mediaList) {
-            Audio existing = audioDao.getByUri(audio.getUri());
-
-            if (existing == null) {
-                // New file → insert
-                audioDao.insertAll(Collections.singletonList(audio));
+        // Insert newly added files
+        for (Audio m : mediaList) {
+            if (!dbUris.contains(m.getUri())) {
+                // New file
+                audioDao.insert(m);
+                getMediaDetails(m);
             }
             else {
-//                // File exists → check if changed
-                if (!existing.getPath().equals(audio.getPath()) ||
-                        !existing.getName().equals(audio.getName())) {
-                    audioDao.update(audio); // rename/update case
+                Audio existing = audioDao.getByUri(m.getUri());
+                if (existing != null && !existing.getName().equals(m.getName())) {
+                    audioDao.update(m);
                 }
             }
+
         }
     }
 
     private void getMediaDetails(Audio media) {
-        if (media.getDuration() == null || media.getSize() == null) {
+        if (media.getDuration() == null || media.getExtraMetadata() == null) {
+
             new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
-                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
+                public void onMetadataReady(FFmpegMetadataRetriever retriever, String extraMetadataJsonString) {
                     try {
                         Long sizeInBytes = retriever.getFileSize();
                         Long duration = retriever.getDuration();
@@ -844,7 +904,10 @@ public class AudioFragment extends Fragment {
 
                         Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(media.getSize()) + " MB, Duration: " + MillisToTime(duration));
 
-                        executorService.execute(() -> audioDao.update(media));
+                        executorService.execute(() -> {
+                            audioDao.update(media);
+                            audioDao.setExtraMetadata(media.getPath(), extraMetadataJsonString);
+                        });
                     }
                     catch (Exception e) {
                         e.printStackTrace();

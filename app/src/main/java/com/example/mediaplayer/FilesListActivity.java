@@ -11,22 +11,17 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -42,7 +37,6 @@ import com.example.mediaplayer.Settings.SettingsFragment;
 import com.example.mediaplayer.Video.Video;
 import com.example.mediaplayer.Video.VideoFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationBarView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,16 +53,27 @@ public class FilesListActivity extends AppCompatActivity {
     private List<Video> mediaList;
 
     private ConstraintLayout StorageRationaleLayout;
-    private Button Rationale_AllowAccess_Button;
+    private Button storageRationale_AccessButton;
+    private TextView storageRationaleText;
     private boolean NotificationEnabled;
 
     private boolean readStorage;
     private boolean writeStorage;
     private boolean isStorageAccessed;
+    private boolean isAudioStorageAccessed;
+    private boolean isStoragePermanentlyDenied;
+    private boolean isAudioStoragePermanentlyDenied;
+    private boolean isPermissionsAsked;
+    private boolean isAudioPermissionsAsked;
     private boolean isSetAdapterNeeded;
     private String TAG = "TAG";
     public boolean isInsert;
 
+    private boolean isNotificationPermissionAsked;
+
+    private boolean isStart = true;
+
+    private Fragment activeFragment;
     private BottomNavigationView bottomNavigationView;
 
     private ImageButton lastPlay_Button;
@@ -79,12 +84,30 @@ public class FilesListActivity extends AppCompatActivity {
     private SharedPreferences listPrefs;
     private SharedPreferences.Editor listPrefsEditor;
 
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor prefsEditor;
+
     private View menu_Container;
     private ImageButton menu_Button;
     private ImageButton search_Button;
     private Switch mode_Switch;
 
+    private int id;
+
     public static boolean isThemeChanged = false;
+
+    private static final String[] REQUIRED_PERMISSIONS_A10B = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    private static final String[] REQUIRED_PERMISSIONS_A1112 = {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
+    private static final String[] REQUIRED_PERMISSIONS_A13A = {
+            Manifest.permission.READ_MEDIA_VIDEO
+    };
 
 
     @Override
@@ -101,7 +124,8 @@ public class FilesListActivity extends AppCompatActivity {
         FilesDuration = new ArrayList<>();
 
         StorageRationaleLayout = findViewById(R.id.StorageAccessLayout);
-        Rationale_AllowAccess_Button = findViewById(R.id.allowAccess);
+        storageRationaleText = findViewById(R.id.access_content);
+        storageRationale_AccessButton = findViewById(R.id.allowAccess);
 
 //        lastPlay_Button = findViewById(R.id.Play_Last);
 
@@ -114,39 +138,54 @@ public class FilesListActivity extends AppCompatActivity {
 
         listPrefs = getSharedPreferences("ListSetting", Context.MODE_PRIVATE);
 
+        prefs = getSharedPreferences("PermissionPrefs", MODE_PRIVATE);
+        prefsEditor = prefs.edit();
+
+        isPermissionsAsked = prefs.getBoolean("isPermissionsAsked", false);
+        isAudioPermissionsAsked = prefs.getBoolean("isAudioPermissionsAsked", false);
+        isNotificationPermissionAsked = prefs.getBoolean("isNotificationPermissionAsked", false);
+
         setThemeMode();
 
 
-//        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//                queryMediaFiles(true); // Example: Refresh media list
-//                swipeRefreshLayout.setRefreshing(false);
-//            }
-//        });
-
-//        CheckAndAsk_StorageAccess();
-
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_video) {
+                id = item.getItemId();
+                Log.d(TAG, "onStart: " + "yy");
+
                 if (!isStorageAccessed) {
-                    return false;
+                    unloadFragment(new VideoFragment()); unloadFragment(new SettingsFragment());
+                    updateRationaleLayout(isStoragePermanentlyDenied, false);
+                    return true;
                 }
 
-                loadFragment(new VideoFragment(), false);
+                StorageRationaleLayout.setVisibility(View.GONE);
+                loadFragment(new VideoFragment());
+                CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
                 return true;
             }
 
             else if (item.getItemId() == R.id.nav_audio) {
-                if (!isStorageAccessed) {
-                    return false;
+                id = item.getItemId();
+
+                if (!checkVersion13A()) isAudioStorageAccessed = isStorageAccessed;
+
+                if (!isAudioStorageAccessed) {
+                    unloadFragment(new VideoFragment()); unloadFragment(new SettingsFragment());
+                    updateRationaleLayout(isAudioStoragePermanentlyDenied, true);
+                    return true;
                 }
-                loadFragment(new AudioFragment(), false);
+
+                StorageRationaleLayout.setVisibility(View.GONE);
+                loadFragment(new AudioFragment());
+                CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
                 return true;
             }
 
             else {
-                loadFragment(new SettingsFragment(), false);
+                id = item.getItemId();
+                StorageRationaleLayout.setVisibility(View.GONE);
+                loadFragment(new SettingsFragment());
                 return true;
             }
         });
@@ -154,48 +193,13 @@ public class FilesListActivity extends AppCompatActivity {
         if (isThemeChanged) {  // If recreated due to theme change
             bottomNavigationView.post(() -> {
                 if (!isFinishing() && !isDestroyed()) {
-                    bottomNavigationView.setSelectedItemId(R.id.nav_video);
+                    bottomNavigationView.setSelectedItemId(R.id.nav_settings);
                     Log.d("ThemeChange", "onCreate: ");
                 }
             });
             Log.d("ThemeChange", "onCreate: Theme changed, selecting Video in NavBar " + isThemeChanged);
             isThemeChanged = false; // Reset flag
         }
-
-
-
-//        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-//            bottomNavigationView.setSelectedItemId(R.id.nav_video);
-//            Log.d("Theme NOT", "onCreate: ");
-//        }, 200);
-
-
-//        lastPlay_Button.setOnClickListener(new View.OnClickListener() {
-//            @OptIn(markerClass = UnstableApi.class)
-//            @Override
-//            public void onClick(View v) {
-//                String name = sharedPreferences.getString("lastPlayedFileName", null);
-//                String path = sharedPreferences.getString("lastPlayedFilePath", null);
-//                Boolean isVideo = sharedPreferences.getBoolean("lastPlayedFile_isVideo", false);
-//
-//                if (name != null) {
-//                    Intent intent = new Intent(FilesListActivity.this, PlayerActivity.class);
-//                    intent.putExtra("Name", name);
-//                    intent.putExtra("Path", path);
-//                    intent.putExtra("isVideo", isVideo);
-//                    startActivity(intent);
-//                }
-//            }
-//        });
-
-        Log.d("DEBUG", "menu_Button: " + (menu_Button != null ? "Exists" : "NULL"));
-        menu_Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("showMenuLayout", "showMenuLayout: YES");
-                showMenuLayout();
-            }
-        });
     }
 
     private void setThemeMode() {
@@ -216,49 +220,12 @@ public class FilesListActivity extends AppCompatActivity {
 //        2 - Night
     }
 
-    private void showMenuLayout() {
-        Log.d("showMenuLayout", "showMenuLayout: YES");
-        Animation slideInRight = AnimationUtils.loadAnimation(FilesListActivity.this, R.anim.slide_in_right);
-        menu_Container.startAnimation(slideInRight);
-
-        slideInRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){
-                menu_Container.setVisibility(View.VISIBLE);
-//                isMenuContainerShowing = true;
-            }
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
-    }
-
-
-    private static final String[] REQUIRED_PERMISSIONS_A10B = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-
-    private static final String[] REQUIRED_PERMISSIONS_A1112 = {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-    };
-
-
-    private static final String[] REQUIRED_PERMISSIONS_A13A = {
-            Manifest.permission.READ_MEDIA_AUDIO,
-            Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.POST_NOTIFICATIONS
-    };
 
     ActivityResultLauncher<String> requestPermissionLauncher_Notification =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
                 @Override
                 public void onActivityResult(Boolean isGranted) {
-                    NotificationEnabled = isGranted;
+                    isNotificationPermissionAsked = NotificationEnabled = isGranted;
                 }
             });
 
@@ -266,46 +233,60 @@ public class FilesListActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
                 @Override
                 public void onActivityResult(Map<String, Boolean> permissions) {
-                    boolean permission1, permission2, isAllowed;
+                    isStorageAccessed = checkStorageAccess(false);
 
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE));
-                        permission2 = Boolean.TRUE.equals(permissions.get(Manifest.permission.WRITE_EXTERNAL_STORAGE));
-                        isAllowed = permission1 && permission2;
-                    }
-                    else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
-                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_EXTERNAL_STORAGE));
-                        isAllowed = Boolean.TRUE.equals(permission1);
-                    }
-                    else {
-                        permission1 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_MEDIA_AUDIO));
-                        permission2 = Boolean.TRUE.equals(permissions.get(Manifest.permission.READ_MEDIA_VIDEO));
-                        isAllowed = Boolean.TRUE.equals(permission1) && Boolean.TRUE.equals(permission2);
-                    }
+                    boolean isPermission = isPermissionsAsked;
+                    isPermissionsAsked = true;
+                    prefsEditor.putBoolean("isPermissionsAsked", true).apply();
 
-                    if (isAllowed) {
-                        isStorageAccessed = true;
+                    if (isStorageAccessed) {
                         StorageRationaleLayout.setVisibility(View.GONE);
-                        loadFragment(new VideoFragment(), true);
+                        loadFragment(id == R.id.nav_audio ? new AudioFragment() : new VideoFragment());
+                        CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
                     }
                     else {
-                        isStorageAccessed = false;
-                        StorageRationaleLayout.setVisibility(View.VISIBLE);
-                        Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                                intent.setData(uri);
-                                startActivity(intent);
-                            }
-                        });
+                        isStoragePermanentlyDenied = isPermission && checkPermanentlyDenied(permissions.keySet().toArray(new String[0]));
+                        updateRationaleLayout(isStoragePermanentlyDenied, false);
                     }
                 }
             });
 
-    // Only check if permission is Allowed or not
-    private boolean checkStorageAccess() {
+    ActivityResultLauncher<String> requestPermissionLauncher_AudioStorage =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    isAudioStorageAccessed = isGranted;
+
+                    boolean isPermission = isAudioPermissionsAsked;
+                    isAudioPermissionsAsked = true;
+                    prefsEditor.putBoolean("isAudioPermissionsAsked", true).apply();
+
+                    if (isAudioStorageAccessed) {
+                        StorageRationaleLayout.setVisibility(View.GONE);
+                        loadFragment(new AudioFragment());
+                        CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
+                    }
+                    else {
+                        isAudioStoragePermanentlyDenied = isPermission && checkPermanentlyDenied(new String[]{Manifest.permission.READ_MEDIA_AUDIO});
+                        updateRationaleLayout(isAudioStoragePermanentlyDenied, true);
+                    }
+                }
+            });
+
+    private boolean checkPermanentlyDenied(String[] permissions) {
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    // Check if permission is Allowed or not
+    private boolean checkStorageAccess(boolean isAudio) {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
@@ -314,42 +295,55 @@ public class FilesListActivity extends AppCompatActivity {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         }
         else {
-            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+            return isAudio ?
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED :
                     ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
         }
     }
 
+    private String[] getRequiredPermissions() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            return REQUIRED_PERMISSIONS_A10B;
+        }
+        else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            return REQUIRED_PERMISSIONS_A1112;
+        }
+        else {
+            return REQUIRED_PERMISSIONS_A13A;
+        }
+    }
+
     // Check and Decide for, which permission is needed
-    private void CheckAndAsk_StorageAccess() {
+    private void CheckAndAsk_StorageAccess(boolean isAudio) {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q)
             CheckAndAsk_StorageAccessA10B();
         else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
             CheckAndAsk_StorageAccessA1112();
         else {
-            CheckAndAsk_StorageAccessA13A();
-            CheckAndAsk_NotificationAccess();
+            if (isAudio) CheckAndAsk_AudioStorageAccessA13A();
+            else CheckAndAsk_StorageAccessA13A();
         }
     }
 
-    // Check and Asks the permission for android 13 and above
-    private void CheckAndAsk_StorageAccessA13A() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+    // Check and Asks the permission for android 10 and below
+    private void CheckAndAsk_StorageAccessA10B() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
-            loadFragment(new VideoFragment(), true);
+            loadFragment(new VideoFragment());
         }
 
         else {
             isStorageAccessed = false;
-            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A13A);
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A10B);
         }
     }
 
-    // Check and Asks the permission for android 10 to 12
+    // Check and Asks the permission for android 11 & 12
     private void CheckAndAsk_StorageAccessA1112() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
-            loadFragment(new VideoFragment(), true);
+            loadFragment(new VideoFragment());
         }
 
         else {
@@ -358,83 +352,53 @@ public class FilesListActivity extends AppCompatActivity {
         }
     }
 
-    // Check and Asks the permission for android 9 and below
-    private void CheckAndAsk_StorageAccessA10B() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+    // Check and Asks the permission for android 13 and above
+    private void CheckAndAsk_StorageAccessA13A() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED) {
             isStorageAccessed = true;
-            loadFragment(new VideoFragment(), true);
+            loadFragment(new VideoFragment());
         }
 
         else {
             isStorageAccessed = false;
-            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A10B);
+            requestPermissionsLauncher_Storage.launch(REQUIRED_PERMISSIONS_A13A);
+        }
+    }
+
+    // Check and Asks the Audio permission for android 13 and above
+    private void CheckAndAsk_AudioStorageAccessA13A() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            isAudioStorageAccessed = true;
+            loadFragment(new AudioFragment());
         }
 
-//        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-//            if (Environment.isExternalStorageManager()) {
-//                isStorageAccessed = true;
-//                loadFragment(new VideoFragment(), true);
-////                queryMediaFiles(false);
-//                Log.d(TAG, "onCreate: YES");
-//            }
-//            else {
-//                isStorageAccessed = false;
-//                CheckAndAsk_NotificationAccess();
-//                StorageRationaleLayout.setVisibility(View.VISIBLE);
-//                Rationale_AllowAccess_Button.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        showPermissionDialog_StorageAccessA11();
-//                    }
-//                });
-//            }
-//        }
+        else {
+            isAudioStorageAccessed = false;
+            requestPermissionLauncher_AudioStorage.launch(Manifest.permission.READ_MEDIA_AUDIO);
+        }
     }
 
     // Check and Asks the permission for Notification for Android 13 and above
     private void CheckAndAsk_NotificationAccess() {
+        if (!isStart) return;
+        isStart = false;
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Check if the permission is granted
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 NotificationEnabled = true;
             }
 
-            else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+            else if (!isNotificationPermissionAsked && ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
                 NotificationEnabled = false;
                 showRationaleDialog_Notification();
             }
 
             else {
+                Log.d(TAG, "CheckAndAsk_NotificationAccess: " + NotificationEnabled);
                 NotificationEnabled = false;
+                requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
-    }
-
-    // Permission Confirmation Dialog for android 11 and above
-    private void showPermissionDialog_StorageAccessA11() {
-        new AlertDialog.Builder(this)
-                .setTitle("Storage Permission")
-                .setMessage(R.string.storage_access_text)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @RequiresApi(api = Build.VERSION_CODES.R)
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Open permission
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create()
-                .show();
     }
 
     // Permission Rationale Dialog
@@ -443,19 +407,18 @@ public class FilesListActivity extends AppCompatActivity {
                 .setTitle("Notification Permission")
                 .setMessage("Notification permission is required to control the media playback from notification while background play is enabled.\n\n" +
                         "Please enable it in the permissions of the app settings.")
-                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Allow Access", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Open app settings
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
+                        // For Notification Access Android 13 and above
+                        requestPermissionLauncher_Notification.launch(Manifest.permission.POST_NOTIFICATIONS);
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        isNotificationPermissionAsked = true;
+                        prefsEditor.putBoolean("isNotificationPermissionAsked", true).apply();
                         dialog.dismiss();
                     }
                 })
@@ -464,108 +427,143 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
 
-    private void loadFragment(Fragment fragment, boolean isAdd) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
-
-        if (!fragment.getClass().isInstance(currentFragment)) {
-            if (isAdd)
-                fragmentTransaction.add(R.id.fragmentContainer, fragment);
-            else
-                fragmentTransaction.replace(R.id.fragmentContainer, fragment);
-        }
-
-        fragmentTransaction.commit();
-    }
-
-    private boolean isFragmentAlreadyActive() {
-        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
-        return currentFragment != null;
-    }
-
-
-    private void unloadFragment() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
-
-        if (currentFragment != null) {
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.remove(currentFragment);
-            fragmentTransaction.commit();
-        }
-    }
-
-
     @Override
     protected void onStart() {
         super.onStart();
         // Check if the permission is granted after returning to app
-        isStorageAccessed = checkStorageAccess();
+        isStorageAccessed = checkStorageAccess(false);
+        isStoragePermanentlyDenied = isPermissionsAsked && checkPermanentlyDenied(getRequiredPermissions());
 
-        if (isStorageAccessed) {
-            StorageRationaleLayout.setVisibility(View.GONE);
-
-            if (!isFragmentAlreadyActive()) {
-                loadFragment(new VideoFragment(), true);
-            }
-//            queryMediaFiles(true);
+        if (checkVersion13A()) {
+            isAudioStorageAccessed = checkStorageAccess(true);
+            isAudioStoragePermanentlyDenied = isAudioPermissionsAsked && checkPermanentlyDenied(new String[]{Manifest.permission.READ_MEDIA_AUDIO});
         }
         else {
-            unloadFragment();
-            CheckAndAsk_StorageAccess();
+            isAudioStorageAccessed = isStorageAccessed;
+            isAudioStoragePermanentlyDenied = isStoragePermanentlyDenied;
         }
+
+        bottomNavigationView.post(() -> {
+            if (id == 0 || id == R.id.nav_video) {
+                bottomNavigationView.setSelectedItemId(R.id.nav_video);
+            }
+            else if (id == R.id.nav_audio) {
+                bottomNavigationView.setSelectedItemId(R.id.nav_audio);
+            }
+        });
+    }
+
+    private void updateRationaleLayout(boolean isStoragePermanentlyDenied, boolean isAudio) {
+        StorageRationaleLayout.setVisibility(View.VISIBLE);
+
+        StringBuilder builder = new StringBuilder();
+
+        if (checkVersion13A()) {
+            builder.append(getString(isAudio ? R.string.audio_access: R.string.video_access));
+        } 
+        else {
+            builder.append(getString(R.string.storage_access));
+        }
+
+        builder.append("\n\n");
+
+        if (isStoragePermanentlyDenied) {
+            if (checkVersion13A()) {
+                builder.append(getString(isAudio ? R.string.action_settings_audio : R.string.action_settings_video));
+            } else {
+                builder.append(getString(R.string.action_settings_storage));
+            }
+
+            storageRationale_AccessButton.setText("Open Settings");
+            storageRationale_AccessButton.setOnClickListener(v -> openSettings());
+        }
+        else {
+            builder.append(getString(R.string.action_allow));
+            storageRationale_AccessButton.setText("Allow Access");
+            storageRationale_AccessButton.setOnClickListener(v -> CheckAndAsk_StorageAccess(isAudio));
+        }
+
+        storageRationaleText.setText(builder.toString());
     }
 
 
-    public static ArrayList<String> getSongList() {
-        if (AudioFilesPath != null) {
-            return AudioFilesPath;
+    private void loadFragment(Fragment fragment) {
+        if (fragment == null) return;
+        String tag = fragment.getClass().getSimpleName(); // Uses the class name as the tag
+        FragmentManager fragmentManager = getSupportFragmentManager();
+
+        // Checking if fragment exists already
+        Fragment existingFragment = fragmentManager.findFragmentByTag(tag);
+
+        if (existingFragment != null && existingFragment == activeFragment) return;
+
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+
+        if (activeFragment != null && activeFragment != existingFragment) {
+            transaction.hide(activeFragment);
         }
-        return null;
+
+        if (existingFragment == null) {
+            existingFragment = fragment;
+            transaction.add(R.id.fragmentContainer, existingFragment, tag);
+        }
+        else {
+            transaction.show(existingFragment);
+        }
+
+        activeFragment = existingFragment;
+        transaction.commit();
     }
 
+    private void unloadFragment(Fragment fragment) {
+        if (fragment == null) return;
 
+        if (!checkVersion13A()) {
+            unloadAllFragments();
+            return;
+        }
 
-//    if (ContextCompat.checkSelfPermission(
-//            this, Manifest.permission.READ_MEDIA_AUDIO) ==
-//    PackageManager.PERMISSION_GRANTED) {
-//        // Permission is already granted. Proceed with the action.
-//        queryMediaFiles(); // Example: method to query and display media files
-//        Toast.makeText(this, "Yes Allowed", Toast.LENGTH_SHORT).show();
-//    }
-//        else if (ActivityCompat.shouldShowRequestPermissionRationale(
-//                this, Manifest.permission.READ_MEDIA_AUDIO)) {
-//        // Permission hasn't been granted yet and the user hasn't declined it previously.
-//        // You can explain to the user why the permission is needed.
-//        showRationaleDialog();
-//        requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO);
-//    }
-//        else {
-//        // Permission hasn't been granted yet. Request the permission.
-//        requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO);
-//    }
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        String tag = fragment.getClass().getSimpleName();
+        Fragment existingFragment = fragmentManager.findFragmentByTag(tag);
 
-    //    ActivityResultLauncher<String> requestPermissionLauncher =
-//            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
-//                @Override
-//                public void onActivityResult(Boolean isGranted) {
-//                    if (isGranted) {
-//                        // Permission is granted. Continue the action or workflow in your
-//                        // app.
-//                        queryMediaFiles();
-//                        Toast.makeText(FilesListActivity.this, "Yes Allowed", Toast.LENGTH_SHORT).show();
-//                    }
-//                    else {
-//                        Toast.makeText(FilesListActivity.this, "Not Allowed", Toast.LENGTH_SHORT).show();
-//
-//                        if (!ActivityCompat.shouldShowRequestPermissionRationale(
-//                                FilesListActivity.this, Manifest.permission.READ_MEDIA_AUDIO)) {
-//                            showSettingsRedirectDialog();
-//                        } else {
-//                            showPermissionDeniedMessage();
-//                        }
-//                    }
-//                }
-//            });
+        if (existingFragment != null) {
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.remove(existingFragment);
+            transaction.commit();
+
+            if (activeFragment == existingFragment) {
+                activeFragment = null;
+            }
+        }
+    }
+
+    private void openSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", FilesListActivity.this.getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
+    }
+
+    private boolean checkVersion13A() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
+    }
+
+    private void unloadAllFragments() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        List<Fragment> fragments = fragmentManager.getFragments();
+
+        for (Fragment fragment : fragments) {
+            if (fragment != null) {
+                transaction.remove(fragment);
+            }
+        }
+
+        transaction.commit();
+        activeFragment = null;
+    }
+
 }

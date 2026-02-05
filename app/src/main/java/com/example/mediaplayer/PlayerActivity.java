@@ -79,6 +79,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 import com.example.mediaplayer.Extra.AnimationLibs;
+import com.example.mediaplayer.Extra.InfoDialog;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.PlaylistManager;
 import com.example.mediaplayer.Room.AudioDao;
@@ -88,6 +89,7 @@ import com.example.mediaplayer.Tracks.AudioTracks;
 import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
 import com.example.mediaplayer.Tracks.SubTracksAdapter;
+import com.example.mediaplayer.Video.Video;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
@@ -265,7 +267,6 @@ public class PlayerActivity extends AppCompatActivity {
     private Drawable expandButtonsDrawable0;
 
     // Expand Views Layouts ---->
-
     private LinearLayout muteExpandB;
     private ImageButton muteExpandImg;
     private boolean isMuted;
@@ -301,6 +302,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isShuffled;
 
     private LinearLayout infoExpandB;
+    private boolean isInfoLayoutShowing;
 
     private LinearLayout audioExpandB;
     private ImageButton audioExpandImg;
@@ -404,6 +406,10 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isLockModeAll;
     private boolean isRemainingTimeViewEnabled;
     private boolean isTrackSelectionEnabled;
+
+    private View infoContainer;
+    private ImageButton infoLayoutBackB;
+    private FrameLayout infoSideBarFrame;
 
     private List<MediaItem> videoList;
     private PlaylistManager manager;
@@ -583,6 +589,10 @@ public class PlayerActivity extends AppCompatActivity {
         subFontDropdown = findViewById(R.id.subFontDropdown);
         ArrayAdapter<String> fontDropdownAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, fontFamilyList);
         subFontDropdown.setAdapter(fontDropdownAdapter);
+
+        infoContainer = findViewById(R.id.infoContainer);
+        infoLayoutBackB = findViewById(R.id.info_BackButton);
+        infoSideBarFrame = findViewById(R.id.infoSideBarFrame);
 
         volumeLayout = findViewById(R.id.volume_layout);
         brightnessLayout = findViewById(R.id.brightness_layout);
@@ -783,6 +793,7 @@ public class PlayerActivity extends AppCompatActivity {
         // For Getting Values at Start from Preferences
         setSubtitleValuesViewsAtStart();
         setPlayerSettingsValuesAtStart();
+        fetchMediaInfoAtStart();
 
 
         zoomW.post(() -> {
@@ -842,6 +853,11 @@ public class PlayerActivity extends AppCompatActivity {
                     if (isSpeedLayoutShowing) {
                         hideSpeedLayout();
                         isSpeedLayoutShowing = false;
+                    }
+
+                    if (isInfoLayoutShowing) {
+                        hideInfoLayout();
+                        isInfoLayoutShowing = false;
                     }
 
                     if (isLongPressed) isLongPressed = false;
@@ -1517,7 +1533,6 @@ public class PlayerActivity extends AppCompatActivity {
         expandB.setOnClickListener(v -> {
             Log.d("dgiuhors", "onCreate: jbissg");
             showExpandViewsLayout(75, 300);
-            isExpandViewsShowing = true;
             hideControls();
             removeControlsRunnable();
         });
@@ -1833,6 +1848,9 @@ public class PlayerActivity extends AppCompatActivity {
             player.setShuffleModeEnabled(isShuffled);
         });
 
+        infoExpandB.setOnClickListener(v -> showInfoLayout());
+        infoLayoutBackB.setOnClickListener(v -> hideInfoLayout());
+
         audioExpandB.setOnClickListener(v -> {
             if (isAudioPlay) {
                 setExpandViewColors(audioExpandImg, expandButtonsTint0, expandButtonsDrawable0);
@@ -1866,8 +1884,6 @@ public class PlayerActivity extends AppCompatActivity {
     private void speedExpand_Listeners() {
         speedExpandB.setOnClickListener(v -> {
             showSpeedLayout();
-            hideExpandViewsLayout();
-            isSpeedLayoutShowing = true;
         });
 
         sliderSpeed.addOnChangeListener((slider, value, fromUser) -> {
@@ -2018,6 +2034,20 @@ public class PlayerActivity extends AppCompatActivity {
 
         subMarginText.setText(String.valueOf(subMargin));
         subMarginSlider.setValue(subMargin);
+    }
+
+    private void fetchMediaInfoAtStart() {
+        new Thread(() -> {
+            Object obj = isVideoFile ? videoDao.getByPath(media_path) : audioDao.getByPath(media_path);
+
+            runOnUiThread(() -> {
+                InfoDialog infoFragment = new InfoDialog(obj, isVideoFile);
+
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.infoSideBarFrame, infoFragment)
+                        .commit();
+            });
+        }).start();
     }
 
 
@@ -2278,7 +2308,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showExpandViewsLayout(long delayBetween, long duration) {
         expandScrollView.animate().cancel();
-        animationLibs.fadeSlideInRight(expandScrollView, 200, null, null);
+        animationLibs.fadeSlideInRight(expandScrollView, 200, () -> isExpandViewsShowing = true, null);
 
         int count = expandView.getChildCount();
         expandView.setVisibility(View.VISIBLE);
@@ -2303,15 +2333,35 @@ public class PlayerActivity extends AppCompatActivity {
     private void hideExpandViewsLayout() {
         expandScrollView.animate().cancel();
         animationLibs.fadeSlideOutRight(expandScrollView, 200, null, () -> expandScrollView.setVisibility(View.GONE));
+        isExpandViewsShowing = false;
     }
 
     private void showSpeedLayout() {
-        animationLibs.fadeSlideInBottom(speedLayout, 300, null, null);
+        hideExpandViewsLayout();
+        isSpeedLayoutShowing = true;
+        animationLibs.fadeSlideInBottom(speedLayout, 300, null,null);
     }
 
     private void hideSpeedLayout() {
         speedText_Expand.setText(String.format(Locale.ROOT, "%.2fX", playbackSpeed));
-        animationLibs.fadeSlideOutBottom(speedLayout, 200, null, null);
+        animationLibs.fadeSlideOutBottom(speedLayout, 200, null,() -> {
+            isSpeedLayoutShowing = false;
+            speedLayout.setVisibility(View.INVISIBLE);
+        });
+    }
+
+    private void showInfoLayout() {
+        hideExpandViewsLayout();
+        isInfoLayoutShowing = true;
+        animationLibs.slideInRight(infoContainer, 250, null, null);
+    }
+
+    private void hideInfoLayout() {
+        animationLibs.slideOutRight(infoContainer, 250, null,
+                () -> {
+                    isInfoLayoutShowing = false;
+                    infoContainer.setVisibility(View.INVISIBLE);
+                });
     }
 
 

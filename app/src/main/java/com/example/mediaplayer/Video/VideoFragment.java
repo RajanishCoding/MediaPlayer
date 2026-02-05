@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -33,15 +34,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
 
-import com.example.mediaplayer.Audio.Audio;
 import com.example.mediaplayer.Extra.AnimationLibs;
 import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
+import com.example.mediaplayer.Extra.InfoDialog;
 import com.example.mediaplayer.Extra.MediaRepository;
 import com.example.mediaplayer.Extra.MyBottomSheet;
 import com.example.mediaplayer.Extra.MyMediaItem;
@@ -57,12 +57,14 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -154,9 +156,12 @@ public class VideoFragment extends Fragment {
     private TextView toolbarSel_text;
     private boolean isAllSelected;
 
-    private ImageButton bottomSel_ren;
-    private ImageButton bottomSel_del;
-    private ImageButton bottomSel_share;
+    private MaterialButton bottomSel_ren;
+    private MaterialButton bottomSel_del;
+    private MaterialButton bottomSel_share;
+
+    private List<Uri> selectedListUris;
+    private int position;
     
     private AnimationLibs animationLibs;
 
@@ -267,17 +272,19 @@ public class VideoFragment extends Fragment {
 
         swipeRefreshLayout.setOnRefreshListener(() -> {
             swipeRefreshLayout.setRefreshing(true);
-//            File[] files = new File("/storage/emulated/0").listFiles();
-//            for (File file : files) {
-//                MediaScannerConnection.scanFile(
-//                        getContext(),
-//                        new String[]{file.getPath()},
-//                        new String[]{"video/*"},
-//                        (path, uri) -> {
-//
-//                        }
-//                );
-//            }
+            File[] files = new File("/storage/emulated/0").listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    MediaScannerConnection.scanFile(
+                            getContext(),
+                            new String[]{file.getPath()},
+                            new String[]{"video/*"},
+                            (path, uri) -> {
+
+                            }
+                    );
+                }
+            }
             Load_Or_Query_MediaList();
             swipeRefreshLayout.setRefreshing(false);
         });
@@ -297,8 +304,7 @@ public class VideoFragment extends Fragment {
         isList = settingsPrefs.getBoolean("isList", true);
 
 //      Setting at start
-        setListObserver();
-        Load_Or_Query_MediaList();
+        setListObserver(true);
 
 //      Loading at Start
         loadDetailsButtonVisibility();
@@ -339,32 +345,44 @@ public class VideoFragment extends Fragment {
             }
 
             @Override
-            public void onCountChanged(int counts) {
+            public void onCountChanged(int counts, List<Uri> list, int position) {
                 toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", counts, storedMediaList.size()));
+                bottomSel_del.setEnabled(counts != 0);
                 bottomSel_ren.setEnabled(counts == 1);
+                bottomSel_share.setEnabled(counts != 0);
+                selectedListUris = new ArrayList<>(list);
+                VideoFragment.this.position = position;
             }
 
             @Override
-            public void onOptionButtonClicked(int p, String name) {
+            public void onOptionButtonClicked(int p, Video video, String name) {
                 MyBottomSheet sheet = new MyBottomSheet(p, name);
                 sheet.show(getChildFragmentManager(), sheet.getTag());
 
                 sheet.addBottomSheetDialogListeners(new MyBottomSheet.BottomSheetDialogListeners() {
+                    @OptIn(markerClass = UnstableApi.class)
                     @Override
                     public void onPlayCLickListener(int position) {
-
+                        Intent intent = new Intent(context, PlayerActivity.class);
+                        intent.putExtra("Name", video.getName());
+                        intent.putExtra("Path", video.getPath());
+                        intent.putExtra("isVideo", video.isVideo());
+                        intent.putExtra("currentIndex", position);
+                        Log.d("isVideoFile", "onClick: " + video.isVideo());
+                        context.startActivity(intent);
                     }
 
                     @Override
                     public void onInfoClickListener(int position) {
-
+                        InfoDialog dialog = new InfoDialog(video, true);
+                        dialog.show(getParentFragmentManager(), "infoDialog");
                     }
 
                     @Override
                     public void onRenameClickListener(int position) {
                         List<Uri> uris = new ArrayList<>();
-                        uris.add(Uri.parse(storedMediaList.get(p).getUri()));
-                        ConsentDialog consent = new ConsentDialog(2, uris, storedMediaList.get(p).getName());
+                        uris.add(Uri.parse(storedMediaList.get(position).getUri()));
+                        ConsentDialog consent = new ConsentDialog(2, uris, storedMediaList.get(position).getName());
                         consent.show(getChildFragmentManager(), sheet.getTag());
                     }
 
@@ -378,7 +396,12 @@ public class VideoFragment extends Fragment {
 
                     @Override
                     public void onShareClickListener(int position) {
-
+                        Uri uri = Uri.parse(storedMediaList.get(position).getUri());
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("video/*");
+                        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(shareIntent, "Share via"));
                     }
                 });
             }
@@ -412,6 +435,7 @@ public class VideoFragment extends Fragment {
         layoutB_Listeners();
         sortB_Listeners();
         detailsB_Listeners();
+        bottomBarListeners();
 
         apply_Button.setOnClickListener(v -> {
             settingsPrefsEditor.putString("sortBy", sortBy);
@@ -419,7 +443,7 @@ public class VideoFragment extends Fragment {
             settingsPrefsEditor.apply();
 
             setDetailsVisibility();
-            setListObserver();
+            setListObserver(false);
             hideMenuLayout();
             Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
         });
@@ -502,14 +526,37 @@ public class VideoFragment extends Fragment {
 
     private void clearSelection() {
         for (Video v : storedMediaList) {
-            Log.d("kklwi", "clearSelection: " + v.isSelected);
             v.isSelected = false;
         }
         adapter.isSelectionMode = false;
         adapter.selectionCounts = 0;
+        adapter.selectedList = new ArrayList<>();
         adapter.notifyDataSetChanged();
 //        adapter.submitList(storedMediaList);
         adapter.listener.onSelectionEnds();
+    }
+
+    private void bottomBarListeners() {
+        bottomSel_ren.setOnClickListener(v -> {
+            ConsentDialog consent = new ConsentDialog(2, selectedListUris, storedMediaList.get(position).getName());
+            consent.show(getChildFragmentManager(), "tag");
+            clearSelection();
+        });
+
+        bottomSel_del.setOnClickListener(v -> {
+            ConsentDialog consent = new ConsentDialog(1, selectedListUris, storedMediaList.get(position).getName());
+            consent.show(getChildFragmentManager(), "tag");
+            clearSelection();
+        });
+
+        bottomSel_share.setOnClickListener(v -> {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            shareIntent.setType("video/*");
+            shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, new ArrayList<>(selectedListUris));
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share Via"));
+            clearSelection();
+        });
     }
 
 
@@ -582,36 +629,42 @@ public class VideoFragment extends Fragment {
         durThumbnail_Details.setOnCheckedChangeListener((buttonView, isChecked) -> isDur_OnThumbnail = isChecked);
     }
 
-    private void setListObserver() {
-        LiveData<List<Video>> livedataList = getSortedListLiveData();
+    private boolean isStoredListAvailable = false;
 
-        if (livedataList != null) {
-            livedataList.removeObservers(getViewLifecycleOwner());
-        }
+    private void setListObserver(boolean isFirstTime) {
+        LiveData<List<Video>> liveData = getSortedListLiveData();
 
-        getSortedListLiveData().observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
+        liveData.removeObservers(getViewLifecycleOwner());
+
+        liveData.observe(getViewLifecycleOwner(), new Observer<List<Video>>() {
             @Override
             public void onChanged(List<Video> videos) {
-                if (videos == null || videos.isEmpty()) foundText.setVisibility(View.VISIBLE);
-                else foundText.setVisibility(View.INVISIBLE);
+                if (videos.isEmpty()) foundText.setVisibility(View.VISIBLE);
+                else foundText.setVisibility(View.GONE);
 
-                if (videos != null) {
-                    String lastPlayedPath = listPrefs.getString("lastPlayedVideoPath", "");
-                    lastPlayedPosition = 0;
+                String lastPlayedPath = listPrefs.getString("lastPlayedVideoPath", "");
+                lastPlayedPosition = 0;
 
-                    for (int i = 0; i < videos.size(); i++) {
-                        Video v = videos.get(i);
-                        boolean isMatch = v.getPath().equals(lastPlayedPath);
-                        v.setLastPlayed(isMatch);
+                // Last Played Code
+                for (int i = 0; i < videos.size(); i++) {
+                    Video v = videos.get(i);
+                    boolean isMatch = v.getPath().equals(lastPlayedPath);
+                    v.setLastPlayed(isMatch);
 
-                        if (isMatch) {
-                            lastPlayedPosition = i; // Position for Last Play Floating Button
-                        }
+                    if (isMatch) {
+                        lastPlayedPosition = i; // Position for Last Play Floating Button
                     }
                 }
 
-                adapter.submitList(videos);
                 storedMediaList = new ArrayList<>(videos);
+                adapter.submitList(videos);
+
+                if (!isStoredListAvailable && isFirstTime) {
+                    isStoredListAvailable = true;
+                    Load_Or_Query_MediaList();
+                    Log.d(TAG, "onChanged: " + "yes");
+                }
+
                 setVideoPlaylist();
             }
         });
@@ -633,7 +686,6 @@ public class VideoFragment extends Fragment {
         adapter.setDetailsVisibility(isPath_Visible, isResol_Visible, isFps_Visible, isSize_Visible, isDate_Visible, isDur_Visible, isDur_OnThumbnail);
         saveDetailsButtonVisibility();
     }
-
 
     private void setBackground(Button button, boolean b) {
         if (!b)
@@ -754,13 +806,12 @@ public class VideoFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         executorService.shutdown();
     }
 
 
     private void Load_Or_Query_MediaList() {
-        executorService.execute(() -> {
+        new Thread(() -> {
             mediaList = new ArrayList<>(queryMediaFiles());
 
             if (storedMediaList == null || storedMediaList.isEmpty()) {
@@ -768,18 +819,23 @@ public class VideoFragment extends Fragment {
 
                 // If no media files in preferences, query media files
                 videoDao.insertAll(mediaList);
+
+                for (Video v : mediaList) {
+                    getMediaDetails(v);
+                }
+
+                Log.d(TAG, "Load_Or_Query_MediaList: "+ "yes");
             }
             else {
+                Log.d(TAG, "Load_Or_Query_MediaList: "+ "no");
                 isFilesStored = true;
                 Check_And_Update_Files();
-            }
 
-            if (storedMediaList != null) {
                 for (Video v : storedMediaList) {
                     getMediaDetails(v);
                 }
             }
-        });
+        }).start();
     }
 
     private List<Video> queryMediaFiles() {
@@ -793,6 +849,8 @@ public class VideoFragment extends Fragment {
         };
 
         String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
+
+        if (!isAdded()) return mediaList;
 
         Cursor videoCursor = requireContext().getContentResolver().query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -845,43 +903,45 @@ public class VideoFragment extends Fragment {
     }
 
     private void Check_And_Update_Files() {
-        // For Deletion
-        List<String> newListUris = new ArrayList<>();
+        // URIs currently stored in DB
+        Set<String> dbUris = new HashSet<>(videoDao.getAllUris());
 
+        // URIs from MediaStore
+        Set<String> mediaUris = new HashSet<>();
         for (Video m : mediaList) {
-            newListUris.add(m.getUri());
+            mediaUris.add(m.getUri());
         }
 
-        videoDao.deleteAllByUris(newListUris);
+        Log.d(TAG, "Check_And_Update_Files: " + "yes");
 
-        // For Insertion
-        for (Video video : mediaList) {
-            Video existing = videoDao.getByUri(video.getUri());
+        // Delete files not in storage
+        videoDao.deleteAllNotInUris(mediaUris);
 
-            if (existing == null) {
-                // New file -> insert
-                videoDao.insertAll(Collections.singletonList(video));
+        // Insert newly added files
+        for (Video m : mediaList) {
+            if (!dbUris.contains(m.getUri())) {
+                // New file
+                videoDao.insert(m);
+                getMediaDetails(m);
             }
             else {
-                // File exists -> check if changed
-                if (!existing.getPath().equals(video.getPath()) ||
-                        !existing.getName().equals(video.getName())) {
-                    videoDao.update(video); // rename/update case
+                Video existing = videoDao.getByUri(m.getUri());
+                if (existing != null && !existing.getName().equals(m.getName())) {
+                    videoDao.update(m);
                 }
             }
         }
     }
 
     private void getMediaDetails(Video media) {
-        if (media.getDuration() == null || media.getResolution() == null || media.getSize() == null) {
+        if (media.getDuration() == null || media.getExtraMetadata() == null) {
             new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
-                public void onMetadataReady(FFmpegMetadataRetriever retriever) {
+                public void onMetadataReady(FFmpegMetadataRetriever retriever, String extraMetadataJsonString) {
                     try {
                         Long sizeInBytes = retriever.getFileSize();
 
                         Long duration = retriever.getDuration();
-                        Integer width = retriever.getResolution();
                         Integer height = retriever.getResolution();
                         Double fps = retriever.getFps();
 
@@ -891,9 +951,10 @@ public class VideoFragment extends Fragment {
                         media.setResolution(height);
                         media.setFrameRate(fps);
 
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(media.getSize()) + " MB, Duration: " + MillisToTime(duration) + ", Resolution: " + width + "x" + height + ", FPS: " + fps);
-
-                        executorService.execute(() -> videoDao.update(media));
+                        executorService.execute(() -> {
+                            videoDao.update(media);
+                            videoDao.setExtraMetadata(media.getPath(), extraMetadataJsonString);
+                        });
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -981,5 +1042,4 @@ public class VideoFragment extends Fragment {
         }
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
-
 }

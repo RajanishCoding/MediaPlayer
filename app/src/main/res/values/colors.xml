@@ -84,12 +84,10 @@
     <color name="sidebarDark">#E6101010</color>
     <color name="tracksBgDark">#F2101010</color>
 
-    <color name="bottomBarLight">#DAC9E8</color>
+    <color name="bottomBarLight">#D4CBE1</color>
     <color name="bottomBarDark">#181620</color>
 
     <color name="bottomBar">#C9D1E8</color>
-
-    <color name="bottomBarButtonTint">#000000</color>
 
 
     <!-- Overlay Colors -->
@@ -126,7 +124,12 @@
     <color name="text_color2">#757575</color>
     <color name="text_color2_rev">#AAAAAA</color>
 
+    <color name="text_color_disable">#808080</color>
+
+    <color name="button_color">#80A2A8CF</color>
     <color name="btn_color">#40DFDFDF</color>
+    <color name="btn_bottom">#C5CCE4</color>
+    <color name="btn_last_play">#9099BF</color>
     <color name="btn_color_checked">#400A004E</color>
 
     <color name="slider_thumb_color">@color/text_color</color>
@@ -135,6 +138,7 @@
     <color name="slider_halo_color">#3D000000</color>
 
     <color name="divider_color">#33000000</color>
+    <color name="divider_color2">#66000000</color>
 
     <color name="stroke_color">@color/text_color2_rev</color>
 

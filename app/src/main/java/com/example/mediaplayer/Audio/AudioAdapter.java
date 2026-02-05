@@ -1,7 +1,6 @@
 package com.example.mediaplayer.Audio;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,15 +30,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
-import com.example.mediaplayer.Extra.MyBottomSheet;
-import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
-import com.example.mediaplayer.Video.Video;
-import com.example.mediaplayer.Video.VideoAdapter;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -49,8 +45,8 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
     public interface SelectionListener {
         void onSelectionStarts();
         void onSelectionEnds();
-        void onCountChanged(int counts);
-        void onOptionButtonClicked(int position, String name);
+        void onCountChanged(int counts, List<Uri> selectedList, int pos);
+        void onOptionButtonClicked(int position, Audio audio, String name);
         void onItemClicked(int position, Audio audio);
     }
 
@@ -68,6 +64,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
 
     public boolean isSelectionMode;
     public int selectionCounts = 0;
+    public List<Uri> selectedList;
 
     public SelectionListener listener;
 
@@ -115,6 +112,8 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
 
         isNewTagEnabled = listPrefs.getBoolean("isNewMediaEnabled", true);
         isLastPlayedShowing = listPrefs.getBoolean("isLastPlayedEnabled", true);
+
+        selectedList = new ArrayList<>();
 
         return holder;
     }
@@ -190,7 +189,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
         try {
             Glide.with(holder.thumbnail.getContext())
             .asBitmap()
-            .load(media.getUri()) // Unique identifier, ensures correct thumbnail
+            .load(media.getUri())
             .placeholder(R.drawable.music1)
             .override(420)
             .centerCrop()
@@ -209,7 +208,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
-                    Glide.with(holder.thumbnail.getContext()).load(getThumbnail(media.getPath()))
+                    Glide.with(holder.thumbnail.getContext()).load(getThumbnail(media.getUri()))
                     .placeholder(R.drawable.music1)
                     .override(420)
                     .into(holder.thumbnail);
@@ -229,41 +228,48 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
             @OptIn(markerClass = UnstableApi.class)
             @Override
             public void onClick(View v) {
-                Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
+                int pos = holder.getBindingAdapterPosition();
 
                 if (isSelectionMode) {
-                    toggleSelection(holder.getBindingAdapterPosition());
+                    toggleSelection(pos);
                 }
                 else {
-                    listener.onItemClicked(holder.getBindingAdapterPosition(), media);
+                    listener.onItemClicked(pos, media);
                 }
             }
         });
 
         holder.itemView.setOnLongClickListener(v -> {
-            int p = holder.getBindingAdapterPosition();
+            int pos = holder.getBindingAdapterPosition();
             if (!isSelectionMode) {
                 isSelectionMode = true;
                 listener.onSelectionStarts();
                 notifyDataSetChanged();
             }
-            toggleSelection(p);
+            toggleSelection(pos);
             return true;
         });
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            listener.onOptionButtonClicked(p, mediaList.get(p).getName());
+            listener.onOptionButtonClicked(p, getItem(p), getItem(p).getName());
         });
     }
 
 
     private void toggleSelection(int position) {
-        Audio item = mediaList.get(position);
+        Audio item = getItem(position);
         item.isSelected = !item.isSelected;
+        if (item.isSelected) {
+            selectionCounts = selectionCounts+1;
+            selectedList.add(Uri.parse(item.getUri()));
+        }
+        else {
+            selectionCounts = selectionCounts-1;
+            selectedList.remove(Uri.parse(item.getUri()));
+        }
         notifyItemChanged(position);
-        selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
-        listener.onCountChanged(selectionCounts);
+        listener.onCountChanged(selectionCounts, selectedList, findSelectedPosition());
 
         if (selectionCounts == 0) {
             isSelectionMode = false;
@@ -277,7 +283,16 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
     }
 
     public boolean isAllSelected() {
-        return selectionCounts == mediaList.size();
+        return selectionCounts == getItemCount();
+    }
+
+    private int findSelectedPosition() {
+        for (int i = 0; i < getItemCount(); i++) {
+            if (getItem(i).isSelected) {
+                return i;
+            }
+        }
+        return 0;
     }
 
 
@@ -327,21 +342,6 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
             }
         }
         return thumbnail;
-    }
-
-    public void addMediaItem(Audio media) {
-        mediaList.add(media);  // Add new item to the list
-        notifyItemInserted(mediaList.size() - 1);  // Notify the adapter of the new item
-    }
-
-    public void addMediaItems(List<Audio> newMediaItems) {
-        int startPosition = mediaList.size();
-        mediaList.addAll(newMediaItems);
-        notifyItemRangeInserted(startPosition, newMediaItems.size());
-    }
-
-    public void addAllMediaItems() {
-        notifyDataSetChanged();
     }
 
     @Override
@@ -415,22 +415,22 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
 
     public static String getFormattedFileSize(long sizeInBytes) {
         // All sizes in bytes
-        final int KILOBYTE = 1024;
-        final int MEGABYTE = KILOBYTE * 1024;
-        final int GIGABYTE = MEGABYTE * 1024;
+        final int kb = 1024;
+        final int mb = kb * 1024;
+        final int gb = mb * 1024;
 
         // Converting based on size
-        if (sizeInBytes < KILOBYTE) {
+        if (sizeInBytes < kb) {
             return sizeInBytes + " B"; // Bytes
         }
-        else if (sizeInBytes < MEGABYTE) {
-            return (sizeInBytes / KILOBYTE) + " KB"; // Kilobytes
+        else if (sizeInBytes < mb) {
+            return (sizeInBytes / kb) + " KB"; // Kilobytes
         }
-        else if (sizeInBytes < GIGABYTE) {
-            return (sizeInBytes / MEGABYTE) + " MB"; // Megabytes
+        else if (sizeInBytes < gb) {
+            return (sizeInBytes / mb) + " MB"; // Megabytes
         }
         else {
-            double sizeInGB = (double) sizeInBytes / GIGABYTE;
+            double sizeInGB = (double) sizeInBytes / gb;
             return String.format(Locale.ROOT,"%.1f GB", sizeInGB); // Gigabytes
         }
     }
@@ -458,7 +458,7 @@ public class AudioAdapter extends ListAdapter<Audio, AudioAdapter.AudioViewHolde
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
 
-    public String SecsToTime(long seconds) {
+    public static String SecsToTime(long seconds) {
         long hours = (seconds / 3600);
         long minutes = (seconds % 3600) / 60;
         long second = seconds % 60;

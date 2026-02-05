@@ -12,6 +12,7 @@ import com.example.mediaplayer.Audio.Audio;
 import com.example.mediaplayer.Video.Video;
 
 import java.util.List;
+import java.util.Set;
 
 @Dao
 public interface AudioDao {
@@ -29,7 +30,10 @@ public interface AudioDao {
     void insertAll(List<Audio> audios);
 
     @Query("delete from audio where uri not in (:uris)")
-    void deleteAllByUris(List<String> uris);
+    void deleteAllNotInUris(Set<String> uris);
+
+    @Query("SELECT uri FROM audio")
+    List<String> getAllUris();
 
     @Query("delete from audio where uri = :uri")
     void deleteByUri(String uri);
@@ -40,11 +44,17 @@ public interface AudioDao {
     @Query("SELECT * FROM audio WHERE uri = :uri")
     Audio getByUri(String uri);
 
+    @Query("SELECT * FROM audio WHERE path = :path")
+    Audio getByPath(String path);
+
     @Query("SELECT EXISTS(SELECT 1 FROM audio WHERE path = :path)")
     boolean isPathExists(String path);
 
     @Query("UPDATE audio SET isNewAudio = 0 WHERE path = :path")
     void markAsPlayed(String path);
+
+    @Query("UPDATE audio SET extraMetadata = :jsonString WHERE path = :path")
+    void setExtraMetadata(String path, String jsonString);
 
 
 

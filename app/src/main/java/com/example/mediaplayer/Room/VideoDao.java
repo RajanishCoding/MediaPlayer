@@ -1,5 +1,7 @@
 package com.example.mediaplayer.Room;
 
+import android.net.Uri;
+
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
@@ -11,6 +13,7 @@ import androidx.room.Query;
 import com.example.mediaplayer.Video.Video;
 
 import java.util.List;
+import java.util.Set;
 
 @Dao
 public interface VideoDao {
@@ -28,7 +31,10 @@ public interface VideoDao {
     void insertAll(List<Video> videos);
 
     @Query("delete from video where uri not in (:uris)")
-    void deleteAllByUris(List<String> uris);
+    void deleteAllNotInUris(Set<String> uris);
+
+    @Query("SELECT uri FROM video")
+    List<String> getAllUris();
 
     @Query("delete from video where uri = :uri")
     void deleteByUri(String uri);
@@ -39,11 +45,17 @@ public interface VideoDao {
     @Query("SELECT * FROM video WHERE uri = :uri")
     Video getByUri(String uri);
 
+    @Query("SELECT * FROM video WHERE path = :path")
+    Video getByPath(String path);
+
     @Query("SELECT EXISTS(SELECT 1 FROM video WHERE path = :path)")
     boolean isPathExists(String path);
 
     @Query("UPDATE video SET isNewVideo = 0 WHERE path = :path")
     void markAsPlayed(String path);
+
+    @Query("UPDATE video SET extraMetadata = :jsonString WHERE path = :path")
+    void setExtraMetadata(String path, String jsonString);
 
 
 
@@ -87,4 +99,5 @@ public interface VideoDao {
 
     @Query("select * from video order by frameRate desc")
     LiveData<List<Video>> getListByFrameDesc();
+
 }

@@ -63,7 +63,7 @@
                 android:background="@drawable/shape_thumbnail_text"
                 android:paddingHorizontal="4dp"
                 android:paddingVertical="1dp"
-                android:text="35:40"
+                android:text="--:--"
                 android:textColor="@color/white"
                 android:textSize="11sp"
                 android:fontFamily="monospace"
@@ -81,7 +81,7 @@
                 android:paddingVertical="1dp"
                 android:text="NEW"
                 android:textColor="@color/white"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:elevation="4dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -206,7 +206,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/bottomBarButtonTint"
+        app:tint="@color/text_color"
         tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

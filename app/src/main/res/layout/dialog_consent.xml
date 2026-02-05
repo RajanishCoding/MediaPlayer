@@ -3,11 +3,10 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="24dp"
-    android:background="@drawable/shape_bottom_bar"
-    android:gravity="center">
+    android:background="@drawable/shape_bottom_bar">
 
     <TextView
         android:id="@+id/titleText"
@@ -26,6 +25,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:orientation="vertical"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
         android:visibility="gone">
 
         <TextView
@@ -45,6 +46,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
         android:visibility="visible">
 
         <EditText

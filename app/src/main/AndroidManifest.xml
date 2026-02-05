@@ -32,8 +32,10 @@
             android:parentActivityName=".FilesListActivity"
             android:theme="@style/Theme.Material3.Dark.NoActionBar">
         </activity>
+
         <activity
             android:name=".FilesListActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:theme="@style/Base.Theme.MediaPlayer">
             <intent-filter>

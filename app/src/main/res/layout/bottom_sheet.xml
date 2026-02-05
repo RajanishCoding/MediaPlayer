@@ -53,7 +53,7 @@
                 android:textAlignment="textStart"
                 android:drawablePadding="20dp"
                 android:drawableStart="@drawable/round_play_arrow"
-                android:drawableTint="@color/bottomBarButtonTint"
+                android:drawableTint="@color/text_color"
                 android:paddingHorizontal="20dp"
                 android:layout_weight="1"/>
 
@@ -67,7 +67,7 @@
                 android:textAlignment="textStart"
                 android:drawablePadding="20dp"
                 android:drawableStart="@drawable/round_info_outline"
-                android:drawableTint="@color/bottomBarButtonTint"
+                android:drawableTint="@color/text_color"
                 android:paddingHorizontal="20dp"
                 android:layout_weight="1"/>
 
@@ -81,7 +81,7 @@
                 android:textAlignment="textStart"
                 android:drawablePadding="20dp"
                 android:drawableStart="@drawable/round_rename_outline_24"
-                android:drawableTint="@color/bottomBarButtonTint"
+                android:drawableTint="@color/text_color"
                 android:paddingHorizontal="20dp"
                 android:layout_weight="1"/>
 
@@ -95,7 +95,7 @@
                 android:textAlignment="textStart"
                 android:drawablePadding="20dp"
                 android:drawableStart="@drawable/round_delete_forever"
-                android:drawableTint="@color/bottomBarButtonTint"
+                android:drawableTint="@color/text_color"
                 android:paddingHorizontal="20dp"
                 android:layout_weight="1"/>
 
@@ -109,7 +109,7 @@
                 android:textAlignment="textStart"
                 android:drawablePadding="20dp"
                 android:drawableStart="@drawable/round_share"
-                android:drawableTint="@color/bottomBarButtonTint"
+                android:drawableTint="@color/text_color"
                 android:paddingHorizontal="20dp"
                 android:layout_weight="1"/>
 

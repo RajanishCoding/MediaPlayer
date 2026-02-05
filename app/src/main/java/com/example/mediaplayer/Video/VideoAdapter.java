@@ -58,13 +58,13 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     public interface SelectionListener {
         void onSelectionStarts();
         void onSelectionEnds();
-        void onCountChanged(int counts);
-        void onOptionButtonClicked(int position, String name);
+        void onCountChanged(int counts, List<Uri> selectedList, int pos);
+        void onOptionButtonClicked(int position, Video video, String name);
         void onItemClicked(int position, Video video);
     }
 
     private List<Video> mediaList;
-    private static Context context;
+    private Context context;
 
     private boolean dur;
     private boolean dur_onThumbnail;
@@ -79,13 +79,14 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
     public boolean isSelectionMode;
     public int selectionCounts = 0;
-    private List<Uri> selectedList;
+    public List<Uri> selectedList;
 
     public SelectionListener listener;
 
     private Drawable icon_more;
     private Drawable icon_check;
     private Drawable icon_uncheck;
+
 
     private boolean isNewTagEnabled;
     private boolean isLastPlayedShowing;
@@ -214,7 +215,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         try {
             Glide.with(holder.thumbnail.getContext())
             .asBitmap()
-            .load(media.getPath()) // Unique identifier, ensures correct thumbnail
+            .load(media.getUri())
             .placeholder(R.drawable.video2)
             .override(420)
             .centerCrop()
@@ -233,7 +234,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
-                    Glide.with(holder.thumbnail.getContext()).load(getThumbnail(media.getPath()))
+                    Glide.with(holder.thumbnail.getContext()).load(getThumbnail(media.getUri()))
                     .placeholder(R.drawable.music1)
                     .override(420)
                     .into(holder.thumbnail);
@@ -252,32 +253,31 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("Item Clicked", holder.getBindingAdapterPosition() + " : " + media.getName());
+                int pos = holder.getBindingAdapterPosition();
 
                 if (isSelectionMode) {
-                    toggleSelection(holder.getBindingAdapterPosition());
+                    toggleSelection(pos);
                 }
                 else {
-                    Log.d("TAG", "onItemNNN3: " + media.getName());
-                    listener.onItemClicked(holder.getBindingAdapterPosition(), media);
+                    listener.onItemClicked(pos, media);
                 }
             }
         });
 
         holder.itemView.setOnLongClickListener(v -> {
-            int p = holder.getBindingAdapterPosition();
+            int pos = holder.getBindingAdapterPosition();
             if (!isSelectionMode) {
                 isSelectionMode = true;
                 listener.onSelectionStarts();
                 notifyDataSetChanged();
             }
-            toggleSelection(p);
+            toggleSelection(pos);
             return true;
         });
 
         holder.moreB.setOnClickListener(v -> {
             int p = holder.getBindingAdapterPosition();
-            listener.onOptionButtonClicked(p, getItem(p).getName());
+            listener.onOptionButtonClicked(p, getItem(p), getItem(p).getName());
         });
     }
 
@@ -285,10 +285,16 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
     private void toggleSelection(int pos) {
         Video item = getItem(pos);
         item.isSelected = !item.isSelected;
+        if (item.isSelected) {
+            selectionCounts = selectionCounts+1;
+            selectedList.add(Uri.parse(item.getUri()));
+        }
+        else {
+            selectionCounts = selectionCounts-1;
+            selectedList.remove(Uri.parse(item.getUri()));
+        }
         notifyItemChanged(pos);
-        selectedList.add(Uri.parse(getItem(pos).getUri()));
-        selectionCounts = item.isSelected ? selectionCounts+1 : selectionCounts-1;
-        listener.onCountChanged(selectionCounts);
+        listener.onCountChanged(selectionCounts, selectedList, findSelectedPosition());
 
         if (selectionCounts == 0) {
             isSelectionMode = false;
@@ -303,6 +309,15 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
     public boolean isAllSelected() {
         return selectionCounts == getItemCount();
+    }
+
+    private int findSelectedPosition() {
+        for (int i = 0; i < getItemCount(); i++) {
+            if (getItem(i).isSelected) {
+                return i;
+            }
+        }
+        return 0;
     }
 
 
@@ -470,7 +485,7 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
     }
 
-    public String SecsToTime(long seconds) {
+    public static String SecsToTime(long seconds) {
         long hours = (seconds / 3600);
         long minutes = (seconds % 3600) / 60;
         long second = seconds % 60;

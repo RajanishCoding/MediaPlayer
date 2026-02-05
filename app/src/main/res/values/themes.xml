@@ -33,7 +33,7 @@
     </style>
 
     <style name="ButtonStyleVariant" parent="Widget.MaterialComponents.Button">
-        <item name="android:backgroundTint">@color/button_background_variant</item>
+        <item name="android:backgroundTint">@color/btn_last_play</item>
         <item name="android:textColor">@color/button_text_variant</item>
     </style>
 

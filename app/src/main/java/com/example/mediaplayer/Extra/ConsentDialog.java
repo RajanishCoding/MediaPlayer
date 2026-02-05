@@ -4,12 +4,14 @@ import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -135,7 +137,7 @@ public class ConsentDialog extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         if (mediaUris.contains(null)) {
-            Toast.makeText(requireContext(), "Invalid media, Refresh this List", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Invalid media, Refresh the List", Toast.LENGTH_LONG).show();
             dismiss();
         }
 
@@ -183,17 +185,14 @@ public class ConsentDialog extends DialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-
-        Dialog dialog = getDialog();
-        if (dialog != null && dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.getWindow().setLayout(
-                    (int) (getResources().getDisplayMetrics().widthPixels * 0.85), // 85% screen width
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-        }
+        updateDialogSize();
     }
 
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateDialogSize();
+    }
 
     public void deleteMedia_A10B() {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -279,7 +278,7 @@ public class ConsentDialog extends DialogFragment {
             }
         }
         catch (Exception e) {
-            Toast.makeText(requireContext(), "Error renaming file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Error renaming file- " + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.d("renameerror", "renameMediaFile: " + e.getMessage());
             dismiss();
         }
@@ -291,6 +290,8 @@ public class ConsentDialog extends DialogFragment {
             ContentResolver contentResolver = requireContext().getContentResolver();
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, newName);
+
+            if (!isAdded() || getActivity() == null) return;
 
             try {
                 int r = contentResolver.update(mediaUris.get(0), values, null, null);
@@ -304,6 +305,7 @@ public class ConsentDialog extends DialogFragment {
                 });
             }
             catch (Exception e) {
+                Log.d("TAG", "doRename_A11A: " + newName);
                 Log.e("renamehello", "Error renaming file", e);
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(requireContext(), "Error Renaming file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -343,5 +345,28 @@ public class ConsentDialog extends DialogFragment {
         } else {
             return fileName;
         }
+    }
+
+    private void updateDialogSize() {
+        Dialog dialog = getDialog();
+        if (dialog == null) return;
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+
+            window.setBackgroundDrawableResource(R.drawable.shape_transparent);
+
+            window.setLayout(
+                    (int) (dm.widthPixels  * (isLandscape ? 0.5f : 0.85f)),
+                    isLandscape ? (int) (dm.heightPixels * 0.8f) : ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+    }
+
+    public int DpToPx(int dp) {
+        float density = this.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }

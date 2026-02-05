@@ -431,7 +431,6 @@
                 android:id="@+id/expandB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-
                 android:background="@drawable/ripple_player_dark"
                 android:contentDescription="TODO"
                 android:padding="3dp"
@@ -645,7 +644,7 @@
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- TYPOGRAPHY -->
+            <!-- Font -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -655,7 +654,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <!-- FONT FAMILY -->
+            <!-- Font Family -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -684,7 +683,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <!-- SIZE -->
+            <!-- Size -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -736,7 +735,7 @@
                 android:value="20"
                 android:stepSize="1" />
 
-            <!-- BOLD / ITALIC -->
+            <!-- Bold/Italic -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/subBIToggleView"
                 android:layout_width="match_parent"
@@ -778,7 +777,7 @@
                 android:background="#33FFFFFF" />
 
 
-            <!-- ================= COLORS ================= -->
+            <!-- Colors -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -787,7 +786,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <!-- TABS: Select what to edit (Text / Background / Stroke) -->
+            <!-- Tabs (Text / Background / Outline) -->
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/subColorTabs"
                 android:layout_width="match_parent"
@@ -861,7 +860,7 @@
                     app:cornerRadius="20dp"/>
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <!-- COLOR PALETTE (Applies to whichever Tab is selected above) -->
+            <!-- Color Pallete -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -901,7 +900,7 @@
                 android:background="#33FFFFFF" />
 
 
-            <!-- ================= LAYOUT & POSITION ================= -->
+            <!-- Layout & Position -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -961,7 +960,7 @@
                 android:value="0"
                 android:stepSize="5" />
 
-            <!-- RESET -->
+            <!-- Reset -->
             <Button
                 android:id="@+id/subResetB"
                 android:layout_width="match_parent"
@@ -975,6 +974,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Subtitle Settings ColorPicker -->
     <LinearLayout
         android:id="@+id/colorPickerContainer"
         android:layout_width="320dp"
@@ -1048,6 +1048,57 @@
             app:selector_AlphaSlideBar="@drawable/colorpickerview_wheel"
             app:borderColor_AlphaSlideBar="@android:color/darker_gray"
             app:borderSize_AlphaSlideBar="5"/>
+    </LinearLayout>
+
+    <!-- Info Sidebar -->
+    <LinearLayout
+        android:id="@+id/infoContainer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_margin="15dp"
+        android:background="@drawable/shape_sidebar"
+        android:elevation="8dp"
+        android:paddingHorizontal="20dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone">
+
+        <!-- HEADER -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/info_BackContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp">
+
+            <ImageButton
+                android:id="@+id/info_BackButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ripple_player_dark"
+                android:padding="3dp"
+                android:src="@drawable/baseline_arrow_back_24"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/ripple_player_dark"
+                android:text="Media Info"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/info_BackButton"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <FrameLayout
+            android:id="@+id/infoSideBarFrame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
     </LinearLayout>
 
 
@@ -1238,8 +1289,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:elevation="5dp"
-        android:visibility="gone">
+        android:elevation="5dp">
 
         <ScrollView
             android:id="@+id/expandScroll"
@@ -1249,8 +1299,7 @@
             android:overScrollMode="never"
             android:layout_margin="15dp"
             android:elevation="5dp"
-            android:scrollbars="none"
-            android:visibility="visible" >
+            android:scrollbars="none">
 
             <LinearLayout
                 android:id="@+id/expandView"
@@ -1258,7 +1307,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingHorizontal="10dp"
-                android:paddingVertical="5dp">
+                android:paddingVertical="5dp"
+                android:visibility="gone">
 
                 <!-- 1 Mute -->
                 <LinearLayout

@@ -31,7 +31,6 @@
 
     <color name="bottomBar">#181620</color>
 
-    <color name="bottomBarButtonTint">#FFFFFF</color>
 
     <color name="text_color">#FFFFFF</color>
     <color name="text_color_rev">#000000</color>
@@ -39,13 +38,18 @@
     <color name="text_color2">#AAAAAA</color>
     <color name="text_color2_rev">#757575</color>
 
+
+    <color name="button_color">#80160A29</color>
     <color name="btn_color">#40444444</color>
+    <color name="btn_bottom">#050629</color>
+    <color name="btn_last_play">#0F0C5B</color>
 
     <color name="slider_active_color">#FFFFFFFF</color>
     <color name="slider_inactive_color">#55FFFFFF</color>
     <color name="slider_halo_color">#33FFFFFF</color>
 
     <color name="divider_color">#33FFFFFF</color>
+    <color name="divider_color2">#66FFFFFF</color>
 
     <color name="stroke_color">#565656</color>
 

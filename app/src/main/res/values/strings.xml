@@ -2,7 +2,15 @@
 
 <resources>
     <string name="app_name">RZ Player</string>
-    <string name="storage_access_text">Storage permission is required to scan and access media files from the storage. We strongly recommend you to allow this permission. \n\nAllow Permission ?</string>
+
+    <string name="storage_access">Storage permission is required to scan and access media files from the storage.</string>
+    <string name="video_access">Video permission is required to scan and play video files from the storage.</string>
+    <string name="audio_access">Audio permission is required to scan and play music and audio files from the storage.</string>
+    <string name="action_allow">To allow: Click Allow Access</string>
+    <string name="action_settings_storage">To allow: Click Open Settings > Permissions > Storage > Allow.</string>
+    <string name="action_settings_video">To allow: Click Open Settings > Permissions > Photos and videos > Allow.</string>
+    <string name="action_settings_audio">To allow: Click Open Settings > Permissions > Music and audio > Allow.</string>
+
     <string name="title_activity_main">MainActivity</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>

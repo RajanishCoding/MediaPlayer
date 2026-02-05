@@ -178,37 +178,68 @@
     <LinearLayout
         android:id="@+id/bottomBar_sel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
         style="@style/NavBarStyle"
         app:layout_constraintBottom_toBottomOf="parent"
         android:visibility="gone">
 
-        <ImageButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/renameB_sel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:contentDescription="TODO"
-            android:src="@drawable/round_rename_outline_24"
-            app:tint="@color/bottomBarButtonTint" />
+            android:contentDescription="Rename"
+            android:backgroundTint="@color/btn_bottom"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="0dp"
+            app:icon="@drawable/round_rename_outline_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@color/selector_btn_bottom" />
 
-        <ImageButton
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/divider_color" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/deleteB_sel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:contentDescription="TODO"
-            android:src="@drawable/round_delete_forever"
-            app:tint="@color/bottomBarButtonTint" />
+            android:contentDescription="Delete"
+            android:backgroundTint="@color/btn_bottom"
+            android:insetTop="0dp"
+            app:cornerRadius="0dp"
+            android:insetBottom="0dp"
+            app:icon="@drawable/round_delete_forever"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@color/selector_btn_bottom" />
 
-        <ImageButton
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/divider_color" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/shareB_sel"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:contentDescription="TODO"
-            android:src="@drawable/round_share"
-            app:tint="@color/bottomBarButtonTint" />
+            android:contentDescription="Share"
+            android:backgroundTint="@color/btn_bottom"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="0dp"
+            app:icon="@drawable/round_share"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@color/selector_btn_bottom" />
 
     </LinearLayout>
 
@@ -217,7 +248,7 @@
         android:id="@+id/MenuContainer_Audio"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/shape_sidebar"
+        android:background="@drawable/shape_more_section"
         android:visibility="gone"
         android:layout_margin="8dp"
         android:clickable="true"
@@ -625,29 +656,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="35dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="40dp"
         android:contentDescription="Play_Last"
-        app:layout_constraintBottom_toTopOf="@+id/PickFile"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:fabCustomSize="60dp"
         app:maxImageSize="35dp"
         app:srcCompat="@drawable/media3_icon_play"
-        app:tint="#FFFFFF"
-        app:borderWidth="0dp" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/PickFile"
-        style="@style/ButtonStyleVariant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="35dp"
-        android:layout_marginBottom="80dp"
-        android:contentDescription="Select_Media"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:fabCustomSize="60dp"
-        app:maxImageSize="30dp"
-        app:srcCompat="@drawable/outline_drive_file_move_24"
         app:tint="#FFFFFF"
         app:borderWidth="0dp" />
 

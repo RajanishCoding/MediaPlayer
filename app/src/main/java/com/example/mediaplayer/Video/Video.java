@@ -38,6 +38,9 @@ public class Video {
     private boolean isNewVideo = true;
     private boolean isLastPlayed;
 
+    @Nullable
+    private String extraMetadata;
+
     @Ignore
     public boolean isSelected;
 
@@ -154,6 +157,14 @@ public class Video {
 
     public void setLastPlayed(boolean isLastPlayed) {
         this.isLastPlayed = isLastPlayed;
+    }
+
+    public String getExtraMetadata() {
+        return extraMetadata;
+    }
+
+    public void setExtraMetadata(String extraMetadata) {
+        this.extraMetadata = extraMetadata;
     }
 
     public boolean isSelected() {
