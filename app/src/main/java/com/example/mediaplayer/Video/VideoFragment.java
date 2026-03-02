@@ -17,6 +17,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -29,14 +33,19 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.example.mediaplayer.Extra.AnimationLibs;
@@ -54,6 +63,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -78,6 +89,7 @@ public class VideoFragment extends Fragment {
 
     private Toolbar toolbar_main;
     private Toolbar toolbar_selection;
+    private Toolbar toolbar_search;
     private View bottomBar_selection;
 
     private TextView foundText;
@@ -96,6 +108,7 @@ public class VideoFragment extends Fragment {
 
     private List<Video> storedMediaList;
     private boolean isFilesStored;
+    private List<Video> temporaryMediaList;
 
     private Thread thread;
 
@@ -160,6 +173,12 @@ public class VideoFragment extends Fragment {
     private MaterialButton bottomSel_del;
     private MaterialButton bottomSel_share;
 
+    private boolean isSearchToolbarShowing;
+    private ImageButton toolbarS_backB;
+    private ImageButton toolbarS_clearB;
+    private TextInputLayout toolbarS_inputLayout;
+    private TextInputEditText toolbarS_inputText;
+
     private List<Uri> selectedListUris;
     private int position;
     
@@ -194,6 +213,7 @@ public class VideoFragment extends Fragment {
 
         toolbar_main = view.findViewById(R.id.toolbar);
         toolbar_selection = view.findViewById(R.id.toolbar_sel);
+        toolbar_search = view.findViewById(R.id.toolbar_search);
         bottomBar_selection = view.findViewById(R.id.bottomBar_sel);
 
         foundText = view.findViewById(R.id.found_text_video);
@@ -246,6 +266,12 @@ public class VideoFragment extends Fragment {
         bottomSel_del = view.findViewById(R.id.deleteB_sel);
         bottomSel_share = view.findViewById(R.id.shareB_sel);
 
+        toolbarS_backB = view.findViewById(R.id.toolbarSearch_backB);
+        toolbarS_clearB = view.findViewById(R.id.toolbarSearch_clearB);
+        toolbarS_inputLayout = view.findViewById(R.id.toolbarSearch_inputLayout);
+        toolbarS_inputText = view.findViewById(R.id.toolbarSearch_inputText);
+
+
         bottomSheet = view.findViewById(R.id.bottomsheet);
         behavior = BottomSheetBehavior.from(bottomSheet);
 
@@ -294,6 +320,8 @@ public class VideoFragment extends Fragment {
         adapter = new VideoAdapter(requireContext(), mediaList, getChildFragmentManager());
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
+
+        temporaryMediaList = new ArrayList<>();
 
         boolean isLastPlayButtonEnabled = listPrefs.getBoolean("isFloatingResumeEnabled", true);
         lastPlay_Button.setVisibility(isLastPlayButtonEnabled ? View.VISIBLE : View.GONE);
@@ -421,6 +449,37 @@ public class VideoFragment extends Fragment {
             isAllSelected = !isAllSelected;
         });
 
+        search_Button.setOnClickListener(v -> {
+            animationLibs.fadeIn(toolbar_search, 350, null, () -> {
+                toggleKeyboard(true, toolbarS_inputText);
+                isSearchToolbarShowing = true;
+            });
+        });
+
+        toolbarS_inputText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                Toast.makeText(requireContext(), "Text : "+charSequence, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
+        toolbarS_backB.setOnClickListener(v -> {
+            isSearchToolbarShowing = false;
+            toggleKeyboard(false, toolbarS_inputText);
+            animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
+        });
+
+        toolbarS_clearB.setOnClickListener(v -> {
+            toolbarS_inputText.setText("");
+        });
+
+
         menu_Button.setOnClickListener(v -> {
             if (switch_isEnd) {
                 if (switch_frag) {
@@ -431,6 +490,7 @@ public class VideoFragment extends Fragment {
                 }
             }
         });
+
 
         layoutB_Listeners();
         sortB_Listeners();
@@ -494,11 +554,30 @@ public class VideoFragment extends Fragment {
                 if (adapter.isSelectionMode) {
                     clearSelection();
                 }
+                else if (isSearchToolbarShowing) {
+                    isSearchToolbarShowing = false;
+                    toggleKeyboard(false, toolbarS_inputText);
+                    animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
+                }
                 else{
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
                 }
             }
         });
+    }
+
+
+    public void toggleKeyboard(boolean show, View targetView) {
+        Window window = requireActivity().getWindow();
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+
+        if (show) {
+            targetView.requestFocus();
+            controller.show(WindowInsetsCompat.Type.ime());
+        } else {
+            controller.hide(WindowInsetsCompat.Type.ime());
+            targetView.clearFocus();
+        }
     }
 
 

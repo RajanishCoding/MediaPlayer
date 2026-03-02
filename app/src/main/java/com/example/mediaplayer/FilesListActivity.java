@@ -2,26 +2,32 @@ package com.example.mediaplayer;
 import android.Manifest;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -30,13 +36,19 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.util.UnstableApi;
 //import androidx.media3.exoplayer.Player;
 
+import com.example.mediaplayer.Audio.Audio;
 import com.example.mediaplayer.Audio.AudioFragment;
+import com.example.mediaplayer.Extra.MediaRepository;
+import com.example.mediaplayer.Extra.MyMediaItem;
 import com.example.mediaplayer.Settings.SettingsFragment;
 import com.example.mediaplayer.Video.Video;
 import com.example.mediaplayer.Video.VideoFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +62,15 @@ public class FilesListActivity extends AppCompatActivity {
     private static ArrayList<String> VideoFilesPath;
     private ArrayList<String> FilesDuration;
 
-    private List<Video> mediaList;
+    private List<Audio> audioList = new ArrayList<>();
+    private List<Video> videoList = new ArrayList<>();
 
     private ConstraintLayout StorageRationaleLayout;
-    private Button storageRationale_AccessButton;
+    private MaterialButton storageRationale_AccessButton;
     private TextView storageRationaleText;
     private boolean NotificationEnabled;
+
+    private MaterialButton pickFileButton;
 
     private boolean readStorage;
     private boolean writeStorage;
@@ -92,6 +107,9 @@ public class FilesListActivity extends AppCompatActivity {
     private ImageButton search_Button;
     private Switch mode_Switch;
 
+    private String mediaName;
+    private String mediaPath;
+
     private int id;
 
     public static boolean isThemeChanged = false;
@@ -127,9 +145,8 @@ public class FilesListActivity extends AppCompatActivity {
         storageRationaleText = findViewById(R.id.access_content);
         storageRationale_AccessButton = findViewById(R.id.allowAccess);
 
-//        lastPlay_Button = findViewById(R.id.Play_Last);
+        pickFileButton = findViewById(R.id.pickFile);
 
-//        menu_Container = findViewById(R.id.MenuContainer);
         menu_Button = findViewById(R.id.moremenu_button);
         search_Button = findViewById(R.id.search_button);
 
@@ -147,6 +164,7 @@ public class FilesListActivity extends AppCompatActivity {
 
         setThemeMode();
 
+        pickFileButton.setOnClickListener(v -> openMediaPicker());
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_video) {
@@ -220,6 +238,42 @@ public class FilesListActivity extends AppCompatActivity {
 //        2 - Night
     }
 
+
+    ActivityResultLauncher<Intent> mediaPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+                @OptIn(markerClass = UnstableApi.class)
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) {
+//                        getPersistentAccess(uri);
+
+                            Audio audio = getAudioFromUri(uri);
+                            audioList.add(audio);
+                            setAudioPlaylist();
+
+                            Intent intent = new Intent(FilesListActivity.this, PlayerActivity.class);
+                            intent.putExtra("Name", audio.getName());
+                            intent.putExtra("Path", audio.getPath());
+                            intent.putExtra("isVideo", audio.isVideo());
+                            intent.putExtra("currentIndex", 0);
+                            intent.putExtra("fromPickFile", true);
+                            Log.d("isVideoFile", "onClick: " + audio.isVideo());
+                            FilesListActivity.this.startActivity(intent);
+                        }
+                    }
+                }
+            });
+
+    ActivityResultLauncher<PickVisualMediaRequest> videoPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.PickVisualMedia(),
+            uri -> {
+                if (uri != null) {
+//                    getPersistentAccess(uri);
+                }
+            }
+    );
 
     ActivityResultLauncher<String> requestPermissionLauncher_Notification =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
@@ -564,6 +618,103 @@ public class FilesListActivity extends AppCompatActivity {
 
         transaction.commit();
         activeFragment = null;
+    }
+
+
+    public void openMediaPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        String[] mimeTypes = {"audio/*", "video/*"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        mediaPickerLauncher.launch(intent);
+
+//        videoPickerLauncher.launch(new PickVisualMediaRequest.Builder()
+//                .setMediaType(ActivityResultContracts.PickVisualMedia.VideoOnly.INSTANCE)
+//                .build());
+    }
+
+    private Audio getAudioFromUri(Uri uri) {
+        mediaPath = uri.toString();
+        String date = String.valueOf(System.currentTimeMillis());
+
+        // Query the specific URI provided by the picker
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                // Get Display Name
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex != -1) {
+                    mediaName = cursor.getString(nameIndex);
+                }
+
+                // Actual media path (may return null on Android 10+)
+                int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                if (dataIndex != -1) {
+                    String realPath = cursor.getString(dataIndex);
+                    if (realPath != null) mediaPath = realPath;
+                }
+            }
+        }
+
+        return new Audio(uri.toString(), mediaName, mediaPath, date, false);
+    }
+
+    private Video getVideoFromPickedUri(Uri uri) {
+        mediaPath = uri.toString();
+        String date = String.valueOf(System.currentTimeMillis());
+
+        // Query the specific URI provided by the picker
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                // Get Display Name
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex != -1) {
+                    mediaName = cursor.getString(nameIndex);
+                }
+
+                // Actual media path (may return null on Android 10+)
+                int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                if (dataIndex != -1) {
+                    String realPath = cursor.getString(dataIndex);
+                    if (realPath != null) mediaPath = realPath;
+                }
+            }
+        }
+
+        return new Video(uri.toString(), mediaName, mediaPath, date, true);
+    }
+
+    public void setAudioPlaylist() {
+        if (audioList != null) {
+            List<MediaItem> mediaItemList = new ArrayList<>();
+
+            for (Audio v : audioList) {
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                mediaItemList.add(mediaItem.toExoPlayerMediaItem());
+            }
+            MediaRepository.getInstance().setAudioPlaylist(mediaItemList);
+        }
+    }
+
+    public void setVideoPlaylist() {
+        if(videoList != null) {
+            List<MediaItem> mediaItemList = new ArrayList<>();
+
+            for (Video v : videoList) {
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                mediaItemList.add(mediaItem.toExoPlayerMediaItem());
+            }
+            MediaRepository.getInstance().setVideoPlaylist(mediaItemList);
+        }
+    }
+
+    private void getPersistentAccess(Uri uri) {
+        int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        try {
+            getContentResolver().takePersistableUriPermission(uri, takeFlags);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -1,5 +1,7 @@
 package com.example.mediaplayer;
 
+import android.app.AppOpsManager;
+import android.app.PictureInPictureParams;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,14 +13,14 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.Rational;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -69,7 +71,6 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.TrackGroupArray;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
-import androidx.media3.exoplayer.trackselection.MappingTrackSelector;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerView;
@@ -89,7 +90,6 @@ import com.example.mediaplayer.Tracks.AudioTracks;
 import com.example.mediaplayer.Tracks.AudioTracksAdapter;
 import com.example.mediaplayer.Tracks.SubTracks;
 import com.example.mediaplayer.Tracks.SubTracksAdapter;
-import com.example.mediaplayer.Video.Video;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
@@ -131,7 +131,8 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton rotateButton;
     private ImageButton lockButton;
     private ImageButton unlockButton;
-    private ImageButton decoderButton;
+    private ImageButton fitcropButton;
+    private ImageButton pipButton;
     private ImageButton audioTrackButton;
     private ImageButton subTrackButton;
 
@@ -147,7 +148,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private ConstraintLayout PlaybackControls_Container;
-    private ImageButton fitcropButton;
+
     private boolean isFitScreen = true;
 
     private boolean f;
@@ -158,6 +159,7 @@ public class PlayerActivity extends AppCompatActivity {
     private int currentIndex = 0;
 
     private boolean fromNotification;
+    private boolean fromPickFile;
 
     private boolean isBound = false;
 
@@ -175,6 +177,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isVideoFile;
     private boolean isOrientationChangedOnReady;
     private boolean isBackgroundPlay;
+    private boolean isInPipMode;
 
     private SharedPreferences playerPrefs;
     private SharedPreferences.Editor playerPrefsEditor;
@@ -312,7 +315,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private LinearLayout rotateExpandB;
 
-    private LinearLayout popupExpandB;
+    private LinearLayout pipExpandB;
 
 
     private enum GestureDirection {NONE, HORIZONTAL, VERTICAL}
@@ -532,7 +535,8 @@ public class PlayerActivity extends AppCompatActivity {
         rotateButton = findViewById(R.id.rotate);
         lockButton = findViewById(R.id.lock);
         unlockButton = findViewById(R.id.unlock);
-//        decoderButton = findViewById(R.id.decoder_button);
+        fitcropButton = findViewById(R.id.fit_crop);
+        pipButton = findViewById(R.id.pip);
         audioTrackButton = findViewById(R.id.audio_tracks_button);
         subTrackButton = findViewById(R.id.sub_tracks_button);
 
@@ -543,8 +547,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         toolbar = findViewById(R.id.toolbar);
         PlaybackControls_Container = findViewById(R.id.full_container);
-
-        fitcropButton = findViewById(R.id.fit_crop);
 
         buffer_view = findViewById(R.id.buffer_layout);
         buffer_view.setVisibility(View.VISIBLE);
@@ -660,7 +662,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         rotateExpandB = findViewById(R.id.rotate_expand);
 
-        popupExpandB = findViewById(R.id.pip_expand);
+        pipExpandB = findViewById(R.id.pip_expand);
 
         videoList = new ArrayList<>();
 
@@ -691,8 +693,9 @@ public class PlayerActivity extends AppCompatActivity {
         isVideoFile = intent.getBooleanExtra("isVideo", false);
         currentIndex = intent.getIntExtra("currentIndex", 0);
         fromNotification = intent.getBooleanExtra("fromNotification", false);
+        fromPickFile = intent.getBooleanExtra("fromPickFile", false);
 
-        Log.d("isVideoFile", "onCreate: " + isVideoFile);
+        Log.d("isVideoFile", "onCreate: " + media_name + "\n" + media_path + isVideoFile);
 
         Intent serviceIntent = new Intent(this, PlayerService.class);
         if (!fromNotification) {
@@ -793,7 +796,7 @@ public class PlayerActivity extends AppCompatActivity {
         // For Getting Values at Start from Preferences
         setSubtitleValuesViewsAtStart();
         setPlayerSettingsValuesAtStart();
-        fetchMediaInfoAtStart();
+        if (!fromPickFile) fetchMediaInfoAtStart();
 
 
         zoomW.post(() -> {
@@ -1331,7 +1334,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void initializePlayer() {
         Log.d("TAG", "initializePlayer: " + player);
         isFirstFetchTracksForCurrentMedia = true;
-        
+
         List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
         Log.d("dbjjbbdjb", "initializePlayer: " + (mediaItemList == null) + isVideoFile);
         
@@ -1405,6 +1408,7 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
+                if (fromPickFile) return;
                 Log.d("heibeibvi", "onMediaItemTransition: ");
                 mediaItem = newMediaItem;
                 media_name = mediaItem.localConfiguration.uri.getLastPathSegment();
@@ -1577,6 +1581,10 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+        pipButton.setOnClickListener(v -> {
+            enterPipMode();
+        });
+
         lockButton.setOnClickListener(v -> {
             isScreenLocked = true;
             hideControls();
@@ -1606,7 +1614,8 @@ public class PlayerActivity extends AppCompatActivity {
         time2.setOnClickListener(v -> {
             if (!isRemainingTimeViewEnabled) {
                 time2.setText("-" + MillisToTime(player.getDuration() - player.getCurrentPosition()));
-            } else {
+            }
+            else {
                 time2.setText(MillisToTime(player.getDuration()));
             }
             isRemainingTimeViewEnabled = !isRemainingTimeViewEnabled;
@@ -1614,6 +1623,39 @@ public class PlayerActivity extends AppCompatActivity {
             Log.d(TAG, "onClickTime2: " + isRemainingTimeViewEnabled);
         });
 
+    }
+
+    private void enterPipMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            AppOpsManager appOpsm = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOpsm.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, android.os.Process.myUid(), getPackageName());
+
+            if (mode != AppOpsManager.MODE_ALLOWED) {
+                Intent intent = new Intent("android.settings.PICTURE_IN_PICTURE_SETTINGS", Uri.parse("package:" + this.getPackageName()));
+                this.startActivity(intent);
+            }
+
+            PictureInPictureParams params =
+                    new PictureInPictureParams.Builder()
+                            .setAspectRatio(new Rational(16, 9))
+                            .build();
+            enterPictureInPictureMode(params);
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPipMode, @NonNull Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPipMode, newConfig);
+
+        if (isInPipMode) {
+            toolbar.setVisibility(View.GONE);
+            PlaybackControls_Container.setVisibility(View.GONE);
+        }
+        else {
+            toolbar.setVisibility(View.VISIBLE);
+            PlaybackControls_Container.setVisibility(View.VISIBLE);
+        }
     }
 
     private void tracksContainers_Listeners() {
@@ -2916,7 +2958,7 @@ public class PlayerActivity extends AppCompatActivity {
             playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
 
-            if (!isBackgroundPlay) {
+            if (!isBackgroundPlay && !isInPictureInPictureMode()) {
                 isPlay = player.getPlayWhenReady();
                 player.setPlayWhenReady(false);
                 player.pause();
@@ -2966,14 +3008,21 @@ public class PlayerActivity extends AppCompatActivity {
         playerPrefsEditor.putBoolean("isShuffle", isShuffled);
         playerPrefsEditor.apply();
 
-        if (isFinishing() && !isBackgroundPlay) {
-            if (player != null) {
-                player.stop();
-                Log.d("finish", "onFinish: YES");
+        if (isFinishing()) {
+            if (!isBackgroundPlay) {
+                if (player != null) {
+                    player.stop();
+                    Log.d("finish", "onFinish: YES");
+                }
             }
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d("mediddass", "onStop: ");
+    }
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
