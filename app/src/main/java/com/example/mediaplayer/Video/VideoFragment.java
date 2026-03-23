@@ -462,7 +462,15 @@ public class VideoFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                Toast.makeText(requireContext(), "Text : "+charSequence, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(requireContext(), "Text : " + charSequence, Toast.LENGTH_SHORT).show();
+                if (charSequence.toString().isEmpty()) {
+                    adapter.submitList(storedMediaList);
+                    return;
+                }
+
+                List<Video> list = getSearchItemsList(charSequence.toString());
+                adapter.submitList(list);
+                Log.d(TAG, "onTextChanged: " + list);
             }
 
             @Override
@@ -580,6 +588,27 @@ public class VideoFragment extends Fragment {
         }
     }
 
+
+    private List<Video> getSearchItemsList(String str) {
+        List<Video> list = new ArrayList<>();
+        String[] words = str.trim().toLowerCase().split("\\s+");
+
+        for (Video v : storedMediaList) {
+            boolean isPresent = true;
+            String name = v.getName().toLowerCase();
+
+            for (String word : words) {
+                if (!name.contains(word)) {
+                    isPresent = false;
+                    break;
+                }
+            }
+
+            if (isPresent) list.add(v);
+        }
+
+        return list;
+    }
 
     private void selectAllItems() {
         for (Video v : storedMediaList) {

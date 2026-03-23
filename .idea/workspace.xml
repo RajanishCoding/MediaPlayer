@@ -309,16 +309,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="Latest Commit">
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/rounded_close_24.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" afterDir="false" />
+    <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="Search Included">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_files_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_files_list.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_video.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_video.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -661,14 +654,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1721030140346</updated>
-    </task>
-    <task id="LOCAL-00040" summary="Latest Commit">
-      <option name="closed" value="true" />
-      <created>1750521003562</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
-      <option name="project" value="LOCAL" />
-      <updated>1750521003562</updated>
     </task>
     <task id="LOCAL-00041" summary="Latest Commit">
       <option name="closed" value="true" />
@@ -1054,7 +1039,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770302198959</updated>
     </task>
-    <option name="localTasksCounter" value="89" />
+    <task id="LOCAL-00089" summary="Search Included">
+      <option name="closed" value="true" />
+      <created>1772425180514</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1772425180514</updated>
+    </task>
+    <option name="localTasksCounter" value="90" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -1083,7 +1076,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$" />
     </ignored-roots>
-    <MESSAGE value="Thumbnail Commit" />
     <MESSAGE value="New Thumbnail Commit" />
     <MESSAGE value="AV_Tracks Commit" />
     <MESSAGE value="Media Info in List Commit" />
@@ -1108,7 +1100,8 @@
     <MESSAGE value="List Setting Done" />
     <MESSAGE value="Bg Play fixed" />
     <MESSAGE value="Latest Commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="Latest Commit" />
+    <MESSAGE value="Search Included" />
+    <option name="LAST_COMMIT_MESSAGE" value="Search Included" />
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">
