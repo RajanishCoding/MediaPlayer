@@ -354,6 +354,7 @@ public class VideoFragment extends Fragment {
                 Intent intent = new Intent(context, PlayerActivity.class);
                 intent.putExtra("Name", video.getName());
                 intent.putExtra("Path", video.getPath());
+                intent.putExtra("Uri", video.getUri());
                 intent.putExtra("isVideo", video.isVideo());
                 intent.putExtra("currentIndex", position);
                 Log.d("isVideoFile", "onClick: " + video.isVideo());
@@ -1077,7 +1078,7 @@ public class VideoFragment extends Fragment {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
             for (Video v : storedMediaList) {
-                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getUri(), v.getPath(), v.isVideo());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setVideoPlaylist(mediaItemList);

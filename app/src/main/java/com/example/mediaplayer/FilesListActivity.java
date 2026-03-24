@@ -689,7 +689,7 @@ public class FilesListActivity extends AppCompatActivity {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
             for (Audio v : audioList) {
-                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getUri(), v.getPath(), v.isVideo());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setAudioPlaylist(mediaItemList);
@@ -701,7 +701,7 @@ public class FilesListActivity extends AppCompatActivity {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
             for (Video v : videoList) {
-                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getUri(), v.getPath(), v.isVideo());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setVideoPlaylist(mediaItemList);

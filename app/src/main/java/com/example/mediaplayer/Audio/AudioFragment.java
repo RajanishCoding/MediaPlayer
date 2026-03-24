@@ -922,7 +922,7 @@ public class AudioFragment extends Fragment {
             List<MediaItem> mediaItemList = new ArrayList<>();
 
             for (Audio v : storedMediaList) {
-                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getPath());
+                MyMediaItem mediaItem = new MyMediaItem(v.getName(), v.getUri(), v.getPath(), v.isVideo());
                 mediaItemList.add(mediaItem.toExoPlayerMediaItem());
             }
             MediaRepository.getInstance().setAudioPlaylist(mediaItemList);

@@ -65,6 +65,8 @@ public class PlayerService extends MediaSessionService {
 
     private boolean isInitialized;
     private String currentMediaPath;
+    private boolean isVideo;
+    private boolean isBGPlay;
 
     private AudioManager audioManager;
     private AudioAttributes audioAttributes;
@@ -136,8 +138,9 @@ public class PlayerService extends MediaSessionService {
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 updateNotification();
                 if (mediaItem != null && mediaItem.localConfiguration != null) {
-                    mediaName = mediaItem.localConfiguration.uri.getLastPathSegment();
-                    currentMediaPath = mediaItem.localConfiguration.uri.getPath();
+                    Bundle extras = mediaItem.mediaMetadata.extras;
+                    mediaName = mediaItem.mediaMetadata.title.toString();
+                    if (extras != null) currentMediaPath = extras.getString("path");
                 }
             }
 
@@ -197,6 +200,7 @@ public class PlayerService extends MediaSessionService {
         super.onStartCommand(intent, flags, startId);
         mediaName = intent.getStringExtra("name");
         String mediaPath = intent.getStringExtra("path");
+        isVideo = intent.getBooleanExtra("isVideo", false);
 
         Log.d(TAG, "onStartCommand: YES");
 
@@ -391,7 +395,7 @@ public class PlayerService extends MediaSessionService {
     private final BroadcastReceiver bgPlayReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean isBGPlay = intent.getBooleanExtra("isBGPlay", false);
+            isBGPlay = intent.getBooleanExtra("isBGPlay", false);
             if (isBGPlay) startForegroundNotification();
             else stopForegroundNotification();
         }
@@ -403,6 +407,8 @@ public class PlayerService extends MediaSessionService {
         contentIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         contentIntent.putExtra("Name", mediaName);
         contentIntent.putExtra("Path", currentMediaPath);
+        contentIntent.putExtra("isVideo", isVideo);
+        contentIntent.putExtra("isBGPlay", isBGPlay);
         contentIntent.putExtra("fromNotification", true);
         // FLAG_IMMUTABLE is important for Android 12+
         return PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);

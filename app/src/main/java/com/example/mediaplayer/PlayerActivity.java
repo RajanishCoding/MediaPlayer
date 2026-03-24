@@ -156,6 +156,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private String media_name;
     private String media_path;
+    private String media_uri;
     private int currentIndex = 0;
 
     private boolean fromNotification;
@@ -177,6 +178,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean isVideoFile;
     private boolean isOrientationChangedOnReady;
     private boolean isBackgroundPlay;
+    private boolean isBGPlay;
     private boolean isInPipMode;
 
     private SharedPreferences playerPrefs;
@@ -690,7 +692,9 @@ public class PlayerActivity extends AppCompatActivity {
         Intent intent = getIntent();
         media_name = intent.getStringExtra("Name");
         media_path = intent.getStringExtra("Path");
+        media_uri = intent.getStringExtra("Uri");
         isVideoFile = intent.getBooleanExtra("isVideo", false);
+        isBGPlay = intent.getBooleanExtra("isBGPlay", false);
         currentIndex = intent.getIntExtra("currentIndex", 0);
         fromNotification = intent.getBooleanExtra("fromNotification", false);
         fromPickFile = intent.getBooleanExtra("fromPickFile", false);
@@ -701,6 +705,8 @@ public class PlayerActivity extends AppCompatActivity {
         if (!fromNotification) {
             serviceIntent.putExtra("name", media_name);
             serviceIntent.putExtra("path", media_path);
+            serviceIntent.putExtra("isVideo", isVideoFile);
+            Log.d(TAG, "onCreate: " + isVideoFile);
             startService(serviceIntent);
         }
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
@@ -1322,7 +1328,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         if (!fromNotification) playMedia();
 
-        if (!isVideoFile) {
+        if (isBGPlay || !isVideoFile) {
             setExpandViewColors(bgExpandImg, expandButtonsTint1, expandButtonsDrawable1);
             isBackgroundPlay = true;
         }
@@ -1337,6 +1343,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
         Log.d("dbjjbbdjb", "initializePlayer: " + (mediaItemList == null) + isVideoFile);
+
+        currentIndex = getCurrentIndex(mediaItemList);
         
         mediaItem = mediaItemList.get(currentIndex);
         player.setMediaItems(mediaItemList, currentIndex, 0);
@@ -1409,10 +1417,13 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem newMediaItem, int reason) {
                 if (fromPickFile) return;
-                Log.d("heibeibvi", "onMediaItemTransition: ");
                 mediaItem = newMediaItem;
-                media_name = mediaItem.localConfiguration.uri.getLastPathSegment();
-                media_path = mediaItem.localConfiguration.uri.getPath();
+
+                media_name = mediaItem.mediaMetadata.title.toString();
+                media_uri = mediaItem.localConfiguration.uri.toString();
+                Bundle extras = mediaItem.mediaMetadata.extras;
+                if (extras != null) media_path = extras.getString("path");
+
                 isOrientationChangedOnReady = false;
                 updatePlayerUI(true);
                 if (player.getPlaybackState() == Player.STATE_READY) {
@@ -2081,6 +2092,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void fetchMediaInfoAtStart() {
         new Thread(() -> {
             Object obj = isVideoFile ? videoDao.getByPath(media_path) : audioDao.getByPath(media_path);
+            Log.d(TAG, "fetchMediaInfoAtStart: " + isVideoFile);
 
             runOnUiThread(() -> {
                 InfoDialog infoFragment = new InfoDialog(obj, isVideoFile);
@@ -3361,5 +3373,15 @@ public class PlayerActivity extends AppCompatActivity {
     public int DpToPx(int dp) {
         float density = this.getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    private int getCurrentIndex(List<MediaItem> mediaItemList) {
+        for (int i = 0; i < mediaItemList.size(); i++) {
+            MediaItem item = mediaItemList.get(i);
+            if (item.localConfiguration != null && item.localConfiguration.uri.toString().equals(media_uri)) {
+                return i;
+            }
+        }
+        return 0;
     }
 }
