@@ -28,6 +28,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:visibility="visible"
+                app:surface_type="surface_view"
                 app:resize_mode="fit"
                 app:show_timeout="0"
                 app:use_controller="false" />

@@ -466,11 +466,13 @@ public class VideoFragment extends Fragment {
 //                Toast.makeText(requireContext(), "Text : " + charSequence, Toast.LENGTH_SHORT).show();
                 if (charSequence.toString().isEmpty()) {
                     adapter.submitList(storedMediaList);
+                    recyclerView.scrollToPosition(0);
                     return;
                 }
 
                 List<Video> list = getSearchItemsList(charSequence.toString());
                 adapter.submitList(list);
+                recyclerView.smoothScrollToPosition(0);
                 Log.d(TAG, "onTextChanged: " + list);
             }
 
@@ -768,6 +770,14 @@ public class VideoFragment extends Fragment {
                 storedMediaList = new ArrayList<>(videos);
                 adapter.submitList(videos);
 
+                for (int i = 0; i < storedMediaList.size(); i++) {
+                    Video m = videos.get(i);
+
+                    if (m.getDuration() == null || m.getExtraMetadata() == null) {
+                        getMediaDetails(m, i);
+                    }
+                }
+
                 if (!isStoredListAvailable && isFirstTime) {
                     isStoredListAvailable = true;
                     Load_Or_Query_MediaList();
@@ -929,9 +939,9 @@ public class VideoFragment extends Fragment {
                 // If no media files in preferences, query media files
                 videoDao.insertAll(mediaList);
 
-                for (Video v : mediaList) {
-                    getMediaDetails(v);
-                }
+//                for (Video v : mediaList) {
+//                    getMediaDetails(v);
+//                }
 
                 Log.d(TAG, "Load_Or_Query_MediaList: "+ "yes");
             }
@@ -940,9 +950,9 @@ public class VideoFragment extends Fragment {
                 isFilesStored = true;
                 Check_And_Update_Files();
 
-                for (Video v : storedMediaList) {
-                    getMediaDetails(v);
-                }
+//                for (Video v : storedMediaList) {
+//                    getMediaDetails(v);
+//                }
             }
         }).start();
     }
@@ -1031,7 +1041,7 @@ public class VideoFragment extends Fragment {
             if (!dbUris.contains(m.getUri())) {
                 // New file
                 videoDao.insert(m);
-                getMediaDetails(m);
+//                getMediaDetails(m);
             }
             else {
                 Video existing = videoDao.getByUri(m.getUri());
@@ -1042,7 +1052,7 @@ public class VideoFragment extends Fragment {
         }
     }
 
-    private void getMediaDetails(Video media) {
+    private void getMediaDetails(Video media, int pos) {
         if (media.getDuration() == null || media.getExtraMetadata() == null) {
             new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
                 @Override
@@ -1059,6 +1069,11 @@ public class VideoFragment extends Fragment {
                         media.setDuration(duration);
                         media.setResolution(height);
                         media.setFrameRate(fps);
+//                        media.setExtraMetadata();
+
+                        requireActivity().runOnUiThread(() -> {
+                            adapter.notifyItemChanged(pos);
+                        });
 
                         executorService.execute(() -> {
                             videoDao.update(media);
