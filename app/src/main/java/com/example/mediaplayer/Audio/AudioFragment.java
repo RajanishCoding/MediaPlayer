@@ -15,6 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -27,10 +30,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -49,9 +55,12 @@ import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.example.mediaplayer.Room.AudioDao;
 import com.example.mediaplayer.Room.RoomDB;
+import com.example.mediaplayer.Video.Video;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -75,6 +84,7 @@ public class AudioFragment extends Fragment {
 
     private Toolbar toolbar_main;
     private Toolbar toolbar_selection;
+    private Toolbar toolbar_search;
     private View bottomBar_selection;
 
     private TextView foundText;
@@ -146,6 +156,12 @@ public class AudioFragment extends Fragment {
     private MaterialButton bottomSel_del;
     private MaterialButton bottomSel_share;
 
+    private boolean isSearchToolbarShowing;
+    private ImageButton toolbarS_backB;
+    private ImageButton toolbarS_clearB;
+    private TextInputLayout toolbarS_inputLayout;
+    private TextInputEditText toolbarS_inputText;
+
     private List<Uri> selectedListUris;
     private int position;
 
@@ -180,6 +196,7 @@ public class AudioFragment extends Fragment {
 
         toolbar_main = view.findViewById(R.id.toolbar);
         toolbar_selection = view.findViewById(R.id.toolbar_sel);
+        toolbar_search = view.findViewById(R.id.toolbar_search);
         bottomBar_selection = view.findViewById(R.id.bottomBar_sel);
 
         foundText = view.findViewById(R.id.found_text_audio);
@@ -227,6 +244,12 @@ public class AudioFragment extends Fragment {
         bottomSel_ren = view.findViewById(R.id.renameB_sel);
         bottomSel_del = view.findViewById(R.id.deleteB_sel);
         bottomSel_share = view.findViewById(R.id.shareB_sel);
+
+        toolbarS_backB = view.findViewById(R.id.toolbarSearch_backB);
+        toolbarS_clearB = view.findViewById(R.id.toolbarSearch_clearB);
+        toolbarS_inputLayout = view.findViewById(R.id.toolbarSearch_inputLayout);
+        toolbarS_inputText = view.findViewById(R.id.toolbarSearch_inputText);
+
 
         context = requireContext();
         executorService = Executors.newFixedThreadPool(1);
@@ -303,14 +326,19 @@ public class AudioFragment extends Fragment {
 
             @Override
             public void onSelectionStarts() {
+                if (isSearchToolbarShowing) {
+                    toolbar_search.setVisibility(View.GONE);
+                    toggleKeyboard(false, toolbarS_inputText);
+                }
                 animationLibs.fadeIn(toolbar_selection, 350, null, null);
                 animationLibs.fadeIn(bottomBar_selection, 350, null, null);
             }
 
             @Override
             public void onSelectionEnds() {
+                if (isSearchToolbarShowing) toolbar_search.setVisibility(View.VISIBLE);
                 animationLibs.fadeOut(toolbar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
-                animationLibs.fadeOut(bottomBar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
+                animationLibs.fadeOut(bottomBar_selection, 350, null, () -> bottomBar_selection.setVisibility(View.GONE));
             }
 
             @Override
@@ -391,6 +419,48 @@ public class AudioFragment extends Fragment {
             isAllSelected = !isAllSelected;
         });
 
+        search_Button.setOnClickListener(v -> {
+            animationLibs.fadeIn(toolbar_search, 350, null, () -> {
+                toggleKeyboard(true, toolbarS_inputText);
+                isSearchToolbarShowing = true;
+            });
+        });
+
+        toolbarS_inputText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//                Toast.makeText(requireContext(), "Text : " + charSequence, Toast.LENGTH_SHORT).show();
+                if (charSequence.toString().isEmpty()) {
+                    adapter.submitList(storedMediaList);
+                    recyclerView.scrollToPosition(0);
+                    return;
+                }
+
+                List<Audio> list = getSearchItemsList(charSequence.toString());
+                adapter.submitList(list);
+                recyclerView.smoothScrollToPosition(0);
+                Log.d(TAG, "onTextChanged: " + list);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
+        toolbarS_backB.setOnClickListener(v -> {
+            isSearchToolbarShowing = false;
+            toggleKeyboard(false, toolbarS_inputText);
+            toolbarS_inputText.setText("");
+            animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
+        });
+
+        toolbarS_clearB.setOnClickListener(v -> {
+            toolbarS_inputText.setText("");
+        });
+
+
         menu_Button.setOnClickListener(v -> {
             if (switch_isEnd) {
                 if (switch_frag) {
@@ -463,6 +533,12 @@ public class AudioFragment extends Fragment {
                 if (adapter.isSelectionMode) {
                     clearSelection();
                 }
+                else if (isSearchToolbarShowing) {
+                    isSearchToolbarShowing = false;
+                    toggleKeyboard(false, toolbarS_inputText);
+                    toolbarS_inputText.setText("");
+                    animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
+                }
                 else {
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
                 }
@@ -471,39 +547,6 @@ public class AudioFragment extends Fragment {
     }
 
 
-    private void selectAllItems() {
-        for (Audio v : storedMediaList) {
-            v.isSelected = true;
-        }
-        adapter.notifyDataSetChanged();
-
-        adapter.selectionCounts = storedMediaList.size();
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
-//        adapter.listener.onCountChanged(mediaList.size());
-    }
-
-    private void deselectAllItems() {
-        Log.d(TAG, "deselectAllItems: " + 1);
-        for (Audio v : storedMediaList) {
-            v.isSelected = false;
-        }
-        adapter.notifyDataSetChanged();
-
-        adapter.selectionCounts = 0;
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
-//        adapter.listener.onCountChanged(0);
-    }
-
-    private void clearSelection() {
-        for (Audio v : storedMediaList) {
-            v.isSelected = false;
-        }
-        adapter.isSelectionMode = false;
-        adapter.selectionCounts = 0;
-        adapter.selectedList = new ArrayList<>();
-        adapter.notifyDataSetChanged();
-        adapter.listener.onSelectionEnds();
-    }
 
     private void bottomBarListeners() {
         bottomSel_ren.setOnClickListener(v -> {
@@ -527,7 +570,6 @@ public class AudioFragment extends Fragment {
             clearSelection();
         });
     }
-
 
     private void layoutB_Listeners() {
         layoutToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
@@ -616,6 +658,14 @@ public class AudioFragment extends Fragment {
 
                 storedMediaList = new ArrayList<>(audios);
                 adapter.submitList(audios);
+
+                for (int i = 0; i < storedMediaList.size(); i++) {
+                    Audio m = storedMediaList.get(i);
+
+                    if (m.getDuration() == null || m.getExtraMetadata() == null) {
+                        getMediaDetails(m, i);
+                    }
+                }
 
                 if (!isStoredListAvailable && isFirstTime) {
                     isStoredListAvailable = true;
@@ -751,6 +801,75 @@ public class AudioFragment extends Fragment {
     }
 
 
+    private void selectAllItems() {
+        for (Audio v : storedMediaList) {
+            v.isSelected = true;
+        }
+        adapter.notifyDataSetChanged();
+
+        adapter.selectionCounts = storedMediaList.size();
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
+//        adapter.listener.onCountChanged(mediaList.size());
+    }
+
+    private void deselectAllItems() {
+        Log.d(TAG, "deselectAllItems: " + 1);
+        for (Audio v : storedMediaList) {
+            v.isSelected = false;
+        }
+        adapter.notifyDataSetChanged();
+
+        adapter.selectionCounts = 0;
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
+//        adapter.listener.onCountChanged(0);
+    }
+
+    private void clearSelection() {
+        for (Audio v : storedMediaList) {
+            v.isSelected = false;
+        }
+        adapter.isSelectionMode = false;
+        adapter.selectionCounts = 0;
+        adapter.selectedList = new ArrayList<>();
+        adapter.notifyDataSetChanged();
+        adapter.listener.onSelectionEnds();
+    }
+
+    public void toggleKeyboard(boolean show, View targetView) {
+        Window window = requireActivity().getWindow();
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+
+        if (show) {
+            targetView.requestFocus();
+            controller.show(WindowInsetsCompat.Type.ime());
+        } else {
+            controller.hide(WindowInsetsCompat.Type.ime());
+            targetView.clearFocus();
+        }
+    }
+
+    private List<Audio> getSearchItemsList(String str) {
+        List<Audio> list = new ArrayList<>();
+        String[] words = str.trim().toLowerCase().split("\\s+");
+
+        for (Audio v : storedMediaList) {
+            boolean isPresent = true;
+            String name = v.getName().toLowerCase();
+
+            for (String word : words) {
+                if (!name.contains(word)) {
+                    isPresent = false;
+                    break;
+                }
+            }
+
+            if (isPresent) list.add(v);
+        }
+
+        return list;
+    }
+
+
     @Override
     public void onStart() {
         super.onStart();
@@ -778,18 +897,17 @@ public class AudioFragment extends Fragment {
                 // If no media files in preferences, query media files
                 audioDao.insertAll(mediaList);
 
-                for (Audio v : mediaList) {
-                    getMediaDetails(v);
-                    Log.d(TAG, "Load_Or_Query_MediaList1: " + v.getName());
-                }
+//                for (Audio v : mediaList) {
+//                    getMediaDetails(v);
+//                }
             }
             else {
                 isFilesStored = true;
                 Check_And_Update_Files();
 
-                for (Audio v : storedMediaList) {
-                    getMediaDetails(v);
-                }
+//                for (Audio v : storedMediaList) {
+//                    getMediaDetails(v);
+//                }
             }
         });
     }
@@ -876,7 +994,7 @@ public class AudioFragment extends Fragment {
             if (!dbUris.contains(m.getUri())) {
                 // New file
                 audioDao.insert(m);
-                getMediaDetails(m);
+//                getMediaDetails(m);
             }
             else {
                 Audio existing = audioDao.getByUri(m.getUri());
@@ -888,7 +1006,7 @@ public class AudioFragment extends Fragment {
         }
     }
 
-    private void getMediaDetails(Audio media) {
+    private void getMediaDetails(Audio media, int pos) {
         if (media.getDuration() == null || media.getExtraMetadata() == null) {
 
             new FFmpegMetadataRetriever(requireContext(), media.getPath(), new FFmpegMetadataRetriever.MetadataCallback() {
@@ -902,7 +1020,9 @@ public class AudioFragment extends Fragment {
                         media.setSize(sizeInBytes);
                         media.setDuration(duration);
 
-                        Log.d("MediaExtractor", "File Size: " + getFormattedFileSize(media.getSize()) + " MB, Duration: " + MillisToTime(duration));
+                        requireActivity().runOnUiThread(() -> {
+                            adapter.notifyItemChanged(pos);
+                        });
 
                         executorService.execute(() -> {
                             audioDao.update(media);

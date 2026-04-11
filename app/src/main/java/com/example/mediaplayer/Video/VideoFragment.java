@@ -363,14 +363,19 @@ public class VideoFragment extends Fragment {
 
             @Override
             public void onSelectionStarts() {
+                if (isSearchToolbarShowing) {
+                    toolbar_search.setVisibility(View.GONE);
+                    toggleKeyboard(false, toolbarS_inputText);
+                }
                 animationLibs.fadeIn(toolbar_selection, 350, null, null);
                 animationLibs.fadeIn(bottomBar_selection, 350, null, null);
             }
 
             @Override
             public void onSelectionEnds() {
+                if (isSearchToolbarShowing) toolbar_search.setVisibility(View.VISIBLE);
                 animationLibs.fadeOut(toolbar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
-                animationLibs.fadeOut(bottomBar_selection, 350, null, () -> toolbar_selection.setVisibility(View.GONE));
+                animationLibs.fadeOut(bottomBar_selection, 350, null, () -> bottomBar_selection.setVisibility(View.GONE));
             }
 
             @Override
@@ -483,6 +488,7 @@ public class VideoFragment extends Fragment {
         toolbarS_backB.setOnClickListener(v -> {
             isSearchToolbarShowing = false;
             toggleKeyboard(false, toolbarS_inputText);
+            toolbarS_inputText.setText("");
             animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
         });
 
@@ -568,6 +574,7 @@ public class VideoFragment extends Fragment {
                 else if (isSearchToolbarShowing) {
                     isSearchToolbarShowing = false;
                     toggleKeyboard(false, toolbarS_inputText);
+                    toolbarS_inputText.setText("");
                     animationLibs.fadeOut(toolbar_search, 350, null, () -> toolbar_search.setVisibility(View.GONE));
                 }
                 else{
@@ -578,74 +585,8 @@ public class VideoFragment extends Fragment {
     }
 
 
-    public void toggleKeyboard(boolean show, View targetView) {
-        Window window = requireActivity().getWindow();
-        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
-
-        if (show) {
-            targetView.requestFocus();
-            controller.show(WindowInsetsCompat.Type.ime());
-        } else {
-            controller.hide(WindowInsetsCompat.Type.ime());
-            targetView.clearFocus();
-        }
-    }
 
 
-    private List<Video> getSearchItemsList(String str) {
-        List<Video> list = new ArrayList<>();
-        String[] words = str.trim().toLowerCase().split("\\s+");
-
-        for (Video v : storedMediaList) {
-            boolean isPresent = true;
-            String name = v.getName().toLowerCase();
-
-            for (String word : words) {
-                if (!name.contains(word)) {
-                    isPresent = false;
-                    break;
-                }
-            }
-
-            if (isPresent) list.add(v);
-        }
-
-        return list;
-    }
-
-    private void selectAllItems() {
-        for (Video v : storedMediaList) {
-            v.isSelected = true;
-        }
-        adapter.notifyDataSetChanged();
-
-        adapter.selectionCounts = storedMediaList.size();
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
-//        adapter.listener.onCountChanged(storedMediaList.size());
-    }
-
-    private void deselectAllItems() {
-        for (Video v : storedMediaList) {
-            v.isSelected = false;
-        }
-        adapter.notifyDataSetChanged();
-
-        adapter.selectionCounts = 0;
-        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
-//        adapter.listener.onCountChanged(0);
-    }
-
-    private void clearSelection() {
-        for (Video v : storedMediaList) {
-            v.isSelected = false;
-        }
-        adapter.isSelectionMode = false;
-        adapter.selectionCounts = 0;
-        adapter.selectedList = new ArrayList<>();
-        adapter.notifyDataSetChanged();
-//        adapter.submitList(storedMediaList);
-        adapter.listener.onSelectionEnds();
-    }
 
     private void bottomBarListeners() {
         bottomSel_ren.setOnClickListener(v -> {
@@ -669,7 +610,6 @@ public class VideoFragment extends Fragment {
             clearSelection();
         });
     }
-
 
     private void layoutB_Listeners() {
         layoutToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
@@ -771,7 +711,7 @@ public class VideoFragment extends Fragment {
                 adapter.submitList(videos);
 
                 for (int i = 0; i < storedMediaList.size(); i++) {
-                    Video m = videos.get(i);
+                    Video m = storedMediaList.get(i);
 
                     if (m.getDuration() == null || m.getExtraMetadata() == null) {
                         getMediaDetails(m, i);
@@ -910,6 +850,75 @@ public class VideoFragment extends Fragment {
         setBackground_SortButtons(sortBy);
         setBackground_AscDesc_Buttons(isAscending);
         setBackground_DetailsButtons();
+    }
+
+
+    private void selectAllItems() {
+        for (Video v : storedMediaList) {
+            v.isSelected = true;
+        }
+        adapter.notifyDataSetChanged();
+
+        adapter.selectionCounts = storedMediaList.size();
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", adapter.selectionCounts, adapter.selectionCounts));
+//        adapter.listener.onCountChanged(storedMediaList.size());
+    }
+
+    private void deselectAllItems() {
+        for (Video v : storedMediaList) {
+            v.isSelected = false;
+        }
+        adapter.notifyDataSetChanged();
+
+        adapter.selectionCounts = 0;
+        toolbarSel_text.setText(String.format(Locale.getDefault(), "%d/%d selected", 0, storedMediaList.size()));
+//        adapter.listener.onCountChanged(0);
+    }
+
+    private void clearSelection() {
+        for (Video v : storedMediaList) {
+            v.isSelected = false;
+        }
+        adapter.isSelectionMode = false;
+        adapter.selectionCounts = 0;
+        adapter.selectedList = new ArrayList<>();
+        adapter.notifyDataSetChanged();
+//        adapter.submitList(storedMediaList);
+        adapter.listener.onSelectionEnds();
+    }
+
+    public void toggleKeyboard(boolean show, View targetView) {
+        Window window = requireActivity().getWindow();
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+
+        if (show) {
+            targetView.requestFocus();
+            controller.show(WindowInsetsCompat.Type.ime());
+        } else {
+            controller.hide(WindowInsetsCompat.Type.ime());
+            targetView.clearFocus();
+        }
+    }
+
+    private List<Video> getSearchItemsList(String str) {
+        List<Video> list = new ArrayList<>();
+        String[] words = str.trim().toLowerCase().split("\\s+");
+
+        for (Video v : storedMediaList) {
+            boolean isPresent = true;
+            String name = v.getName().toLowerCase();
+
+            for (String word : words) {
+                if (!name.contains(word)) {
+                    isPresent = false;
+                    break;
+                }
+            }
+
+            if (isPresent) list.add(v);
+        }
+
+        return list;
     }
 
 

@@ -70,6 +70,7 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <!-- Selection Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_sel"
         style="@style/ToolbarStyle"
@@ -147,6 +148,7 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <!-- Search Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_search"
         style="@style/ToolbarStyle"
