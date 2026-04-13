@@ -1,11 +1,11 @@
-# Android Media Player App
+# Android Media Player App 🎬
 
-A modern, high-performance **Android Media Player** built using **Media3 ExoPlayer** in **Android Studio**, designed with a lightweight UI, efficient architecture and real-world media handling capabilities.  
-This project focuses on **scalable design, performance optimization, and accurate media management**.
+A modern, advanced **Android Media Player** built using **Media3 ExoPlayer** in **Android Studio**, designed with a lightweight UI and real-world media handling capabilities.  
+It supports audio/video playback, gesture-based controls, background playback, and optimized media browsing with thumbnail caching.
 
 ---
 
-## Features
+## ⚙️ Features
 
 ### Playback System
 - Media3 ExoPlayer integration
@@ -77,7 +77,7 @@ This project focuses on **scalable design, performance optimization, and accurat
 
 ---
 
-## Architecture
+## 🧩 Architecture
 
 - **PlayerService:** Manages background playback  
 - **PlayerActivity:** Handles UI & controls playback logic  
@@ -85,14 +85,14 @@ This project focuses on **scalable design, performance optimization, and accurat
 
 ---
 
-## Problems Solved
+## 🧠 Problems Solved
 - Prevented playback mismatch using URI-based mapping
 - Reduced UI lag using background threading
 - Managed ExoPlayer lifecycle efficiently across Activity & Service
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **IDE:** Android Studio
 - **Language:** Java  
@@ -106,7 +106,5 @@ This project focuses on **scalable design, performance optimization, and accurat
 
 ## 📄 License
 
-All rights reserved.
-
-This source code is provided for viewing and evaluation purposes only.  
-You are NOT allowed to copy, modify, distribute, sublicense, or use this code in any form without explicit permission from the author.
+This project is intended for personal and educational viewing only.
+You are not allowed to copy, modify, or redistribute this code without permission.
