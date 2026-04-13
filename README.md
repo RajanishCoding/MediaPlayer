@@ -1,7 +1,7 @@
 # Android Media Player App
 
-A modern, high-performance **Android Media Player** built using **Media3 ExoPlayer**, designed with a clean UI and efficient architecture.  
-This project focuses on real-world media handling, performance optimization, and scalable design.
+A modern, high-performance **Android Media Player** built using **Media3 ExoPlayer** in **Android Studio**, designed with a lightweight UI, efficient architecture and real-world media handling capabilities.  
+This project focuses on **scalable design, performance optimization, and accurate media management**.
 
 ---
 
@@ -11,26 +11,24 @@ This project focuses on real-world media handling, performance optimization, and
 - Media3 ExoPlayer integration
 - Supports both **audio & video playback**
 - Smooth seek & resume functionality
-- Background playback using Service
-- URI-based playback (no position-based bugs)
+- Background playback with notification using Service
+- URI-based playback (avoids position mismatch bugs)
 
 ---
 
 ### Player Interface
 - Clean and minimal video player UI
 - Integrated Media3 PlayerView
-- Custom UI adjustments (removed default unwanted elements)
 - SeekBar for precise playback control
 - Smooth play/pause and resume handling
-- Optimized for dark mode experience
 
 ---
 
 ### Touch Controls
 - Gesture-based brightness & volume control
-- Gesture-based seek control
-- Double-tap to play/pause & seek (forward/backward)
-- Long press hold for speed up & lock UI
+- Horizontal swipe for precise seeking
+- Double-tap gestures for play/pause and forward/backward seek
+- Long press hold for speed up & UI gesture lock
 
 ---
 
@@ -50,15 +48,22 @@ This project focuses on real-world media handling, performance optimization, and
 
 ---
 
+### Picture-in-Picture (PiP)
+- Supports PiP mode for video playback
+- Handles lifecycle transitions properly
+- Works with background playback
+
+---
+
 ### Advanced Search System
 - Room Database + LiveData integration
-- Fast in-memory filtering
+- Optimized in-memory filtering
 - Accurate mapping using URI (no mismatch issues)
 
 ---
 
 ### Performance Optimizations
-- Background processing using threads
+- Background processing using threading (ExecutorService)
 - Thumbnail caching to avoid redundant work
 - Optimized handling of large media files
 - Smooth scrolling and UI responsiveness
@@ -69,46 +74,39 @@ This project focuses on real-world media handling, performance optimization, and
 - Resume last played media
 - "New" indicator for recently added media
 - Foreground notification toggle (dynamic)
-- BottomNavigation-based UI structure
-
----
-
-### Picture-in-Picture (PiP)
-- Supports PiP mode for video playback
-- Handles lifecycle transitions properly
-- Works with background playback
 
 ---
 
 ## Architecture
 
-- **PlayerService** → Holds ExoPlayer instance  
-- **PlayerActivity** → Handles UI & playback logic  
-- **RecyclerView Adapter** → UI only (no direct player access)  
+- **PlayerService:** Manages background playback  
+- **PlayerActivity:** Handles UI & controls playback logic  
+- **RecyclerView Adapter:** Handles listing of media items  
 
-### Key Design Decisions
-- URI-based media identity instead of position
-- Clear separation of concerns
-- Scalable and maintainable structure
+---
+
+## Problems Solved
+- Prevented playback mismatch using URI-based mapping
+- Reduced UI lag using background threading
+- Managed ExoPlayer lifecycle efficiently across Activity & Service
 
 ---
 
 ## Tech Stack
 
+- **IDE:** Android Studio
 - **Language:** Java  
 - **Player:** Media3 ExoPlayer  
-- **Database:** Room  
-- **Image Loading:** Glide  
-- **UI:** RecyclerView, ConstraintLayout  
-- **Architecture:** Service-based playback  
+- **Database:** Room
+- **Local Storage:** SharedPreferences (for settings & user preferences)
+- **Thumbnail Loading:** Glide  
+- **UI:** XML (RecyclerView, ConstraintLayout, etc)    
 
 ---
 
-## Project Highlights
+## 📄 License
 
-- Handles real-world edge cases (missing thumbnails, large files)
-- Avoids common playback bugs (position mismatch, UI lag)
-- Efficient caching and threading implementation
-- Designed similar to production-level media apps
+All rights reserved.
 
----
+This source code is provided for viewing and evaluation purposes only.  
+You are NOT allowed to copy, modify, distribute, sublicense, or use this code in any form without explicit permission from the author.
