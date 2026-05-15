@@ -58,6 +58,7 @@ import com.example.mediaplayer.Room.RoomDB;
 import com.example.mediaplayer.Video.Video;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -143,7 +144,7 @@ public class AudioFragment extends Fragment {
     private boolean isList;
     private boolean isDur_OnThumbnail;
 
-    private ImageButton lastPlay_Button;
+    private FloatingActionButton lastPlay_Button;
     private int lastPlayedPosition;
 
     private ImageButton toolbarSel_back;
@@ -466,8 +467,10 @@ public class AudioFragment extends Fragment {
                 if (switch_frag) {
                     hideMenuLayout();
                     resetMoreContainerViews();
+                    lastPlay_Button.show();
                 } else {
                     showMenuLayout();
+                    lastPlay_Button.hide();
                 }
             }
         });
@@ -485,10 +488,12 @@ public class AudioFragment extends Fragment {
             setDetailsVisibility();
             setListObserver(false);
             hideMenuLayout();
+            lastPlay_Button.show();
         });
 
         cancel_Button.setOnClickListener(v -> {
             hideMenuLayout();
+            lastPlay_Button.show();
             resetMoreContainerViews();
         });
 

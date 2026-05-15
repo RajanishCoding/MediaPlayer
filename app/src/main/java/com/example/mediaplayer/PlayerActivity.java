@@ -1259,7 +1259,9 @@ public class PlayerActivity extends AppCompatActivity {
             isFirstTimeForCurrentMedia = false;
 
             if (!fromNotification) {
-                lastPlayedTime = playerPrefs.getLong("lastTime : " + mediaItem.requestMetadata.mediaUri, 0);
+                Uri mediaUri = mediaItem.localConfiguration != null ? mediaItem.localConfiguration.uri : null;
+                lastPlayedTime = mediaUri != null ? playerPrefs.getLong("lastTime : " + mediaUri, 0) : 0;
+                Log.d(TAG, "onStateReady: time - " + mediaUri);
                 player.seekTo(lastPlayedTime);
             }
 
@@ -1452,7 +1454,8 @@ public class PlayerActivity extends AppCompatActivity {
                     MediaItem oldMediaItem = oldPosition.mediaItem;
                     if (oldMediaItem != null){
                         Log.d("onPosDIs", "onPositionDiscontinuity: " + oldMediaItem.mediaMetadata.title);
-                        playerPrefsEditor.putLong("lastTime : " + oldMediaItem.requestMetadata.mediaUri, 0);
+                        Uri mediaUri = oldMediaItem.localConfiguration != null ? oldMediaItem.localConfiguration.uri : null;
+                        playerPrefsEditor.putLong("lastTime : " + mediaUri, 0);
                         playerPrefsEditor.apply();
                     }
                 }
@@ -1531,13 +1534,15 @@ public class PlayerActivity extends AppCompatActivity {
         });
 
         prevButton.setOnClickListener(v -> {
-            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
+            Uri mediaUri = mediaItem.localConfiguration != null ? mediaItem.localConfiguration.uri : null;
+            playerPrefsEditor.putLong("lastTime : " + mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
             player.seekToPreviousMediaItem();
         });
 
         nextButton.setOnClickListener(v -> {
-            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
+            Uri mediaUri = mediaItem.localConfiguration != null ? mediaItem.localConfiguration.uri : null;
+            playerPrefsEditor.putLong("lastTime : " + mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
             player.seekToNextMediaItem();
         });
@@ -2967,7 +2972,8 @@ public class PlayerActivity extends AppCompatActivity {
         if (player != null) {
             Log.d(TAG, "onPause: ");
 
-            playerPrefsEditor.putLong("lastTime : " + mediaItem.requestMetadata.mediaUri, player.getCurrentPosition());
+            Uri mediaUri = mediaItem.localConfiguration != null ? mediaItem.localConfiguration.uri : null;
+            playerPrefsEditor.putLong("lastTime : " + mediaUri, player.getCurrentPosition());
             playerPrefsEditor.apply();
 
             if (!isBackgroundPlay && !isInPictureInPictureMode()) {

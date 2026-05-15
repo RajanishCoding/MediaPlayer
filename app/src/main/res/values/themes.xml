@@ -28,8 +28,8 @@
 
     <!-- Button Style -->
     <style name="ButtonStyle" parent="Widget.MaterialComponents.Button">
-        <item name="android:backgroundTint">@color/button_background</item>
-        <item name="android:textColor">@color/button_text</item>
+        <item name="android:backgroundTint">#96BBEF</item>
+        <item name="android:textColor">@color/text_color</item>
     </style>
 
     <style name="ButtonStyleVariant" parent="Widget.MaterialComponents.Button">

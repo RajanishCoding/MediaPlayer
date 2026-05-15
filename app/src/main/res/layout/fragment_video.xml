@@ -323,424 +323,6 @@
 
     </LinearLayout>
 
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/MenuContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@drawable/shape_more_section"
-        android:visibility="gone"
-        android:layout_margin="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:elevation="5dp"
-        android:outlineProvider="none"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-<!--        android:layout_marginHorizontal="30dp"-->
-<!--        android:layout_marginVertical="100dp"-->
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layoutContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/layoutTitle"
-                style="@style/ToolbarTitleStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="View Layout"
-                android:textAlignment="center"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintTop_toTopOf="parent" />
-
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/layoutViewToggle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:padding="8dp"
-                    app:selectionRequired="true"
-                    app:singleSelection="true"
-                    app:layout_constraintTop_toBottomOf="@id/layoutTitle">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/layout_list"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        app:iconGravity="top"
-                        app:icon="@drawable/rounded_lists_24"
-                        android:backgroundTint="@color/selector_toggle_btn"
-                        android:text="List Layout" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/layout_grid"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        app:iconGravity="top"
-                        app:icon="@drawable/rounded_grid_view_24"
-                        android:backgroundTint="@color/selector_toggle_btn"
-                        android:text="Grid Layout"/>
-
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/sortContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                app:layout_constraintTop_toBottomOf="@id/layoutContainer">
-
-                <TextView
-                    android:id="@+id/sortTitle"
-                    style="@style/ToolbarTitleStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Sort"
-                    android:textAlignment="center"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/sortLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    app:layout_constraintTop_toBottomOf="@id/sortTitle">
-
-                    <TableLayout
-                        android:id="@+id/sortTable"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:stretchColumns="*"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <TableRow
-                            android:paddingVertical="4dp"
-                            android:layout_width="match_parent"
-                            >
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_byName"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                android:textColor="@color/text_color"
-                                android:text="Name" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_byDate"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="38dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:text="Date Added"
-                                android:textColor="@color/text_color" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_bySize"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                android:textColor="@color/text_color"
-                                android:text="Size" />
-                        </TableRow>
-
-                        <TableRow
-                            android:paddingVertical="4dp"
-                            android:layout_width="match_parent">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_byLength"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Duration" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_byResol"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Resolution" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sort_byFps"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Frame Rate" />
-                        </TableRow>
-
-                    </TableLayout>
-
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/sortOrderToggle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:padding="8dp"
-                        app:selectionRequired="true"
-                        app:singleSelection="true"
-                        app:layout_constraintTop_toBottomOf="@id/sortTable">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/sort_Asc"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_weight="1"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginRight="8dp"
-                            app:icon="@drawable/rounded_arrow_downward_alt_24"
-                            android:backgroundTint="@color/selector_toggle_btn"
-                            android:text="Ascending"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/sort_Desc"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_weight="1"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            app:icon="@drawable/rounded_arrow_upward_alt_24"
-                            android:backgroundTint="@color/selector_toggle_btn"
-                            android:text="Descending" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/detailsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                app:layout_constraintTop_toBottomOf="@id/sortContainer">
-
-                <TextView
-                    android:id="@+id/detailsTitle"
-                    style="@style/ToolbarTitleStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Details"
-                    android:textAlignment="center"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/detailsLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        app:layout_constraintTop_toBottomOf="@id/detailsTitle">
-
-                    <TableLayout
-                        android:id="@+id/detailsTable"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:stretchColumns="*"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <TableRow
-                            android:paddingVertical="4dp"
-                            android:layout_width="wrap_content">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Date"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Date Added" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Dur"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Duration" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Size"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                android:textColor="@color/text_color"
-                                android:text="Size" />
-                        </TableRow>
-
-                        <TableRow
-                            android:paddingVertical="4dp"
-                            android:layout_width="match_parent">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Path"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                android:textColor="@color/text_color"
-                                android:text="Path" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Resol"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_marginRight="5dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Resolution" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/details_Fps"
-                                style="?attr/materialButtonOutlinedStyle"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:checkable="true"
-                                android:backgroundTint="@color/selector_toggle_btn"
-                                app:autoSizeTextType="uniform"
-                                app:autoSizeMaxTextSize="14sp"
-                                android:textColor="@color/text_color"
-                                android:text="Frame Rate" />
-
-                        </TableRow>
-
-                    </TableLayout>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/moreContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:layout_constraintTop_toBottomOf="@id/detailsContainer">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="5dp"
-                    android:padding="8dp"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/more_dur"
-                        style="@style/ButtonStyleToggle"
-                        android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_weight="1"
-                        android:paddingStart="15dp"
-                        android:textAlignment="textStart"
-                        android:text="Display Duration over Thumbnail" />
-
-                </LinearLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="30dp"
-                android:padding="8dp"
-                app:layout_constraintTop_toBottomOf="@id/moreContainer">
-
-                <Button
-                    android:id="@+id/buttonCancel"
-                    style="@style/ButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginRight="8dp"
-                    android:text="Cancel"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/detailsContainer" />
-
-                <Button
-                    android:id="@+id/buttonApply"
-                    style="@style/ButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Apply"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/buttonApply" />
-
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
-
-
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/Play_Last"
@@ -757,6 +339,436 @@
         app:srcCompat="@drawable/media3_icon_play"
         app:tint="#FFFFFF"
         app:borderWidth="0dp" />
+
+    <!-- Menu Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/MenuContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/shape_more_section"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:visibility="gone">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollMenuContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="5dp"
+            android:outlineProvider="none"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/buttonsMenuContainer"
+            >
+
+    <!--        android:layout_marginHorizontal="30dp"-->
+    <!--        android:layout_marginVertical="100dp"-->
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layoutContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/layoutTitle"
+                    style="@style/ToolbarTitleStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="View Layout"
+                    android:textAlignment="center"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/layoutViewToggle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:padding="8dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true"
+                        app:layout_constraintTop_toBottomOf="@id/layoutTitle">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/layout_list"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            app:iconGravity="top"
+                            app:icon="@drawable/rounded_lists_24"
+                            android:backgroundTint="@color/selector_toggle_btn"
+                            android:text="List Layout" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/layout_grid"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            app:iconGravity="top"
+                            app:icon="@drawable/rounded_grid_view_24"
+                            android:backgroundTint="@color/selector_toggle_btn"
+                            android:text="Grid Layout"/>
+
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/sortContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="30dp"
+                    app:layout_constraintTop_toBottomOf="@id/layoutContainer">
+
+                    <TextView
+                        android:id="@+id/sortTitle"
+                        style="@style/ToolbarTitleStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sort"
+                        android:textAlignment="center"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/sortLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        app:layout_constraintTop_toBottomOf="@id/sortTitle">
+
+                        <TableLayout
+                            android:id="@+id/sortTable"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:stretchColumns="*"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <TableRow
+                                android:paddingVertical="4dp"
+                                android:layout_width="match_parent"
+                                >
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_byName"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    android:textColor="@color/text_color"
+                                    android:text="Name" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_byDate"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="38dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:text="Date Added"
+                                    android:textColor="@color/text_color" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_bySize"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    android:textColor="@color/text_color"
+                                    android:text="Size" />
+                            </TableRow>
+
+                            <TableRow
+                                android:paddingVertical="4dp"
+                                android:layout_width="match_parent">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_byLength"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Duration" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_byResol"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Resolution" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/sort_byFps"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Frame Rate" />
+                            </TableRow>
+
+                        </TableLayout>
+
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/sortOrderToggle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:padding="8dp"
+                            app:selectionRequired="true"
+                            app:singleSelection="true"
+                            app:layout_constraintTop_toBottomOf="@id/sortTable">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/sort_Asc"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginRight="8dp"
+                                app:icon="@drawable/rounded_arrow_downward_alt_24"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:text="Ascending"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/sort_Desc"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                app:icon="@drawable/rounded_arrow_upward_alt_24"
+                                android:backgroundTint="@color/selector_toggle_btn"
+                                android:text="Descending" />
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/detailsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="30dp"
+                    app:layout_constraintTop_toBottomOf="@id/sortContainer">
+
+                    <TextView
+                        android:id="@+id/detailsTitle"
+                        style="@style/ToolbarTitleStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Details"
+                        android:textAlignment="center"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/detailsLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            app:layout_constraintTop_toBottomOf="@id/detailsTitle">
+
+                        <TableLayout
+                            android:id="@+id/detailsTable"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:stretchColumns="*"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <TableRow
+                                android:paddingVertical="4dp"
+                                android:layout_width="wrap_content">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Date"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Date Added" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Dur"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Duration" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Size"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    android:textColor="@color/text_color"
+                                    android:text="Size" />
+                            </TableRow>
+
+                            <TableRow
+                                android:paddingVertical="4dp"
+                                android:layout_width="match_parent">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Path"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    android:textColor="@color/text_color"
+                                    android:text="Path" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Resol"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginRight="5dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Resolution" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/details_Fps"
+                                    style="?attr/materialButtonOutlinedStyle"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:checkable="true"
+                                    android:backgroundTint="@color/selector_toggle_btn"
+                                    app:autoSizeTextType="uniform"
+                                    app:autoSizeMaxTextSize="14sp"
+                                    android:textColor="@color/text_color"
+                                    android:text="Frame Rate" />
+
+                            </TableRow>
+
+                        </TableLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/moreContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:layout_constraintTop_toBottomOf="@id/detailsContainer">
+
+                    <LinearLayout
+                        android:id="@+id/hello"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="5dp"
+                        android:padding="8dp"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/more_dur"
+                            android:layout_width="0dp"
+                            android:layout_height="60dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/switch_menu_bg"
+                            android:paddingHorizontal="15dp"
+                            android:textAllCaps="true"
+                            android:textAlignment="textStart"
+                            android:textColor="@color/text_color"
+                            android:text="Display Duration over Thumbnail" />
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/buttonsMenuContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="30dp"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/buttonCancel"
+            style="@style/ButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="8dp"
+            android:text="Cancel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/detailsContainer" />
+
+        <Button
+            android:id="@+id/buttonApply"
+            style="@style/ButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Apply"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttonApply" />
+
+    </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout

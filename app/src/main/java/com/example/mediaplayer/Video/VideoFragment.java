@@ -62,6 +62,7 @@ import com.example.mediaplayer.Room.VideoDao;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -157,7 +158,7 @@ public class VideoFragment extends Fragment {
     private boolean isList;
     private boolean isDur_OnThumbnail;
 
-    private ImageButton lastPlay_Button;
+    private FloatingActionButton lastPlay_Button;
     private int lastPlayedPosition;
 
     private View bottomSheet;
@@ -502,8 +503,11 @@ public class VideoFragment extends Fragment {
                 if (switch_frag) {
                     hideMenuLayout();
                     resetMoreContainerViews();
-                } else {
+                    lastPlay_Button.show();
+                }
+                else {
                     showMenuLayout();
+                    lastPlay_Button.hide();
                 }
             }
         });
@@ -522,11 +526,13 @@ public class VideoFragment extends Fragment {
             setDetailsVisibility();
             setListObserver(false);
             hideMenuLayout();
+            lastPlay_Button.show();
             Log.d("DUR_onThumb", "onViewCreated: " + isDur_OnThumbnail);
         });
 
         cancel_Button.setOnClickListener(v -> {
             hideMenuLayout();
+            lastPlay_Button.show();
             resetMoreContainerViews();
         });
 

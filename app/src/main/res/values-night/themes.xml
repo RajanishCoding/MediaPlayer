@@ -29,7 +29,7 @@
 
     <!-- Button Style -->
     <style name="ButtonStyle" parent="Widget.MaterialComponents.Button">
-        <item name="android:backgroundTint">@color/button_background_dark</item>
+        <item name="android:backgroundTint">#172EFF</item>
         <item name="android:textColor">@color/button_text_dark</item>
     </style>
 

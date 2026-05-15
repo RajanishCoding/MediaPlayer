@@ -567,7 +567,7 @@ public class FilesListActivity extends AppCompatActivity {
         }
 
         activeFragment = existingFragment;
-        transaction.commit();
+        transaction.commitAllowingStateLoss();
     }
 
     private void unloadFragment(Fragment fragment) {
