@@ -657,7 +657,7 @@ public class AudioFragment extends Fragment {
                     v.setLastPlayed(isMatch);
 
                     if (isMatch) {
-                        lastPlayedPosition = i; // Position for Last Play Floating Button
+                        lastPlayedPosition = i; // Position of Last Played Media - Floating Button
                     }
                 }
 
@@ -675,7 +675,6 @@ public class AudioFragment extends Fragment {
                 if (!isStoredListAvailable && isFirstTime) {
                     isStoredListAvailable = true;
                     Load_Or_Query_MediaList();
-                    Log.d(TAG, "onChanged: " + "yes");
                 }
 
                 setAudioPlaylist();

@@ -699,7 +699,7 @@ public class PlayerActivity extends AppCompatActivity {
         fromNotification = intent.getBooleanExtra("fromNotification", false);
         fromPickFile = intent.getBooleanExtra("fromPickFile", false);
 
-        Log.d("isVideoFile", "onCreate: " + media_name + "\n" + media_path + isVideoFile);
+        Log.d("isVideoFile", "onCreate: " + media_name + "\n" + media_path + "\n" + currentIndex);
 
         Intent serviceIntent = new Intent(this, PlayerService.class);
         if (!fromNotification) {
@@ -1295,6 +1295,7 @@ public class PlayerActivity extends AppCompatActivity {
                 new Thread(() -> videoDao.markAsPlayed(media_path)).start();
                 listPrefsEditor.putString("lastPlayedVideoName", media_name);
                 listPrefsEditor.putString("lastPlayedVideoPath", media_path);
+                Log.d(TAG, "last played path  : " + media_name);
             }
             else {
                 new Thread(() -> audioDao.markAsPlayed(media_path)).start();
@@ -1346,7 +1347,7 @@ public class PlayerActivity extends AppCompatActivity {
         List<MediaItem> mediaItemList = isVideoFile ? MediaRepository.getInstance().getVideoPlaylist() : MediaRepository.getInstance().getAudioPlaylist();
         Log.d("dbjjbbdjb", "initializePlayer: " + (mediaItemList == null) + isVideoFile);
 
-        currentIndex = getCurrentIndex(mediaItemList);
+        // currentIndex = getCurrentIndex(mediaItemList);
         
         mediaItem = mediaItemList.get(currentIndex);
         player.setMediaItems(mediaItemList, currentIndex, 0);

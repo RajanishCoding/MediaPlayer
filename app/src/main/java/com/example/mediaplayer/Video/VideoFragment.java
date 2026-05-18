@@ -543,6 +543,9 @@ public class VideoFragment extends Fragment {
                 String name = listPrefs.getString("lastPlayedVideoName", "");
                 String path = listPrefs.getString("lastPlayedVideoPath", "");
                 Boolean isVideo = listPrefs.getBoolean("lastPlayedFile_isVideo", false);
+                Log.d(TAG, "button last played name : " + name);
+                Log.d(TAG, "button last played path : " + path);
+                Log.d(TAG, "button last played pos : " + lastPlayedPosition);
 
                 new Thread(() -> {
                     if (videoDao.isPathExists(path)) {
@@ -589,9 +592,6 @@ public class VideoFragment extends Fragment {
             }
         });
     }
-
-
-
 
 
     private void bottomBarListeners() {
@@ -702,14 +702,14 @@ public class VideoFragment extends Fragment {
                 String lastPlayedPath = listPrefs.getString("lastPlayedVideoPath", "");
                 lastPlayedPosition = 0;
 
-                // Last Played Code
+                // Last Played Position Code
                 for (int i = 0; i < videos.size(); i++) {
                     Video v = videos.get(i);
                     boolean isMatch = v.getPath().equals(lastPlayedPath);
-                    v.setLastPlayed(isMatch);
+                    v.setLastPlayed(isMatch); // not needed
 
                     if (isMatch) {
-                        lastPlayedPosition = i; // Position for Last Play Floating Button
+                        lastPlayedPosition = i; // Position of Last Played Media - Floating Button
                     }
                 }
 
@@ -727,7 +727,6 @@ public class VideoFragment extends Fragment {
                 if (!isStoredListAvailable && isFirstTime) {
                     isStoredListAvailable = true;
                     Load_Or_Query_MediaList();
-                    Log.d(TAG, "onChanged: " + "yes");
                 }
 
                 setVideoPlaylist();
