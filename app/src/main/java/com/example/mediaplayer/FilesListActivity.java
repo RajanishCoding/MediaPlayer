@@ -71,6 +71,7 @@ public class FilesListActivity extends AppCompatActivity {
     private boolean NotificationEnabled;
 
     private MaterialButton pickFileButton;
+    private TextView toolbarTextview;
 
     private boolean readStorage;
     private boolean writeStorage;
@@ -146,6 +147,7 @@ public class FilesListActivity extends AppCompatActivity {
         storageRationale_AccessButton = findViewById(R.id.allowAccess);
 
         pickFileButton = findViewById(R.id.pickFile);
+        toolbarTextview = findViewById(R.id.toolbar_title);
 
         menu_Button = findViewById(R.id.moremenu_button);
         search_Button = findViewById(R.id.search_button);
@@ -174,10 +176,12 @@ public class FilesListActivity extends AppCompatActivity {
                 if (!isStorageAccessed) {
                     unloadFragment(new VideoFragment()); unloadFragment(new SettingsFragment());
                     updateRationaleLayout(isStoragePermanentlyDenied, false);
+                    toolbarTextview.setVisibility(View.VISIBLE);
                     return true;
                 }
 
                 StorageRationaleLayout.setVisibility(View.GONE);
+                toolbarTextview.setVisibility(View.INVISIBLE);
                 loadFragment(new VideoFragment());
                 CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
                 return true;
@@ -191,10 +195,12 @@ public class FilesListActivity extends AppCompatActivity {
                 if (!isAudioStorageAccessed) {
                     unloadFragment(new VideoFragment()); unloadFragment(new SettingsFragment());
                     updateRationaleLayout(isAudioStoragePermanentlyDenied, true);
+                    toolbarTextview.setVisibility(View.VISIBLE);
                     return true;
                 }
 
                 StorageRationaleLayout.setVisibility(View.GONE);
+                toolbarTextview.setVisibility(View.INVISIBLE);
                 loadFragment(new AudioFragment());
                 CheckAndAsk_NotificationAccess(); // For Notification Access Android 13 and above
                 return true;
@@ -203,20 +209,20 @@ public class FilesListActivity extends AppCompatActivity {
             else {
                 id = item.getItemId();
                 StorageRationaleLayout.setVisibility(View.GONE);
+                toolbarTextview.setVisibility(View.INVISIBLE);
                 loadFragment(new SettingsFragment());
                 return true;
             }
         });
 
-        if (isThemeChanged) {  // If recreated due to theme change
+        if (isThemeChanged) {  // If reopened due to theme change
             bottomNavigationView.post(() -> {
                 if (!isFinishing() && !isDestroyed()) {
                     bottomNavigationView.setSelectedItemId(R.id.nav_settings);
-                    Log.d("ThemeChange", "onCreate: ");
                 }
             });
-            Log.d("ThemeChange", "onCreate: Theme changed, selecting Video in NavBar " + isThemeChanged);
-            isThemeChanged = false; // Reset flag
+
+            isThemeChanged = false;
         }
     }
 

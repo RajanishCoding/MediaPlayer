@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-    <string name="app_name">RZ Player</string>
+    <string name="app_name">RQ Player</string>
 
     <string name="storage_access">Storage permission is required to scan and access media files from the storage.</string>
     <string name="video_access">Video permission is required to scan and play video files from the storage.</string>

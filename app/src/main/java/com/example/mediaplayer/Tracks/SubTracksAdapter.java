@@ -23,8 +23,8 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
     private List<SubTracks> subTracksList;
     private DefaultTrackSelector trackSelector;
 
-    private int selectedPosition = -1; // Tracks the selected position
-    private int previousPosition = -1;
+    private int selectedPosition = 0; // Tracks the selected position
+    private int previousPosition = 0;
     private boolean firstSelection = true;
 
 
@@ -46,7 +46,7 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
 
         if (position != 0) {
             if (track.getLabel() == null) {
-                holder.label.setText("Sub Track " + (position + 1));
+                holder.label.setText("Sub Track " + (position));
             } else {
                 holder.label.setText(track.getLabel());
             }
@@ -59,14 +59,13 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
             holder.language.setVisibility(View.GONE);
         }
 
-        if (track.isSelected() && firstSelection) {
-            holder.radioButton.setChecked(true);
-            previousPosition = position;
-            Log.d("SubTrackSelect", "onBindViewHolder: " + position);
-        }
-        else {
-            holder.radioButton.setChecked(position == selectedPosition);
-        }
+//        if (track.isSelected() && firstSelection) {
+//            selectedPosition = position;
+//            firstSelection = false;
+//            Log.d("SubTrackSelect", "onBindViewHolder: " + position);
+//        }
+
+        holder.radioButton.setChecked(position == selectedPosition);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
@@ -97,21 +96,14 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
                 trackSelector.setParameters(parameters);
 
                 if (selectedPosition != pos) {
-                    // Store the previous selected position
+                    firstSelection = false; // false on user click
+                    previousPosition = selectedPosition;
+                    selectedPosition = pos; // Update to the new position
 
-                    if (firstSelection) {
-                        selectedPosition = pos;
-                        firstSelection = false;
-                    }
-                    else {
-                        previousPosition = selectedPosition;
-                        selectedPosition = pos; // Update to the new position
-                    }
-                    Log.d("SubTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
+                    Log.d("AudioTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
 
-                    // Notify adapter to refresh previously and newly selected items
-                    notifyItemChanged(previousPosition); // Uncheck the previously selected RadioButton
-                    notifyItemChanged(selectedPosition); // Check the newly selected RadioButton
+                    notifyItemChanged(previousPosition); // Uncheck the previously selected RB
+                    notifyItemChanged(selectedPosition); // Check the newly selected RB
 //                    holder.radioButton.setChecked(true);
                 }
 
@@ -126,6 +118,15 @@ public class SubTracksAdapter extends RecyclerView.Adapter<SubTracksAdapter.SubT
             return subTracksList.size();
         }
         return 0;
+    }
+
+    public void setSelectedPosition(int pos) {
+        selectedPosition = pos;
+
+        if (pos != RecyclerView.NO_POSITION) return;
+
+        notifyItemChanged(pos);
+        notifyItemChanged(0);
     }
 
 

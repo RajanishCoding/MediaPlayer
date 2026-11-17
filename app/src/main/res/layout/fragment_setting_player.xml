@@ -303,7 +303,6 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        app:iconTint="@color/text_color"
                         android:backgroundTint="@color/btn_color"
                         android:text="Slow" />
 
@@ -313,9 +312,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        app:iconTint="@color/text_color"
                         android:backgroundTint="@color/btn_color"
-                        android:text="Normal" />
+                        android:text="Normal"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="10dp"
+                        android:autoSizeMaxTextSize="14sp"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/verticalSwipeFast"
@@ -323,7 +324,6 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        app:iconTint="@color/text_color"
                         android:backgroundTint="@color/btn_color"
                         android:text="Fast" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>

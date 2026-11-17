@@ -87,7 +87,8 @@
     <color name="bottomBarLight">#D4CBE1</color>
     <color name="bottomBarDark">#181620</color>
 
-    <color name="bottomBar">#C9D1E8</color>
+<!--    <color name="bottomBar">#C9D1E8</color>-->
+    <color name="bottomBar">#D6DDE2</color>
 
 
     <!-- Overlay Colors -->
@@ -105,6 +106,8 @@
 
     <color name="overlayListLight">#1A373737</color>
     <color name="overlayListDark">#1AC8C8C8</color>
+
+    <color name="overlayList">#08373737</color>
 
     <color name="overlayToastDark">#80000000</color>
 
@@ -133,6 +136,11 @@
     <color name="btn_color_checked">#80A9C5EF</color>
     
     <color name="switch_color">#C1C6CA</color>
+
+    // Fixed Player Slider Colors
+    <color name="slider_active">#FFFFFFFF</color>
+    <color name="slider_inactive">#55FFFFFF</color>
+    <color name="slider_halo">#33FFFFFF</color>
 
     <color name="slider_thumb_color">@color/text_color</color>
     <color name="slider_active_color">@color/text_color</color>

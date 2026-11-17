@@ -23,8 +23,8 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
     private List<AudioTracks> audioTracksList;
     private DefaultTrackSelector trackSelector;
 
-    private int selectedPosition = -1; // Tracks the selected position
-    private int previousPosition = -1;
+    private int selectedPosition = 0; // tracks the selected position
+    private int previousPosition = -1; // for click logic
     private boolean firstSelection = true;
 
 
@@ -46,7 +46,7 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
 
         if (position != 0) {
             if (track.getLabel() == null) {
-                holder.label.setText("Audio Track " + (position + 1));
+                holder.label.setText("Audio Track " + (position));
             } else {
                 holder.label.setText(track.getLabel());
             }
@@ -59,20 +59,21 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
 
             holder.LangChannels.setVisibility(View.VISIBLE);
             holder.LangChannels.setText(finalText);
+
+            if (track.getSupportCode() != C.FORMAT_HANDLED && track.getSupportCode() != C.FORMAT_EXCEEDS_CAPABILITIES) {
+                holder.supportLabel.setVisibility(View.VISIBLE);
+            }
+            else {
+                holder.supportLabel.setVisibility(View.GONE);
+            }
         }
         else {
             holder.label.setText("None");
             holder.LangChannels.setVisibility(View.GONE);
+            holder.supportLabel.setVisibility(View.GONE);
         }
 
-        if (track.isSelected() && firstSelection) {
-            holder.radioButton.setChecked(true);
-            previousPosition = position;
-            Log.d("AudioTrackSelect", "onBindViewHolder: " + position);
-        }
-        else {
-            holder.radioButton.setChecked(position == selectedPosition);
-        }
+        holder.radioButton.setChecked(position == selectedPosition);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @OptIn(markerClass = UnstableApi.class)
@@ -80,6 +81,8 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
             public void onClick(View v) {
                 DefaultTrackSelector.Parameters parameters;
                 int pos = holder.getBindingAdapterPosition();
+
+                if (pos == RecyclerView.NO_POSITION) return;
 
                 if (pos != 0 && pos != RecyclerView.NO_POSITION) {
                     AudioTracks t = audioTracksList.get(pos);
@@ -103,25 +106,19 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
                 trackSelector.setParameters(parameters);
 
                 if (selectedPosition != pos) {
-                    // Store the previous selected position
+                    firstSelection = false; // false on user click
+                    previousPosition = selectedPosition;
+                    selectedPosition = pos; // Update to the new position
 
-                    if (firstSelection) {
-                        selectedPosition = pos;
-                        firstSelection = false;
-                    }
-                    else {
-                        previousPosition = selectedPosition;
-                        selectedPosition = pos; // Update to the new position
-                    }
                     Log.d("AudioTrackSelect", "CLicked: " + previousPosition + "   " + selectedPosition);
 
-                    // Notify adapter to refresh previously and newly selected items
+                    // Safely update items dynamically
                     notifyItemChanged(previousPosition); // Uncheck the previously selected RadioButton
                     notifyItemChanged(selectedPosition); // Check the newly selected RadioButton
 //                    holder.radioButton.setChecked(true);
                 }
 
-                Log.d("trackLog", "onClick: " + track.getLabel());
+//                Log.d("trackLog", "onClick: " + track.getLabel());
             }
         });
     }
@@ -134,17 +131,28 @@ public class AudioTracksAdapter extends RecyclerView.Adapter<AudioTracksAdapter.
         return 0;
     }
 
+    public void setSelectedPosition(int pos) {
+        selectedPosition = pos;
+
+        if (pos != RecyclerView.NO_POSITION) return;
+
+        notifyItemChanged(pos);
+        notifyItemChanged(0);
+    }
+
 
     public static class AudioTrackViewHolder extends RecyclerView.ViewHolder {
         TextView label;
         TextView LangChannels;
         RadioButton radioButton;
+        View supportLabel;
 
         public AudioTrackViewHolder(View audiotrackslist_layout) {
             super(audiotrackslist_layout);
             label = audiotrackslist_layout.findViewById(R.id.audioTrackLabel);
             LangChannels = audiotrackslist_layout.findViewById(R.id.audioTrack_LangChannels);
             radioButton = audiotrackslist_layout.findViewById(R.id.audioRadioButton);
+            supportLabel = audiotrackslist_layout.findViewById(R.id.audioTrack_Unsupported);
         }
     }
 

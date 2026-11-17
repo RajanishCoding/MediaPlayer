@@ -1,14 +1,10 @@
 package com.example.mediaplayer.Video;
 
-import static androidx.core.content.ContentProviderCompat.requireContext;
-
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -20,17 +16,11 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.IntentSenderRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
-import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,11 +28,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.example.mediaplayer.Audio.Audio;
-import com.example.mediaplayer.Extra.FFmpegMetadataRetriever;
-import com.example.mediaplayer.Extra.MyBottomSheet;
-import com.example.mediaplayer.FilesListActivity;
-import com.example.mediaplayer.PlayerActivity;
 import com.example.mediaplayer.R;
 import com.google.gson.Gson;
 
@@ -202,8 +187,8 @@ public class VideoAdapter extends ListAdapter<Video, VideoAdapter.VideoViewHolde
 
             if (resol || fps) {
                 holder.resolutionFrame.setText(
-                        resol && fps ? media.getResolution() + "P@" + media.getFrameRate() :
-                                resol ? media.getResolution() + "P" : media.getFrameRate() + "FPS");
+                        resol && fps ? media.getResolution() + "P@" + media.getFPS() :
+                                resol ? media.getResolution() + "P" : media.getFPS() + "FPS");
             }
             else {
                 holder.resolutionFrame.setVisibility(View.GONE);

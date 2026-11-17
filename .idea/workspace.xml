@@ -31,7 +31,24 @@
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/color/selector_theme_btn.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable-night/shape_bottom_bar.xml">
+        <config>
+          <night>night</night>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable-night/shape_bottom_divider.xml">
+        <config>
+          <night>night</night>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable-night/shape_group_divider.xml">
         <config>
           <night>night</night>
           <theme>@style/Base.Theme.MediaPlayer</theme>
@@ -60,6 +77,11 @@
         </config>
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/gradient_bg_button.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/round_arrow_forward_ios_24.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
@@ -99,6 +121,11 @@
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/selector_list_view.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/selector_toggle_buttons.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
@@ -115,6 +142,16 @@
         </config>
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_bottom_button.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_bottom_divider.xml">
+        <config>
+          <theme>@style/Base.Theme.MediaPlayer</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/drawable/shape_group_divider.xml">
         <config>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
@@ -177,7 +214,6 @@
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_player.xml">
         <config>
           <state>Landscape</state>
-          <night>night</night>
           <theme>@style/Theme.Material3.DayNight.NoActionBar</theme>
         </config>
       </layout>
@@ -246,6 +282,7 @@
       </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml">
         <config>
+          <night>night</night>
           <theme>@style/Base.Theme.MediaPlayer</theme>
         </config>
       </layout>
@@ -314,10 +351,38 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8c40059a-3645-4946-a053-b050f4766a16" name="Changes" comment="New Commit">
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/color/selector_theme_btn.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable-night/shape_group_divider.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/day_night.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/light.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/night_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/night_2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/shape_group_divider.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Audio/AudioFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/FFmpegMetadataRetriever.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/FFmpegMetadataRetriever.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/InfoDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Extra/InfoDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/FilesListActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/PlayerActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingsFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Settings/SettingsFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/AudioTracks.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/AudioTracks.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/AudioTracksAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/AudioTracksAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/SubTracksAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Tracks/SubTracksAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/Video.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/Video.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/mediaplayer/Video/VideoAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable-night/shape_bottom_bar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable-night/shape_bottom_bar.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/shape_bottom_bar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/shape_bottom_bar.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_files_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_files_list.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_player.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_player.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/audiotrackslist_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/audiotrackslist_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_setting_player.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/subtrackslist_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/subtrackslist_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-night/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-night/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -327,7 +392,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=LocalEmulator, isTemplate=false, identifier=path=C:\Users\rajan\.android\avd\Pixel_7_API_33_-_A13.avd)]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[PhysicalDevice::serial=2fe6fcbb]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -418,9 +483,8 @@
     &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
     &quot;Android App.PlayerActivity.executor&quot;: &quot;Run&quot;,
     &quot;Android App.app.executor&quot;: &quot;Run&quot;,
+    &quot;CidrDebugProfileConversion&quot;: &quot;true&quot;,
     &quot;Kotlin script (Beta).build.gradle.kts.executor&quot;: &quot;Run&quot;,
-    &quot;Notification.DisplayName-DoNotAsk-Android Gradle Upgrade Notification&quot;: &quot;Android Gradle Upgrade Notification&quot;,
-    &quot;Notification.DoNotAsk-Android Gradle Upgrade Notification&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
@@ -434,7 +498,7 @@
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_directory_selection&quot;: &quot;D:/CR/Coding/AndroidStudioProjects/Projects/MediaPlayer/app/src/main/java/com/example/mediaplayer&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Coding/Coding/AndroidStudioProjects/Projects/MediaPlayer/app/src/main/res/drawable&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Coding/Coding/AndroidStudioProjects/Projects/MediaPlayer/app/src/main/res/raw&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Dependencies&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
@@ -455,15 +519,15 @@
       <recent name="com.example.mediaplayer" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\raw" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable-night" />
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\layout" />
-      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\animator" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\color" />
+      <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res\drawable" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java" />
       <recent name="D:\Coding\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\java\mediaarea" />
       <recent name="D:\CR\Coding\AndroidStudioProjects\Projects\MediaPlayer\app\src\main\res" />
@@ -516,8 +580,6 @@
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
-      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
-      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -526,7 +588,6 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Auto>
       <Hybrid>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -535,11 +596,9 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Hybrid>
       <Java>
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Java>
       <Native>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -548,7 +607,6 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
@@ -588,8 +646,6 @@
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
-      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
-      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -598,7 +654,6 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Auto>
       <Hybrid>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -607,11 +662,9 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Hybrid>
       <Java>
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Java>
       <Native>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -620,7 +673,6 @@
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
@@ -660,14 +712,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1721030140346</updated>
-    </task>
-    <task id="LOCAL-00046" summary="Speed Layout Commit">
-      <option name="closed" value="true" />
-      <created>1751000627956</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1751000627956</updated>
     </task>
     <task id="LOCAL-00047" summary="Speed Layout Commit">
       <option name="closed" value="true" />
@@ -1053,7 +1097,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778833904825</updated>
     </task>
-    <option name="localTasksCounter" value="95" />
+    <task id="LOCAL-00095" summary="New Commit">
+      <option name="closed" value="true" />
+      <created>1779090688531</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1779090688532</updated>
+    </task>
+    <option name="localTasksCounter" value="96" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -1102,24 +1154,24 @@
     <MESSAGE value="Bg Play fixed" />
     <MESSAGE value="Latest Commit" />
     <MESSAGE value="Search Included" />
-    <MESSAGE value="New Commit" />
     <MESSAGE value="Video Search Done" />
     <MESSAGE value="List details fixed" />
     <MESSAGE value="Search Logic Done" />
     <MESSAGE value="Last time &amp; Menu UI Fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="Last time &amp; Menu UI Fixed" />
+    <MESSAGE value="New Commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="New Commit" />
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">
       <map>
         <entry key="com.example.mediaplayer">
           <value>
-            <CheckInfo lastCheckTimestamp="1778918194745" />
+            <CheckInfo lastCheckTimestamp="1794933350567" />
           </value>
         </entry>
         <entry key="com.example.mediaplayer.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1778918194744" />
+            <CheckInfo lastCheckTimestamp="1794933350574" />
           </value>
         </entry>
         <entry key="com.mxtech.videoplayer.ad">

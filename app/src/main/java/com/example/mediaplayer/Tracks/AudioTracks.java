@@ -9,14 +9,16 @@ public class AudioTracks {
     private String language;
     private int channels;
     private boolean isSelected;
+    private int supportCode;
 
-    public AudioTracks(TrackGroup trackGroup, int trackIndex, String label, String language, int channels, boolean isSelected) {
+    public AudioTracks(TrackGroup trackGroup, int trackIndex, String label, String language, int channels, boolean isSelected, int supportCode) {
         this.trackGroup = trackGroup;
         this.trackIndex = trackIndex;
         this.label = label;
         this.language = language;
         this.channels = channels;
         this.isSelected = isSelected;
+        this.supportCode = supportCode;
     }
 
     public TrackGroup getTrackGroup() {
@@ -41,5 +43,9 @@ public class AudioTracks {
 
     public boolean isSelected() {
         return isSelected;
+    }
+
+    public int getSupportCode() {
+        return supportCode;
     }
 }

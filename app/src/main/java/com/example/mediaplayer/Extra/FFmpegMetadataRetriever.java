@@ -63,7 +63,7 @@ public class FFmpegMetadataRetriever {
                         JSONObject tags = formatObj.optJSONObject("tags");
                         if (tags != null) {
                             checkAndPutJson(format, "title", tags.optString("title"), ValueType.STRING);
-                            checkAndPutJson(format, "encoder", tags.optString("encoder"), ValueType.STRING);
+//                            checkAndPutJson(format, "encoder", tags.optString("encoder"), ValueType.STRING);
                         }
                         extraMetadata.put("format", format);
                     }

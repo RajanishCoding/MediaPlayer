@@ -1,7 +1,6 @@
 package com.example.mediaplayer.Video;
 
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -10,6 +9,7 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.text.DecimalFormat;
 import java.util.Objects;
 
 @Entity
@@ -102,8 +102,13 @@ public class Video {
         this.resolution = resolution;
     }
 
+    public String getFPS() {
+        Log.d("frameRate", "getFPS: " + frameRate);
+        DecimalFormat df = new DecimalFormat("0.##");
+        return df.format(frameRate);
+    }
+
     public Double getFrameRate() {
-        Log.d("frameRate", "getFrameRate: " + frameRate);
         return frameRate;
     }
 

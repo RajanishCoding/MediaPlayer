@@ -2,10 +2,7 @@ package com.example.mediaplayer.Extra;
 
 import android.app.Dialog;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.media.MediaFeature;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -217,7 +213,7 @@ public class InfoDialog extends DialogFragment {
             addInfoRow(videoContainer, "Resolution", video.optInt("width") + " x " + videoObj.getResolution().toString());
         }
 
-        String fps = String.format(Locale.ROOT, "%.2f", videoObj.getFrameRate());
+        String fps = videoObj.getFPS();
         addInfoRow(videoContainer, "Frame Rate", fps + " fps");
 
         if (video.has("bit_rate")) {

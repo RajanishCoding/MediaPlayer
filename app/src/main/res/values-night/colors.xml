@@ -38,6 +38,7 @@
     <color name="text_color2">#AAAAAA</color>
     <color name="text_color2_rev">#757575</color>
 
+    <color name="overlayList">#1AC8C8C8</color>
 
     <color name="button_color">#80160A29</color>
     <color name="btn_color">#40444444</color>

@@ -808,7 +808,6 @@ public class PlayerActivity extends AppCompatActivity {
         zoomW.post(() -> {
             originalWidth = playerView.getWidth();
             originalHeight = playerView.getHeight();
-
         });
 
         zoomW.setOnTouchListener((v, event) -> {
@@ -1276,20 +1275,17 @@ public class PlayerActivity extends AppCompatActivity {
             time2.setText(isRemainingTimeViewEnabled ? "-" + MillisToTime(player.getDuration() - player.getCurrentPosition()) : MillisToTime(player.getDuration()));
             controlsToast();
 
-            audioTracksList.clear();
             audioTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
             audioTracksAdapter = new AudioTracksAdapter(audioTracksList, audioTrackSelector);
             audioTracksRecyclerView.setAdapter(audioTracksAdapter);
 
-            subTracksList.clear();
             subTrackSelector = (DefaultTrackSelector) player.getTrackSelector();
-            subTracksAdapter = new SubTracksAdapter(subTracksList, subTrackSelector);
+            subTracksAdapter = new SubTracksAdapter(subTracksList, audioTrackSelector);
             subTracksRecyclerView.setAdapter(subTracksAdapter);
 
             Log.d("tracksLoad", "onTracksLoad: ");
 
-            loadAudioTracks();
-            loadSubTracks();
+            loadTracks();
 
             if (isVideoFile) {
                 new Thread(() -> videoDao.markAsPlayed(media_path)).start();
@@ -2242,119 +2238,84 @@ public class PlayerActivity extends AppCompatActivity {
 
 
     @OptIn(markerClass = UnstableApi.class)
-    private void loadAudioTracks() {
+    private void loadTracks() {
         // Get current tracks and check for selection
         Tracks currentTracks = player.getCurrentTracks();
 
-        new Thread(() -> {
-            audioTracksList.add(new AudioTracks(null, -1, null, null, -1, false));
+        audioTracksList.clear();
+        subTracksList.clear();
 
-            // Fetch the track info
-            DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
+        // for None option
+        audioTracksList.add(new AudioTracks(null, -1, null, null, -1, false, -1));
+        subTracksList.add(new SubTracks(null, -1, null, null, false));
 
-            if (mappedTrackInfo == null) {
-                Log.e("AudioTrack", "No track info available.");
-                return;
-            }
+        // Fetch the track info
+        DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
 
-            for (int rendererIndex=0; rendererIndex<mappedTrackInfo.getRendererCount(); rendererIndex++) {
-                int trackType = mappedTrackInfo.getRendererType(rendererIndex);
+        if (mappedTrackInfo == null) {
+            Log.e("Tracks", "No track info available.");
+            return;
+        }
 
-                if (trackType == C.TRACK_TYPE_VIDEO || trackType == C.TRACK_TYPE_AUDIO) {
-                    TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(trackType);
+        for (int rendererIndex=0; rendererIndex < mappedTrackInfo.getRendererCount(); rendererIndex++) {
+            int trackType = mappedTrackInfo.getRendererType(rendererIndex);
 
-                    // Collect available audio track names
-                    List<String> audioTrackNames = new ArrayList<>();
-                    for (int i = 0; i < trackGroups.length; i++) {
-                        TrackGroup trackGroup = trackGroups.get(i);
-                        for (int j = 0; j < trackGroup.length; j++) {
-                            Format format = trackGroup.getFormat(j);
-                            String trackName = format.language != null ? format.language : "Unknown";
-                            audioTrackNames.add(trackName);
+            if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
+                TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(rendererIndex);
 
-                            if (format.sampleMimeType != null) {
-                                if (format.sampleMimeType.startsWith("audio/")) {
-                                    // Check if this track is selected when played
-                                    boolean isSelected = false;
-                                    for (Tracks.Group group : currentTracks.getGroups()) {
-                                        if (group.getMediaTrackGroup() == trackGroup && group.getTrackFormat(j).sampleMimeType != null) {
-                                            if (group.getTrackFormat(j).sampleMimeType.startsWith("audio/")) {
-                                                isSelected = group.isTrackSelected(j);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    Log.d("AudioTracks", "loadAudioTracks: " + isSelected);
+                // Getting available audio tracks
+                for (int i = 0; i < trackGroups.length; i++) {
+                    TrackGroup trackGroup = trackGroups.get(i);
 
-                                    audioTracksList.add(new AudioTracks(trackGroup, j, format.label, getTrackLanguage(format.language), format.channelCount, isSelected));
-                                    Log.d("audioTracks", "showAudioTracks: " + format.id + "   " + format.language + "   " + format.channelCount + "   " + format.label + "   " + format.bitrate);
-                                }
+                    for (int j = 0; j < trackGroup.length; j++) {
+                        Format format = trackGroup.getFormat(j);
+
+                        int support = mappedTrackInfo.getTrackSupport(rendererIndex, i, j);
+
+                        // Check selected status
+                        boolean isSelected = false;
+                        for (Tracks.Group group : currentTracks.getGroups()) {
+                            if (group.getMediaTrackGroup() == trackGroup) {
+                                    isSelected = group.isTrackSelected(j);
+                                    break;
                             }
                         }
+                        Log.d("Tracks", "loadTracks: " + isSelected);
+
+                        if (trackType == C.TRACK_TYPE_AUDIO) {
+                            audioTracksList.add(new AudioTracks(trackGroup, j, format.label, getTrackLanguage(format.language), format.channelCount, isSelected, support));
+                        }
+
+                        else {
+                            Log.d("nijtv", "loadTracks: " + format.label);
+                            subTracksList.add(new SubTracks(trackGroup, j, format.label, getTrackLanguage(format.language), isSelected));
+                        }
+
+                        Log.d("audioTracks", "showAudioTracks: " + format.id + "   " + format.language + "   " + format.channelCount + "   " + format.label + "   " + format.bitrate);
                     }
                 }
             }
+        }
 
-            runOnUiThread(() -> {
-                audioTracksAdapter.notifyDataSetChanged();
-            });
-        }).start();
-    }
-
-    @OptIn(markerClass = UnstableApi.class)
-    private void loadSubTracks() {
-        // Get current tracks and check for selection
-        Tracks currentTracks = player.getCurrentTracks();
-
-        new Thread(() -> {
-            subTracksList.add(new SubTracks(null, -1, null, null, false));
-
-            // Fetch the track info
-            DefaultTrackSelector.MappedTrackInfo mappedTrackInfo = audioTrackSelector.getCurrentMappedTrackInfo();
-
-            if (mappedTrackInfo == null) {
-                Log.e("SubTrack", "No track info available.");
-                return;
+        int pos = 0;
+        for (int i = 0; i < audioTracksList.size(); i++) {
+            if (audioTracksList.get(i).isSelected()) {
+                pos = i;
+                break;
             }
+        }
+        audioTracksAdapter.setSelectedPosition(pos);
+        audioTracksAdapter.notifyDataSetChanged();
 
-            for (int rendererIndex=0; rendererIndex<mappedTrackInfo.getRendererCount(); rendererIndex++) {
-                int trackType = mappedTrackInfo.getRendererType(rendererIndex);
-
-                if (trackType == C.TRACK_TYPE_VIDEO || trackType == C.TRACK_TYPE_TEXT) {
-                    TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(trackType);
-
-                    // Collect available audio track names
-                    for (int i = 0; i < trackGroups.length; i++) {
-                        TrackGroup trackGroup = trackGroups.get(i);
-                        for (int j = 0; j < trackGroup.length; j++) {
-                            Format format = trackGroup.getFormat(j);
-                            if (format.sampleMimeType != null) {
-                                if (format.sampleMimeType.startsWith("application/")) {
-                                    // Check if this track is selected
-                                    boolean isSelected = false;
-                                    for (Tracks.Group group : currentTracks.getGroups()) {
-                                        if (group.getMediaTrackGroup() == trackGroup && group.getTrackFormat(j).sampleMimeType != null) {
-                                            if (group.getTrackFormat(j).sampleMimeType.startsWith("application/")) {
-                                                isSelected = group.isTrackSelected(j);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    Log.d("SubTracks", "loadSubTracks: " + isSelected);
-
-                                    subTracksList.add(new SubTracks(trackGroup, j, format.label, getTrackLanguage(format.language), isSelected));
-                                    Log.d("subTracks", "showAudioTracks: " + format.id + "   " + format.language + "   " + format.channelCount + "   " + format.label + "   " + format.bitrate);
-                                }
-                            }
-                        }
-                    }
-                }
+        pos = 0;
+        for (int i = 0; i < subTracksList.size(); i++) {
+            if (subTracksList.get(i).isSelected()) {
+                pos = i;
+                break;
             }
-
-            runOnUiThread(() -> {
-                subTracksAdapter.notifyDataSetChanged();
-            });
-        }).start();
+        }
+        subTracksAdapter.setSelectedPosition(pos);
+        subTracksAdapter.notifyDataSetChanged();
     }
 
     private String getTrackLanguage(String language) {

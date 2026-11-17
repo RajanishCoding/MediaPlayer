@@ -2,6 +2,7 @@ package com.example.mediaplayer.Settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -9,14 +10,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.fragment.app.FragmentTransition;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,6 +29,7 @@ import android.widget.TextView;
 import com.example.mediaplayer.FilesListActivity;
 import com.example.mediaplayer.R;
 import com.example.mediaplayer.Video.Video;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -37,17 +41,13 @@ import java.util.Locale;
 
 public class SettingsFragment extends Fragment {
 
-    private View menu_Container;
-    private ImageButton menu_Button;
-    private ImageButton search_Button;
-    private Switch mode_Switch;
-
-    private FrameLayout fragmentContainer;
+    private MaterialButtonToggleGroup themeGroup;
 
     private View playerSettings, audioSettings, subtitleSettings, listSettings, storageSettings;
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
+
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -63,12 +63,7 @@ public class SettingsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        search_Button = view.findViewById(R.id.search_button);
-        menu_Container = view.findViewById(R.id.MenuContainer);
-        menu_Button = view.findViewById(R.id.menu_button);
-        mode_Switch = view.findViewById(R.id.mode_switch);
-
-        fragmentContainer = view.findViewById(R.id.fragmentContainerSetting);
+        themeGroup = view.findViewById(R.id.themeGroup);
 
         playerSettings = view.findViewById(R.id.playerSetting);
         audioSettings = view.findViewById(R.id.audioSetting);
@@ -76,7 +71,10 @@ public class SettingsFragment extends Fragment {
         listSettings = view.findViewById(R.id.listSetting);
         storageSettings = view.findViewById(R.id.systemSetting);
 
-        setModeSwitch();
+        sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        setModeGroup();
 
         setSettingItemsViews();
 
@@ -86,24 +84,24 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+//        menu_Button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Log.d("showMenuLayout", "showMenuLayout: YES");
+//                showMenuLayout();
+//            }
+//        });
 
-        sharedPreferences = requireActivity().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
-        menu_Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("showMenuLayout", "showMenuLayout: YES");
-                showMenuLayout();
-            }
+        themeGroup.findViewById(R.id.auto).setOnClickListener(v -> {
+            setThemeMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         });
 
-        mode_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                setThemeMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                setThemeMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
+        themeGroup.findViewById(R.id.light).setOnClickListener(v -> {
+            setThemeMode(AppCompatDelegate.MODE_NIGHT_NO);
+        });
+
+        themeGroup.findViewById(R.id.dark).setOnClickListener(v -> {
+            setThemeMode(AppCompatDelegate.MODE_NIGHT_YES);
         });
 
         playerSettings.setOnClickListener(v -> createFragment(new SettingPlayerFragment()));
@@ -114,79 +112,37 @@ public class SettingsFragment extends Fragment {
 
     }
 
-
-    private void setModeSwitch() {
-        sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-        mode_Switch.setChecked(sharedPreferences.getBoolean("mode_switch", true));
+    private void setSettingItemsViews() {
+        setSettingsItem(playerSettings, "Player", R.drawable.rounded_smart_display_24);
+        setSettingsItem(audioSettings, "Audio", R.drawable.round_music_video_24);
+        setSettingsItem(subtitleSettings, "Subtitle", R.drawable.rounded_subtitles_24);
+        setSettingsItem(listSettings, "List", R.drawable.rounded_list_alt_24);
+        setSettingsItem(storageSettings, "Storage", R.drawable.rounded_info_24);
     }
 
-    private void setSettingItemsViews() {
-        int drawable = R.drawable.round_arrow_forward_ios_24;
-
-        ((TextView) playerSettings.findViewById(R.id.itemText)).setText("Player");
-        ((ImageView) playerSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_smart_display_24);
-        ((ImageView) playerSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
-
-        ((TextView) audioSettings.findViewById(R.id.itemText)).setText("Audio");
-        ((ImageView) audioSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.round_music_video_24);
-        ((ImageView) audioSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
-
-        ((TextView) subtitleSettings.findViewById(R.id.itemText)).setText("Subtitle");
-        ((ImageView) subtitleSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_subtitles_24);
-        ((ImageView) subtitleSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
-
-        ((TextView) listSettings.findViewById(R.id.itemText)).setText("List");
-        ((ImageView) listSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_list_alt_24);
-        ((ImageView) listSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
-
-        ((TextView) storageSettings.findViewById(R.id.itemText)).setText("Storage");
-        ((ImageView) storageSettings.findViewById(R.id.itemIconStart)).setImageResource(R.drawable.rounded_info_24);
-        ((ImageView) storageSettings.findViewById(R.id.itemIconEnd)).setImageResource(drawable);
+    private void setModeGroup() {
+        int m = sharedPreferences.getInt("theme_mode", -1);
+        themeGroup.check(m == 1 ? R.id.light : m == 2 ? R.id.dark : R.id.auto);
     }
 
     private void setThemeMode(int mode) {
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("Settings", Context.MODE_PRIVATE);
         int savedMode = sharedPreferences.getInt("theme_mode", -1);
 
         if (savedMode == mode) {
-            Log.d("theme_mode", "Theme mode is already set. No need to restart.");
             return;
         }
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("theme_mode", mode);
-
-        editor.putBoolean("mode_switch", mode == 2);
-
         editor.apply();
-
-        Log.d("theme_mode", "New theme mode set: " + mode);
 
         FilesListActivity.isThemeChanged = true;
 
         AppCompatDelegate.setDefaultNightMode(mode);
     }
 
-    private void showMenuLayout() {
-        Log.d("showMenuLayout", "showMenuLayout: YES");
-        Animation slideInRight = AnimationUtils.loadAnimation(getActivity(), R.anim.slide_in_right);
-        menu_Container.startAnimation(slideInRight);
-
-        slideInRight.setAnimationListener(new Animation.AnimationListener(){
-            @Override
-            public void onAnimationStart (Animation animation){
-                menu_Container.setVisibility(View.VISIBLE);
-//                isMenuContainerShowing = true;
-            }
-
-            @Override
-            public void onAnimationEnd (Animation animation){
-            }
-
-            @Override
-            public void onAnimationRepeat (Animation animation){}
-        });
+    private void setSettingsItem(View view, String text, int icon) {
+        ((TextView) view.findViewById(R.id.itemText)).setText(text);
+        ((ImageView) view.findViewById(R.id.itemIconStart)).setImageResource(icon);
     }
 
     private void createFragment(Fragment fragment) {
@@ -197,34 +153,4 @@ public class SettingsFragment extends Fragment {
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
         }
-
-    public void saveMediaListToPreferences(List<Video> mediaList) {
-        SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(mediaList);
-        editor.putString("mediaList", json);
-        editor.apply();
-    }
-
-    public List<Video> loadMediaListFromPreferences() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("MediaPrefs", Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = prefs.getString("mediaList", null);
-        Type type = new TypeToken<ArrayList<Video>>() {}.getType();
-        return gson.fromJson(json, type);
-    }
-
-
-    public String MillisToTime(long millis) {
-        long hours = (millis / (1000 * 60 * 60)) % 24;
-        long minutes = (millis / (1000 * 60)) % 60;
-        long seconds = (millis / 1000) % 60;
-
-        if (hours >= 1) {
-            return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
-        }
-        return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds);
-    }
-
 }
